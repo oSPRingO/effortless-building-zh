@@ -1,0 +1,16 @@
+[
+{
+  "modid": "effortlessbuilding",
+  "name": "Effortless Building",
+  "description": "Makes building easier by providing tools like mirrors, arrays, quickreplace and a block randomizer.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "https://requios.nl/",
+  "updateUrl": "",
+  "authorList": ["Requios"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
