@@ -4,13 +4,18 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.inventory.RandomizerBagCapabilityProvider;
+
+import javax.annotation.Nullable;
 
 public class ItemRandomizerBag extends Item {
 
@@ -52,5 +57,11 @@ public class ItemRandomizerBag extends Item {
     @Override
     public int getMaxItemUseDuration(ItemStack stack) {
         return 1;
+    }
+
+    @Nullable
+    @Override
+    public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable NBTTagCompound nbt) {
+        return new RandomizerBagCapabilityProvider();
     }
 }

@@ -8,17 +8,19 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.SlotItemHandler;
 
 public class RandomizerBagContainer extends Container {
 
-    private final IInventory bagInventory;
+    private final IItemHandler bagInventory;
     private final int sizeInventory;
 
-    public RandomizerBagContainer(InventoryPlayer parInventoryPlayer, IInventory parIInventory) {
+    public RandomizerBagContainer(InventoryPlayer parInventoryPlayer, IItemHandler parIInventory) {
         bagInventory = parIInventory;
-        sizeInventory = bagInventory.getSizeInventory();
-        for (int i = 0; i < RandomizerBagInventory.INV_SIZE; ++i) {
-            this.addSlotToContainer(new Slot(bagInventory, i, 80 + (18 * (i / 4)), 8 + (18 * (i % 4))));
+        sizeInventory = bagInventory.getSlots();
+        for (int i = 0; i < sizeInventory; ++i) {
+            this.addSlotToContainer(new SlotItemHandler(bagInventory, i, 80 + (18 * (i / 4)), 8 + (18 * (i % 4))));
         }
 
         // add player inventory slots
@@ -37,7 +39,7 @@ public class RandomizerBagContainer extends Container {
 
     @Override
     public boolean canInteractWith(EntityPlayer playerIn) {
-        return bagInventory.isUsableByPlayer(playerIn);
+        return true;
     }
 
     @Override
