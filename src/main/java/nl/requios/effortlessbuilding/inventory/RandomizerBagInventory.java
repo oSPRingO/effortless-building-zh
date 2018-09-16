@@ -1,13 +1,17 @@
 package nl.requios.effortlessbuilding.inventory;
 
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.items.IItemHandler;
 
 import javax.annotation.Nonnull;
 
-public class RandomizerBagInventory implements IItemHandler {
+public class RandomizerBagInventory implements IInventory {
 
     //Reference to NBT data
     private final ItemStack invItem;
@@ -27,8 +31,13 @@ public class RandomizerBagInventory implements IItemHandler {
     }
 
     @Override
-    public int getSlots() {
+    public int getSizeInventory() {
         return INV_SIZE;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
     }
 
     @Nonnull
@@ -39,48 +48,42 @@ public class RandomizerBagInventory implements IItemHandler {
 
     @Nonnull
     @Override
-    public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
-        ItemStack slotStack = getStackInSlot(slot);
-        if (slotStack.getCount() == 0) {
-            setInventorySlotContents(slot, stack);
-            return null;
+    public ItemStack decrStackSize(int slot, int amount) {
+        if (inventory[slot] != null)
+        {
+            ItemStack itemstack;
+
+            if (inventory[slot].getCount() <= amount)
+            {
+                itemstack = inventory[slot];
+                inventory[slot] = null;
+                return itemstack;
+            }
+            else
+            {
+                itemstack = inventory[slot].splitStack(amount);
+
+                if (inventory[slot].getCount() == 0)
+                {
+                    inventory[slot] = null;
+                }
+
+                return itemstack;
+            }
         }
-        if (getSlotLimit(slot) - slotStack.getCount() < stack.getCount()) {
-            //Not enough place remaining, split stack
-            slotStack.setCount(getSlotLimit(slot));
-            onInventoryChanged();
-            stack.copy().shrink(getSlotLimit(slot) - slotStack.getCount());
-            //TODO make proper
-            return stack;
-        } else {
-            slotStack.grow(stack.getCount());
-            onInventoryChanged();
+        else
+        {
             return null;
         }
     }
 
-    @Nonnull
     @Override
-    public ItemStack extractItem(int slot, int amount, boolean simulate) {
-        ItemStack stack = getStackInSlot(slot);
-        if (stack == null) return stack;
-
-        if (stack.getCount() > amount) {
-            stack = stack.splitStack(amount);
-            onInventoryChanged();
-        } else {
-            setInventorySlotContents(slot, null);
-        }
-        return stack;
-    }
-
-    @Override
-    public int getSlotLimit(int slot) {
-        return 64;
+    public ItemStack removeStackFromSlot(int index) {
+        return null;
     }
 
     public void onInventoryChanged() {
-        for (int i = 0; i < getSlotLimit(0); ++i) {
+        for (int i = 0; i < getFieldCount(); ++i) {
             if (getStackInSlot(i) != null && getStackInSlot(i).getCount() == 0) {
                 inventory[i] = null;
             }
@@ -92,12 +95,66 @@ public class RandomizerBagInventory implements IItemHandler {
     public void setInventorySlotContents(int slot, ItemStack stack) {
         inventory[slot] = stack;
 
-        if (stack != null && stack.getCount() > getSlotLimit(slot)) {
-            stack.setCount(getSlotLimit(slot));
+        if (stack != null && stack.getCount() > getInventoryStackLimit())
+        {
+            stack.setCount(getInventoryStackLimit());
         }
 
-        // Don't forget this line or your inventory will not be saved!
-        onInventoryChanged();
+        markDirty();
+    }
+
+    @Override
+    public int getInventoryStackLimit() {
+        return 64;
+    }
+
+    @Override
+    public void markDirty() {
+
+    }
+
+    @Override
+    public boolean isUsableByPlayer(EntityPlayer player) {
+        return true;
+    }
+
+    @Override
+    public void openInventory(EntityPlayer player) {
+
+    }
+
+    @Override
+    public void closeInventory(EntityPlayer player) {
+
+    }
+
+    @Override
+    public boolean isItemValidForSlot(int index, ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public int getField(int id) {
+        //variables
+        return 0;
+    }
+
+    @Override
+    public void setField(int id, int value) {
+
+    }
+
+    @Override
+    public int getFieldCount() {
+        return 0;
+    }
+
+    @Override
+    public void clear() {
+        for (int i = 0; i < inventory.length; ++i)
+        {
+            inventory[i] = null;
+        }
     }
 
     public void readFromNBT(NBTTagCompound compound) {
@@ -111,7 +168,7 @@ public class RandomizerBagInventory implements IItemHandler {
             int slot = item.getInteger("Slot");
 
             // Just double-checking that the saved slot index is within our inventory array bounds
-            if (slot >= 0 && slot < getSlots()) {
+            if (slot >= 0 && slot < getFieldCount()) {
                 inventory[slot] = new ItemStack(item);
             }
         }
@@ -124,7 +181,7 @@ public class RandomizerBagInventory implements IItemHandler {
         // Create a new NBT Tag List to store itemstacks as NBT Tags
         NBTTagList items = new NBTTagList();
 
-        for (int i = 0; i < getSlots(); ++i) {
+        for (int i = 0; i < getSizeInventory(); ++i) {
             // Only write stacks that contain items
             if (getStackInSlot(i) != null) {
                 // Make a new NBT Tag Compound to write the itemstack and slot index to
@@ -141,4 +198,18 @@ public class RandomizerBagInventory implements IItemHandler {
         tagcompound.setTag("ItemInventory", items);
     }
 
+    @Override
+    public String getName() {
+        return "Testname";
+    }
+
+    @Override
+    public boolean hasCustomName() {
+        return false;
+    }
+
+    @Override
+    public ITextComponent getDisplayName() {
+        return new TextComponentString("Testname");
+    }
 }
