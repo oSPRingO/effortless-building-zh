@@ -5,6 +5,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
+import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
@@ -45,15 +46,15 @@ public class EventHandler
     public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
         QuickReplace.onBlockPlaced(event);
         if (event.isCanceled()) return;
-        Array.onBlockPlaced(event);
         Mirror.onBlockPlaced(event);
+        Array.onBlockPlaced(event);
     }
 
 
     @SubscribeEvent
     public static void onBlockBroken(BlockEvent.BreakEvent event) {
-        Array.onBlockBroken(event);
         Mirror.onBlockBroken(event);
+        Array.onBlockBroken(event);
     }
 
 }

@@ -41,11 +41,6 @@ public class Array {
             pos = pos.add(offset);
             if (event.getWorld().isBlockLoaded(pos, true)) {
                 event.getWorld().setBlockState(pos, event.getPlacedBlock());
-
-                //Mirror synergy
-                BlockSnapshot blockSnapshot = new BlockSnapshot(event.getWorld(), pos, event.getPlacedBlock());
-                BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, event.getPlacedBlock(), event.getPlayer(), EnumHand.MAIN_HAND);
-                Mirror.onBlockPlaced(placeEvent);
             }
         }
     }
@@ -66,17 +61,7 @@ public class Array {
             pos = pos.add(offset);
             if (event.getWorld().isBlockLoaded(pos, false)) {
                 event.getWorld().setBlockToAir(pos);
-
-                //Mirror synergy
-                BlockEvent.BreakEvent breakEvent = new BlockEvent.BreakEvent(event.getWorld(), pos, event.getState(), event.getPlayer());
-                Mirror.onBlockBroken(breakEvent);
             }
         }
     }
-
-//    @SubscribeEvent
-//    @SideOnly(Side.CLIENT)
-//    public static void onRender(RenderWorldLastEvent event) {
-//
-//    }
 }

@@ -16,7 +16,7 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.capability.*;
-import nl.requios.effortlessbuilding.inventory.RandomizerGuiHandler;
+import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import nl.requios.effortlessbuilding.network.QuickReplaceMessage;
@@ -75,7 +75,7 @@ public class EffortlessBuilding
     // Register network handlers
     public void init(FMLInitializationEvent event)
     {
-        NetworkRegistry.INSTANCE.registerGuiHandler(EffortlessBuilding.instance, new RandomizerGuiHandler());
+        NetworkRegistry.INSTANCE.registerGuiHandler(EffortlessBuilding.instance, new RandomizerBagGuiHandler());
         proxy.init(event);
     }
 

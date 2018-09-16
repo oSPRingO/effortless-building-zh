@@ -42,8 +42,8 @@ public class ClientProxy implements IProxy {
         keyBindings = new KeyBinding[2];
 
         // instantiate the key bindings
-        keyBindings[0] = new KeyBinding("key.hud.desc", Keyboard.KEY_NUMPAD0, "key.effortlessbuilding.category");
-        keyBindings[1] = new KeyBinding("key.replace.desc", Keyboard.KEY_NUMPAD1, "key.effortlessbuilding.category");
+        keyBindings[0] = new KeyBinding("key.hud.desc", Keyboard.KEY_ADD, "key.effortlessbuilding.category");
+        keyBindings[1] = new KeyBinding("key.replace.desc", Keyboard.KEY_SUBTRACT, "key.effortlessbuilding.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {

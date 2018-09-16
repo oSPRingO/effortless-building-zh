@@ -1,4 +1,4 @@
-package nl.requios.effortlessbuilding.inventory;
+package nl.requios.effortlessbuilding.capability;
 
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
@@ -7,12 +7,13 @@ import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
+import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class RandomizerBagCapabilityProvider implements ICapabilitySerializable<NBTTagCompound> {
-    IItemHandler itemHandler = new ItemStackHandler(5);
+public class ItemHandlerCapabilityProvider implements ICapabilitySerializable<NBTTagCompound> {
+    IItemHandler itemHandler = new ItemStackHandler(ItemRandomizerBag.INV_SIZE);
 
     @Override
     public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
@@ -31,11 +32,11 @@ public class RandomizerBagCapabilityProvider implements ICapabilitySerializable<
 
     @Override
     public NBTTagCompound serializeNBT() {
-        return ((ItemStackHandler)itemHandler).serializeNBT();
+        return ((ItemStackHandler) itemHandler).serializeNBT();
     }
 
     @Override
     public void deserializeNBT(NBTTagCompound nbt) {
-        ((ItemStackHandler)itemHandler).deserializeNBT(nbt);
+        ((ItemStackHandler) itemHandler).deserializeNBT(nbt);
     }
 }

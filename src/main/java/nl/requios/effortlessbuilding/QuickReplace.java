@@ -48,7 +48,12 @@ public class QuickReplace {
         if (!message.isBlockHit() || message.getBlockPos() == null) return;
 
         BlockPos placedAgainstBlockPos = message.getBlockPos();
-        //placedAgainstBlockPos = placedAgainstBlockPos.down();
+
+        //Get under tall grass and other replaceable blocks
+        if (player.world.getBlockState(placedAgainstBlockPos).getBlock().isReplaceable(player.world, placedAgainstBlockPos)) {
+            placedAgainstBlockPos = placedAgainstBlockPos.down();
+        }
+
         IBlockState blockState = blockStates.get(player.getUniqueID());
         player.world.setBlockState(placedAgainstBlockPos, blockState);
 

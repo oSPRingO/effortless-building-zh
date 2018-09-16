@@ -9,11 +9,14 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -77,19 +80,19 @@ public class Mirror {
             return;
 
         if (m.mirrorX) {
-            placeMirrorX(event.getWorld(), m, oldBlockPos, event.getPlacedBlock());
+            placeMirrorX(event.getWorld(), event.getPlayer(), m, oldBlockPos, event.getPlacedBlock());
         }
 
         if (m.mirrorY) {
-            placeMirrorY(event.getWorld(), m, oldBlockPos, event.getPlacedBlock());
+            placeMirrorY(event.getWorld(), event.getPlayer(), m, oldBlockPos, event.getPlacedBlock());
         }
 
         if (m.mirrorZ) {
-            placeMirrorZ(event.getWorld(), m, oldBlockPos, event.getPlacedBlock());
+            placeMirrorZ(event.getWorld(), event.getPlayer(), m, oldBlockPos, event.getPlacedBlock());
         }
     }
 
-    private static void placeMirrorX(World world, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState) {
+    private static void placeMirrorX(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState) {
         //find mirror position
         double x = m.position.x + (m.position.x - oldBlockPos.getX() - 0.5);
         BlockPos newBlockPos = new BlockPos(x, oldBlockPos.getY(), oldBlockPos.getZ());
@@ -98,13 +101,13 @@ public class Mirror {
         if (world.isBlockLoaded(newBlockPos, true)) {
             newBlockState = oldBlockState.withMirror(net.minecraft.util.Mirror.FRONT_BACK);
 
-            world.setBlockState(newBlockPos, newBlockState);
+            placeBlock(world, player, newBlockPos, newBlockState);
         }
-        if (m.mirrorY) placeMirrorY(world, m, newBlockPos, newBlockState);
-        if (m.mirrorZ) placeMirrorZ(world, m, newBlockPos, newBlockState);
+        if (m.mirrorY) placeMirrorY(world, player, m, newBlockPos, newBlockState);
+        if (m.mirrorZ) placeMirrorZ(world, player, m, newBlockPos, newBlockState);
     }
 
-    private static void placeMirrorY(World world, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState) {
+    private static void placeMirrorY(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState) {
         //find mirror position
         double y = m.position.y + (m.position.y - oldBlockPos.getY() - 0.5);
         BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), y, oldBlockPos.getZ());
@@ -113,12 +116,12 @@ public class Mirror {
         if (world.isBlockLoaded(newBlockPos, true)) {
             newBlockState = getVerticalMirror(oldBlockState);
 
-            world.setBlockState(newBlockPos, newBlockState);
+            placeBlock(world, player, newBlockPos, newBlockState);
         }
-        if (m.mirrorZ) placeMirrorZ(world, m, newBlockPos, newBlockState);
+        if (m.mirrorZ) placeMirrorZ(world, player, m, newBlockPos, newBlockState);
     }
 
-    private static void placeMirrorZ(World world, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState) {
+    private static void placeMirrorZ(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState) {
         //find mirror position
         double z = m.position.z + (m.position.z - oldBlockPos.getZ() - 0.5);
         BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), oldBlockPos.getY(), z);
@@ -127,8 +130,17 @@ public class Mirror {
         if (world.isBlockLoaded(newBlockPos, true)) {
             newBlockState = oldBlockState.withMirror(net.minecraft.util.Mirror.LEFT_RIGHT);
 
-            world.setBlockState(newBlockPos, newBlockState);
+            placeBlock(world, player, newBlockPos, newBlockState);
         }
+    }
+
+    private static void placeBlock(World world, EntityPlayer player, BlockPos newBlockPos, IBlockState newBlockState){
+        world.setBlockState(newBlockPos, newBlockState);
+
+        //Array synergy
+        BlockSnapshot blockSnapshot = new BlockSnapshot(world, newBlockPos, newBlockState);
+        BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, newBlockState, player, EnumHand.MAIN_HAND);
+        Array.onBlockPlaced(placeEvent);
     }
 
     private static IBlockState getVerticalMirror(IBlockState blockState) {
@@ -199,7 +211,7 @@ public class Mirror {
         BlockPos newBlockPos = new BlockPos(x, oldBlockPos.getY(), oldBlockPos.getZ());
         //break block
         if (event.getWorld().isBlockLoaded(newBlockPos, true)) {
-            event.getWorld().setBlockToAir(newBlockPos);
+            breakBlock(event, newBlockPos);
         }
         if (m.mirrorY) breakMirrorY(event, m, newBlockPos);
         if (m.mirrorZ) breakMirrorZ(event, m, newBlockPos);
@@ -211,7 +223,7 @@ public class Mirror {
         BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), y, oldBlockPos.getZ());
         //place block
         if (event.getWorld().isBlockLoaded(newBlockPos, true)) {
-            event.getWorld().setBlockToAir(newBlockPos);
+            breakBlock(event, newBlockPos);
         }
         if (m.mirrorZ) breakMirrorZ(event, m, newBlockPos);
     }
@@ -222,8 +234,16 @@ public class Mirror {
         BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), oldBlockPos.getY(), z);
         //place block
         if (event.getWorld().isBlockLoaded(newBlockPos, true)) {
-            event.getWorld().setBlockToAir(newBlockPos);
+            breakBlock(event, newBlockPos);
         }
+    }
+
+    private static void breakBlock(BlockEvent.BreakEvent event, BlockPos newBlockPos){
+        event.getWorld().setBlockToAir(newBlockPos);
+
+        //Array synergy
+        BlockEvent.BreakEvent breakEvent = new BlockEvent.BreakEvent(event.getWorld(), newBlockPos, event.getState(), event.getPlayer());
+        Array.onBlockBroken(breakEvent);
     }
 
     @SubscribeEvent
