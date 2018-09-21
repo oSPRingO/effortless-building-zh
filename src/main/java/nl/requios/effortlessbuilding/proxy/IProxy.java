@@ -1,6 +1,7 @@
 package nl.requios.effortlessbuilding.proxy;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.IThreadListener;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -33,8 +34,10 @@ public interface IProxy
     /**
      * Returns a side-appropriate EntityPlayer for use during message handling.
      *
-     * @param parContext the context
+     * @param ctx the context
      * @return the player entity from context
      */
-    EntityPlayer getPlayerEntityFromContext(MessageContext parContext);
+    EntityPlayer getPlayerEntityFromContext(MessageContext ctx);
+
+    IThreadListener getThreadListenerFromContext(MessageContext ctx);
 }

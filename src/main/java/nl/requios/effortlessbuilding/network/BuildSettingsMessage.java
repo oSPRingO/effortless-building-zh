@@ -13,6 +13,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import nl.requios.effortlessbuilding.Array;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.BuildSettingsManager.BuildSettings;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.Mirror;
 
 public class BuildSettingsMessage implements IMessage {
@@ -84,7 +85,7 @@ public class BuildSettingsMessage implements IMessage {
             //EffortlessBuilding.log("message received on " + ctx.side + " side");
 
             // This is the player the packet was sent to the server from
-            EntityPlayer player = (ctx.side.isClient() ? Minecraft.getMinecraft().player : ctx.getServerHandler().player);
+            EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
             // The value that was sent
             BuildSettings buildSettings = message.buildSettings;
             Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
@@ -98,9 +99,9 @@ public class BuildSettingsMessage implements IMessage {
             a.count = Math.max(0, a.count);
 
             // Execute the action on the main server thread by adding it as a scheduled task
-            IThreadListener threadListener = (ctx.side.isClient() ? Minecraft.getMinecraft() : ((EntityPlayerMP) player).getServerWorld());
+            IThreadListener threadListener = EffortlessBuilding.proxy.getThreadListenerFromContext(ctx);
             threadListener.addScheduledTask(() -> {
-                EntityPlayer p = (ctx.side.isClient() ? Minecraft.getMinecraft().player : ctx.getServerHandler().player);
+                EntityPlayer p = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
                 BuildSettingsManager.setBuildSettings(p, buildSettings);
             });
             // No response packet

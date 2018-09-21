@@ -29,7 +29,7 @@ public class EffortlessBuilding
 {
     public static final String MODID = "effortlessbuilding";
     public static final String NAME = "Effortless Building";
-    public static final String VERSION = "0.1.2";
+    public static final String VERSION = "0.1.3";
 
     @Mod.Instance(EffortlessBuilding.MODID)
     public static EffortlessBuilding instance;
@@ -44,11 +44,13 @@ public class EffortlessBuilding
 
     public static final SimpleNetworkWrapper packetHandler = NetworkRegistry.INSTANCE.newSimpleChannel(EffortlessBuilding.MODID);
 
+    public static final ItemRandomizerBag ITEM_RANDOMIZER_BAG = new ItemRandomizerBag();
+
     public static final Block[] BLOCKS = {
     };
 
     public static final Item[] ITEMS = {
-            new ItemRandomizerBag()
+            ITEM_RANDOMIZER_BAG
     };
 
     public static final int RANDOMIZER_BAG_GUI = 0;

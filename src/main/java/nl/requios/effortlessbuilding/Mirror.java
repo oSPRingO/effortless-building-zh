@@ -1,15 +1,16 @@
 package nl.requios.effortlessbuilding;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockDirectional;
 import net.minecraft.block.BlockDispenser;
 import net.minecraft.block.BlockStairs;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
@@ -22,6 +23,8 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.items.IItemHandler;
+import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.Color;
 
@@ -76,65 +79,87 @@ public class Mirror {
 
         if (oldBlockPos.getX() + 0.5 < m.position.x - m.radius || oldBlockPos.getX() + 0.5 > m.position.x + m.radius ||
                 oldBlockPos.getY() + 0.5 < m.position.y - m.radius || oldBlockPos.getY() + 0.5 > m.position.y + m.radius ||
-                oldBlockPos.getZ() + 0.5 < m.position.z - m.radius || oldBlockPos.getZ() + 0.5 > m.position.z+ m.radius)
+                oldBlockPos.getZ() + 0.5 < m.position.z - m.radius || oldBlockPos.getZ() + 0.5 > m.position.z + m.radius)
             return;
 
+        //Randomizer bag synergy
+        IItemHandler bagInventory = null;
+        if (event.getPlayer().getHeldItem(event.getHand()).getItem() == EffortlessBuilding.ITEM_RANDOMIZER_BAG) {
+            bagInventory = ItemRandomizerBag.getBagInventory(event.getPlayer().getHeldItem(EnumHand.MAIN_HAND));
+        }
+
         if (m.mirrorX) {
-            placeMirrorX(event.getWorld(), event.getPlayer(), m, oldBlockPos, event.getPlacedBlock());
+            placeMirrorX(event.getWorld(), event.getPlayer(), m, event.getPos(), event.getPlacedBlock(), bagInventory);
         }
 
         if (m.mirrorY) {
-            placeMirrorY(event.getWorld(), event.getPlayer(), m, oldBlockPos, event.getPlacedBlock());
+            placeMirrorY(event.getWorld(), event.getPlayer(), m, oldBlockPos, event.getPlacedBlock(), bagInventory);
         }
 
         if (m.mirrorZ) {
-            placeMirrorZ(event.getWorld(), event.getPlayer(), m, oldBlockPos, event.getPlacedBlock());
+            placeMirrorZ(event.getWorld(), event.getPlayer(), m, oldBlockPos, event.getPlacedBlock(), bagInventory);
         }
     }
 
-    private static void placeMirrorX(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState) {
+    private static IBlockState getBlockStateFromRandomizerBag(IItemHandler bagInventory, World world, EntityPlayer player, BlockPos pos) {
+        int randomSlot = ItemRandomizerBag.pickRandomSlot(bagInventory);
+        ItemStack stack = bagInventory.getStackInSlot(randomSlot);
+        //TODO get facing from getPlacedAgainst and getPlacedBlock
+        return Block.getBlockFromItem(stack.getItem()).getStateForPlacement(world, pos, EnumFacing.NORTH, 0, 0, 0, stack.getMetadata(), player, EnumHand.MAIN_HAND);
+    }
+
+    private static void placeMirrorX(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState, IItemHandler bagInventory) {
         //find mirror position
         double x = m.position.x + (m.position.x - oldBlockPos.getX() - 0.5);
         BlockPos newBlockPos = new BlockPos(x, oldBlockPos.getY(), oldBlockPos.getZ());
-        IBlockState newBlockState = oldBlockState;
+
+        //Randomizer bag synergy
+        if (bagInventory != null)
+            oldBlockState = getBlockStateFromRandomizerBag(bagInventory, world, player, oldBlockPos);
+
+        IBlockState newBlockState = oldBlockState.withMirror(net.minecraft.util.Mirror.FRONT_BACK);
         //place block
         if (world.isBlockLoaded(newBlockPos, true)) {
-            newBlockState = oldBlockState.withMirror(net.minecraft.util.Mirror.FRONT_BACK);
-
             placeBlock(world, player, newBlockPos, newBlockState);
         }
-        if (m.mirrorY) placeMirrorY(world, player, m, newBlockPos, newBlockState);
-        if (m.mirrorZ) placeMirrorZ(world, player, m, newBlockPos, newBlockState);
+        if (m.mirrorY) placeMirrorY(world, player, m, newBlockPos, newBlockState, bagInventory);
+        if (m.mirrorZ) placeMirrorZ(world, player, m, newBlockPos, newBlockState, bagInventory);
     }
 
-    private static void placeMirrorY(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState) {
+    private static void placeMirrorY(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState, IItemHandler bagInventory) {
         //find mirror position
         double y = m.position.y + (m.position.y - oldBlockPos.getY() - 0.5);
         BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), y, oldBlockPos.getZ());
-        IBlockState newBlockState = oldBlockState;
+
+        //Randomizer bag synergy
+        if (bagInventory != null)
+            oldBlockState = getBlockStateFromRandomizerBag(bagInventory, world, player, oldBlockPos);
+
+        IBlockState newBlockState = getVerticalMirror(oldBlockState);
         //place block
         if (world.isBlockLoaded(newBlockPos, true)) {
-            newBlockState = getVerticalMirror(oldBlockState);
-
             placeBlock(world, player, newBlockPos, newBlockState);
         }
-        if (m.mirrorZ) placeMirrorZ(world, player, m, newBlockPos, newBlockState);
+        if (m.mirrorZ) placeMirrorZ(world, player, m, newBlockPos, newBlockState, bagInventory);
     }
 
-    private static void placeMirrorZ(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState) {
+    private static void placeMirrorZ(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState, IItemHandler bagInventory) {
         //find mirror position
         double z = m.position.z + (m.position.z - oldBlockPos.getZ() - 0.5);
         BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), oldBlockPos.getY(), z);
-        IBlockState newBlockState = oldBlockState;
+
+        //Randomizer bag synergy
+        if (bagInventory != null)
+            oldBlockState = getBlockStateFromRandomizerBag(bagInventory, world, player, oldBlockPos);
+
+        IBlockState newBlockState = oldBlockState.withMirror(net.minecraft.util.Mirror.LEFT_RIGHT);
         //place block
         if (world.isBlockLoaded(newBlockPos, true)) {
-            newBlockState = oldBlockState.withMirror(net.minecraft.util.Mirror.LEFT_RIGHT);
-
             placeBlock(world, player, newBlockPos, newBlockState);
         }
     }
 
-    private static void placeBlock(World world, EntityPlayer player, BlockPos newBlockPos, IBlockState newBlockState){
+    private static void placeBlock(World world, EntityPlayer player, BlockPos newBlockPos, IBlockState newBlockState) {
         world.setBlockState(newBlockPos, newBlockState);
 
         //Array synergy
@@ -189,7 +214,7 @@ public class Mirror {
 
         if (oldBlockPos.getX() + 0.5 < m.position.x - m.radius || oldBlockPos.getX() + 0.5 > m.position.x + m.radius ||
                 oldBlockPos.getY() + 0.5 < m.position.y - m.radius || oldBlockPos.getY() + 0.5 > m.position.y + m.radius ||
-                oldBlockPos.getZ() + 0.5 < m.position.z - m.radius || oldBlockPos.getZ() + 0.5 > m.position.z+ m.radius)
+                oldBlockPos.getZ() + 0.5 < m.position.z - m.radius || oldBlockPos.getZ() + 0.5 > m.position.z + m.radius)
             return;
 
         if (m.mirrorX) {
@@ -238,7 +263,7 @@ public class Mirror {
         }
     }
 
-    private static void breakBlock(BlockEvent.BreakEvent event, BlockPos newBlockPos){
+    private static void breakBlock(BlockEvent.BreakEvent event, BlockPos newBlockPos) {
         event.getWorld().setBlockToAir(newBlockPos);
 
         //Array synergy
@@ -249,7 +274,7 @@ public class Mirror {
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
     public static void onRender(RenderWorldLastEvent event) {
-        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        EntityPlayer player = Minecraft.getMinecraft().player;
         BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(player);
         if (buildSettings == null) return;
         MirrorSettings m = buildSettings.getMirrorSettings();

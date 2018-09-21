@@ -1,10 +1,17 @@
 package nl.requios.effortlessbuilding;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
-import net.minecraftforge.common.util.BlockSnapshot;
+import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.items.IItemHandler;
+import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 public class Array {
     //TODO config file
@@ -37,12 +44,31 @@ public class Array {
 
         BlockPos pos = event.getPos();
         Vec3i offset = new Vec3i(a.offset.getX(), a.offset.getY(), a.offset.getZ());
+
+        //Randomizer bag synergy
+        IItemHandler bagInventory = null;
+        if (event.getPlayer().getHeldItemMainhand().getItem() instanceof ItemRandomizerBag) {
+            bagInventory = ItemRandomizerBag.getBagInventory(event.getPlayer().getHeldItemMainhand());
+            //EffortlessBuilding.log(event.getPlayer(), "placed with bag");
+        }
+        //EffortlessBuilding.log(event.getPlayer(), event.getPlayer().getHeldItem(event.getHand()).getDisplayName());
+        //TODO fix not recognizing its the bag in singleplayer and now in multiplayer too?
+
         for (int i = 0; i < a.count; i++) {
             pos = pos.add(offset);
             if (event.getWorld().isBlockLoaded(pos, true)) {
-                event.getWorld().setBlockState(pos, event.getPlacedBlock());
+                IBlockState blockState = bagInventory == null ? event.getPlacedBlock() :
+                        getBlockStateFromRandomizerBag(bagInventory, event.getWorld(), event.getPlayer(), event.getPos());
+                event.getWorld().setBlockState(pos, blockState);
             }
         }
+    }
+
+    private static IBlockState getBlockStateFromRandomizerBag(IItemHandler bagInventory, World world, EntityPlayer player, BlockPos pos) {
+        int randomSlot = ItemRandomizerBag.pickRandomSlot(bagInventory);
+        ItemStack stack = bagInventory.getStackInSlot(randomSlot);
+        //TODO get facing from getPlacedAgainst and getPlacedBlock
+        return Block.getBlockFromItem(stack.getItem()).getStateForPlacement(world, pos, EnumFacing.NORTH, 0, 0, 0, stack.getMetadata(), player, EnumHand.MAIN_HAND);
     }
 
     //Called from EventHandler

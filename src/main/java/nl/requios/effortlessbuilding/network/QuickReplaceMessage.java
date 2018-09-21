@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.QuickReplace;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
@@ -77,7 +78,7 @@ public class QuickReplaceMessage implements IMessage {
 
             } else {
                 //Received serverside
-                ctx.getServerHandler().player.getServerWorld().addScheduledTask(() -> {
+                EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {
                     QuickReplace.onMessageReceived(ctx.getServerHandler().player, message);
                 });
             }

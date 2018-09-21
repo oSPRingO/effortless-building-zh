@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.util.IThreadListener;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.client.event.ModelRegistryEvent;
@@ -24,6 +25,7 @@ import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.gui.SettingsGui;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
+import nl.requios.effortlessbuilding.network.QuickReplaceMessage;
 import org.lwjgl.input.Keyboard;
 
 @Mod.EventBusSubscriber(Side.CLIENT)
@@ -58,7 +60,12 @@ public class ClientProxy implements IProxy {
 
     @Override
     public EntityPlayer getPlayerEntityFromContext(MessageContext ctx) {
-        return (ctx.side.isClient() ? Minecraft.getMinecraft().player : EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx));
+        return Minecraft.getMinecraft().player;//(ctx.side.isClient() ? Minecraft.getMinecraft().player : EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx));
+    }
+
+    @Override
+    public IThreadListener getThreadListenerFromContext(MessageContext ctx) {
+        return Minecraft.getMinecraft();//(ctx.side.isClient() ? Minecraft.getMinecraft() : EffortlessBuilding.proxy.getThreadListenerFromContext(ctx));
     }
 
     @Override
