@@ -49,10 +49,7 @@ public class Array {
         IItemHandler bagInventory = null;
         if (event.getPlayer().getHeldItemMainhand().getItem() instanceof ItemRandomizerBag) {
             bagInventory = ItemRandomizerBag.getBagInventory(event.getPlayer().getHeldItemMainhand());
-            //EffortlessBuilding.log(event.getPlayer(), "placed with bag");
         }
-        //EffortlessBuilding.log(event.getPlayer(), event.getPlayer().getHeldItem(event.getHand()).getDisplayName());
-        //TODO fix not recognizing its the bag in singleplayer and now in multiplayer too?
 
         for (int i = 0; i < a.count; i++) {
             pos = pos.add(offset);

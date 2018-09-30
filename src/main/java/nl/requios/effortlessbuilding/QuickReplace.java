@@ -60,7 +60,7 @@ public class QuickReplace {
         //Mirror and Array synergy
         BlockSnapshot blockSnapshot = new BlockSnapshot(player.world, placedAgainstBlockPos, blockState);
         BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, blockState, player, EnumHand.MAIN_HAND);
-        Array.onBlockPlaced(placeEvent);
         Mirror.onBlockPlaced(placeEvent);
+        Array.onBlockPlaced(placeEvent);
     }
 }

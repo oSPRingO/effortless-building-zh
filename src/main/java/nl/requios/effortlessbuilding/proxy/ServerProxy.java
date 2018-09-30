@@ -16,6 +16,7 @@ import nl.requios.effortlessbuilding.network.QuickReplaceMessage;
 
 public class ServerProxy implements IProxy
 {
+    //Only physical server! Singleplayer server is seen as clientproxy
     @Override
     public void preInit(FMLPreInitializationEvent event)
     {

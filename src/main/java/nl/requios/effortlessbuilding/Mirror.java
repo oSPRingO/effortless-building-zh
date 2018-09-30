@@ -1,9 +1,6 @@
 package nl.requios.effortlessbuilding;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockDirectional;
-import net.minecraft.block.BlockDispenser;
-import net.minecraft.block.BlockStairs;
+import net.minecraft.block.*;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -175,6 +172,16 @@ public class Mirror {
                 return blockState.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.TOP);
             } else {
                 return blockState.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
+            }
+        }
+
+        //Slabs
+        if (blockState.getBlock() instanceof BlockSlab) {
+            if (((BlockSlab) blockState.getBlock()).isDouble()) return blockState;
+            if (blockState.getValue(BlockSlab.HALF) == BlockSlab.EnumBlockHalf.BOTTOM) {
+                return blockState.withProperty(BlockSlab.HALF, BlockSlab.EnumBlockHalf.TOP);
+            } else {
+                return blockState.withProperty(BlockSlab.HALF, BlockSlab.EnumBlockHalf.BOTTOM);
             }
         }
 

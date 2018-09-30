@@ -5,7 +5,7 @@
   "description": "Makes building easier by providing tools like mirrors, arrays, quickreplace and a block randomizer.",
   "version": "${version}",
   "mcversion": "${mcversion}",
-  "url": "https://requios.nl/",
+  "url": "https://minecraft.curseforge.com/projects/effortless-building",
   "updateUrl": "",
   "authorList": ["Requios"],
   "credits": "",

@@ -1,6 +1,9 @@
 package nl.requios.effortlessbuilding.item;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -10,11 +13,16 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.BlockSnapshot;
+import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import nl.requios.effortlessbuilding.Array;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.Mirror;
 import nl.requios.effortlessbuilding.capability.ItemHandlerCapabilityProvider;
 
 import javax.annotation.Nullable;
@@ -32,7 +40,7 @@ public class ItemRandomizerBag extends Item {
         this.setUnlocalizedName(this.getRegistryName().toString());
 
         this.maxStackSize = 1;
-        //this.setCreativeTab(CreativeTabs.DECORATIONS); //TODO add back in
+        this.setCreativeTab(CreativeTabs.DECORATIONS);
     }
 
     @Override
@@ -43,6 +51,7 @@ public class ItemRandomizerBag extends Item {
             //Open inventory
             player.openGui(EffortlessBuilding.instance, EffortlessBuilding.RANDOMIZER_BAG_GUI, world, 0, 0, 0);
         } else {
+            if (world.isRemote) return EnumActionResult.SUCCESS;
             //Use item
             //Get bag inventory
             ItemStack bag = player.getHeldItem(hand);
@@ -57,8 +66,23 @@ public class ItemRandomizerBag extends Item {
 
             if (toPlace.isEmpty()) return EnumActionResult.FAIL;
 
-            bag.setItemDamage(toPlace.getMetadata());
-            return toPlace.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
+            //Previously: use onItemUse to place block (no synergy)
+            //bag.setItemDamage(toPlace.getMetadata());
+            //toPlace.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
+
+            if (!world.getBlockState(pos).getBlock().isReplaceable(world, pos)) {
+                pos = pos.offset(facing);
+            }
+
+            IBlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(world, pos, facing,
+                    hitX, hitY, hitZ, toPlace.getMetadata(), player, hand);
+            world.setBlockState(pos, blockState);
+
+            //Synergy
+            BlockSnapshot blockSnapshot = new BlockSnapshot(player.world, pos, blockState);
+            BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, blockState, player, hand);
+            Mirror.onBlockPlaced(placeEvent);
+            Array.onBlockPlaced(placeEvent);
         }
         return EnumActionResult.SUCCESS;
     }
@@ -92,6 +116,7 @@ public class ItemRandomizerBag extends Item {
 
     /**
      * Get the inventory of a randomizer bag by checking the capability.
+     *
      * @param bag
      * @return
      */
@@ -102,6 +127,7 @@ public class ItemRandomizerBag extends Item {
 
     /**
      * Pick a random slot from the bag. Empty slots will never get chosen.
+     *
      * @param bagInventory
      * @return
      */
@@ -143,7 +169,7 @@ public class ItemRandomizerBag extends Item {
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World world, List<String> tooltip, ITooltipFlag flag) {
-        tooltip.add("Sneak + rightclick to open inventory");
-        tooltip.add("Rightclick to place a random block");
+        tooltip.add(TextFormatting.BLUE + "Rightclick" + TextFormatting.GRAY + " to place a random block");
+        tooltip.add(TextFormatting.BLUE + "Sneak + rightclick" + TextFormatting.GRAY + " to open inventory");
     }
 }
