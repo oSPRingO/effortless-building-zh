@@ -51,14 +51,32 @@ public class Array {
             bagInventory = ItemRandomizerBag.getBagInventory(event.getPlayer().getHeldItemMainhand());
         }
 
+        //Get itemstack
+        ItemStack itemStack = event.getPlayer().getHeldItem(event.getHand());
+
         for (int i = 0; i < a.count; i++) {
             pos = pos.add(offset);
             if (event.getWorld().isBlockLoaded(pos, true)) {
+                if (itemStack.isEmpty()) break;
+
+                //Check if held block = placed block (otherwise its a bag or wand)
+                if (!event.getPlayer().isCreative() && Block.getBlockFromItem(itemStack.getItem()) == event.getPlacedBlock().getBlock()) {
+                    itemStack.shrink(1);
+                }
+
+                //Randomizer bag synergy
                 IBlockState blockState = bagInventory == null ? event.getPlacedBlock() :
                         getBlockStateFromRandomizerBag(bagInventory, event.getWorld(), event.getPlayer(), event.getPos());
+
+                //TODO check if can place (ItemBlock) and if can break replaced
+
+                //Drop existing block
+                SurvivalHelper.dropBlock(event.getWorld(), pos, event.getPlayer());
+
                 event.getWorld().setBlockState(pos, blockState);
             }
         }
+        //EffortlessBuilding.log(event.getPlayer(), String.valueOf(event.getPlayer().getHeldItem(event.getHand()).getCount()));
     }
 
     private static IBlockState getBlockStateFromRandomizerBag(IItemHandler bagInventory, World world, EntityPlayer player, BlockPos pos) {
@@ -83,6 +101,11 @@ public class Array {
         for (int i = 0; i < a.count; i++) {
             pos = pos.add(offset);
             if (event.getWorld().isBlockLoaded(pos, false)) {
+                //TODO check if can break
+
+                //Drop existing block
+                SurvivalHelper.dropBlock(event.getWorld(), pos, event.getPlayer());
+
                 event.getWorld().setBlockToAir(pos);
             }
         }

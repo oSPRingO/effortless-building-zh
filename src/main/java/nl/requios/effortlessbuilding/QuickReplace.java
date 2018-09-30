@@ -1,8 +1,10 @@
 package nl.requios.effortlessbuilding;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.common.util.BlockSnapshot;
@@ -55,7 +57,15 @@ public class QuickReplace {
         }
 
         IBlockState blockState = blockStates.get(player.getUniqueID());
+
+        SurvivalHelper.dropBlock(player.world, placedAgainstBlockPos, player);
         player.world.setBlockState(placedAgainstBlockPos, blockState);
+
+        //Shrink itemstack with 1
+        ItemStack itemStack = player.getHeldItem(player.swingingHand); //TODO check hand
+        if (!player.isCreative() && Block.getBlockFromItem(itemStack.getItem()) == blockState.getBlock()) {
+            itemStack.shrink(1);
+        }
 
         //Mirror and Array synergy
         BlockSnapshot blockSnapshot = new BlockSnapshot(player.world, placedAgainstBlockPos, blockState);

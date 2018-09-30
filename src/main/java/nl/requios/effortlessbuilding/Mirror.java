@@ -157,7 +157,20 @@ public class Mirror {
     }
 
     private static void placeBlock(World world, EntityPlayer player, BlockPos newBlockPos, IBlockState newBlockState) {
+        //Check itemstack
+        ItemStack itemStack = player.getHeldItem(player.swingingHand); //TODO check hand
+        if (itemStack.isEmpty()) return;
+
+        //TODO check if can place
+        //TODO check if can break
+
+        SurvivalHelper.dropBlock(world, newBlockPos, player);
         world.setBlockState(newBlockPos, newBlockState);
+
+        //Check if held block = placed block (otherwise its a bag or wand)
+        if (!player.isCreative() && Block.getBlockFromItem(itemStack.getItem()) == newBlockState.getBlock()) {
+            itemStack.shrink(1);
+        }
 
         //Array synergy
         BlockSnapshot blockSnapshot = new BlockSnapshot(world, newBlockPos, newBlockState);
@@ -271,6 +284,9 @@ public class Mirror {
     }
 
     private static void breakBlock(BlockEvent.BreakEvent event, BlockPos newBlockPos) {
+        //TODO check if can break
+
+        SurvivalHelper.dropBlock(event.getWorld(), newBlockPos, event.getPlayer());
         event.getWorld().setBlockToAir(newBlockPos);
 
         //Array synergy
