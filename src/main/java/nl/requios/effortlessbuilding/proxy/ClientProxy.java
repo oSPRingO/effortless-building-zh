@@ -1,6 +1,7 @@
 package nl.requios.effortlessbuilding.proxy;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.SoundType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
@@ -41,11 +42,12 @@ public class ClientProxy implements IProxy {
     @Override
     public void init(FMLInitializationEvent event) {
         // register key bindings
-        keyBindings = new KeyBinding[2];
+        keyBindings = new KeyBinding[3];
 
         // instantiate the key bindings
         keyBindings[0] = new KeyBinding("key.hud.desc", Keyboard.KEY_ADD, "key.effortlessbuilding.category");
         keyBindings[1] = new KeyBinding("key.replace.desc", Keyboard.KEY_SUBTRACT, "key.effortlessbuilding.category");
+        keyBindings[2] = new KeyBinding("key.creative.desc", Keyboard.KEY_F4, "key.effortlessbuilding.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {
@@ -104,6 +106,13 @@ public class ClientProxy implements IProxy {
             buildSettings.setQuickReplace(!buildSettings.doQuickReplace());
             EffortlessBuilding.log(player, "Set "+ TextFormatting.GOLD + "Quick Replace " + TextFormatting.RESET + (buildSettings.doQuickReplace() ? "on" : "off"));
             EffortlessBuilding.packetHandler.sendToServer(new BuildSettingsMessage(buildSettings));
+        }
+        if (keyBindings[2].isPressed()) {
+            if (player.isCreative()) {
+                player.sendChatMessage("/gamemode 0");
+            } else {
+                player.sendChatMessage("/gamemode 1");
+            }
         }
     }
 

@@ -3,7 +3,9 @@ package nl.requios.effortlessbuilding;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
@@ -59,31 +61,27 @@ public class Array {
             if (event.getWorld().isBlockLoaded(pos, true)) {
                 if (itemStack.isEmpty()) break;
 
-                //Check if held block = placed block (otherwise its a bag or wand)
-                if (!event.getPlayer().isCreative() && Block.getBlockFromItem(itemStack.getItem()) == event.getPlacedBlock().getBlock()) {
-                    itemStack.shrink(1);
-                }
+                IBlockState blockState = event.getPlacedBlock();
 
                 //Randomizer bag synergy
-                IBlockState blockState = bagInventory == null ? event.getPlacedBlock() :
-                        getBlockStateFromRandomizerBag(bagInventory, event.getWorld(), event.getPlayer(), event.getPos());
+                if (bagInventory != null) {
+                    itemStack = ItemRandomizerBag.pickRandomStack(bagInventory);
+                    if (itemStack.isEmpty()) continue;
+                    blockState = getBlockStateFromRandomizerBag(bagInventory, event.getWorld(), event.getPlayer(), event.getPos(), itemStack);
+                    if (blockState == null) continue;
+                }
 
                 //TODO check if can place (ItemBlock) and if can break replaced
 
-                //Drop existing block
-                SurvivalHelper.dropBlock(event.getWorld(), pos, event.getPlayer());
-
-                event.getWorld().setBlockState(pos, blockState);
+                SurvivalHelper.placeBlock(event.getWorld(), event.getPlayer(), pos, blockState, itemStack, EnumFacing.NORTH, true, false);
             }
         }
         //EffortlessBuilding.log(event.getPlayer(), String.valueOf(event.getPlayer().getHeldItem(event.getHand()).getCount()));
     }
 
-    private static IBlockState getBlockStateFromRandomizerBag(IItemHandler bagInventory, World world, EntityPlayer player, BlockPos pos) {
-        int randomSlot = ItemRandomizerBag.pickRandomSlot(bagInventory);
-        ItemStack stack = bagInventory.getStackInSlot(randomSlot);
+    private static IBlockState getBlockStateFromRandomizerBag(IItemHandler bagInventory, World world, EntityPlayer player, BlockPos pos, ItemStack itemStack) {
         //TODO get facing from getPlacedAgainst and getPlacedBlock
-        return Block.getBlockFromItem(stack.getItem()).getStateForPlacement(world, pos, EnumFacing.NORTH, 0, 0, 0, stack.getMetadata(), player, EnumHand.MAIN_HAND);
+        return Block.getBlockFromItem(itemStack.getItem()).getStateForPlacement(world, pos, EnumFacing.NORTH, 0, 0, 0, itemStack.getMetadata(), player, EnumHand.MAIN_HAND);
     }
 
     //Called from EventHandler

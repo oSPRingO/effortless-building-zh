@@ -6,6 +6,7 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ActionResult;
@@ -23,6 +24,7 @@ import net.minecraftforge.items.IItemHandler;
 import nl.requios.effortlessbuilding.Array;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.Mirror;
+import nl.requios.effortlessbuilding.SurvivalHelper;
 import nl.requios.effortlessbuilding.capability.ItemHandlerCapabilityProvider;
 
 import javax.annotation.Nullable;
@@ -40,7 +42,7 @@ public class ItemRandomizerBag extends Item {
         this.setUnlocalizedName(this.getRegistryName().toString());
 
         this.maxStackSize = 1;
-        this.setCreativeTab(CreativeTabs.DECORATIONS);
+        this.setCreativeTab(CreativeTabs.TOOLS);
     }
 
     @Override
@@ -59,11 +61,7 @@ public class ItemRandomizerBag extends Item {
             if (bagInventory == null)
                 return EnumActionResult.FAIL;
 
-            int randomSlot = pickRandomSlot(bagInventory);
-            if (randomSlot < 0 || randomSlot > bagInventory.getSlots()) return EnumActionResult.FAIL;
-
-            ItemStack toPlace = bagInventory.getStackInSlot(randomSlot);
-
+            ItemStack toPlace = pickRandomStack(bagInventory);
             if (toPlace.isEmpty()) return EnumActionResult.FAIL;
 
             //Previously: use onItemUse to place block (no synergy)
@@ -74,15 +72,21 @@ public class ItemRandomizerBag extends Item {
                 pos = pos.offset(facing);
             }
 
+//            if (!player.isCreative()) {
+//                toPlace.shrink(1);
+//            }
+
             IBlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(world, pos, facing,
                     hitX, hitY, hitZ, toPlace.getMetadata(), player, hand);
-            world.setBlockState(pos, blockState);
+            //world.setBlockState(pos, blockState);
+            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, false, true);
 
             //Synergy
-            BlockSnapshot blockSnapshot = new BlockSnapshot(player.world, pos, blockState);
-            BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, blockState, player, hand);
-            Mirror.onBlockPlaced(placeEvent);
-            Array.onBlockPlaced(placeEvent);
+            //Works without calling
+//            BlockSnapshot blockSnapshot = new BlockSnapshot(player.world, pos, blockState);
+//            BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, blockState, player, hand);
+//            Mirror.onBlockPlaced(placeEvent);
+//            Array.onBlockPlaced(placeEvent);
         }
         return EnumActionResult.SUCCESS;
     }
@@ -102,11 +106,7 @@ public class ItemRandomizerBag extends Item {
             if (bagInventory == null)
                 return new ActionResult<>(EnumActionResult.FAIL, player.getHeldItem(hand));
 
-            int randomSlot = pickRandomSlot(bagInventory);
-            if (randomSlot < 0 || randomSlot > bagInventory.getSlots())
-                return new ActionResult<>(EnumActionResult.FAIL, player.getHeldItem(hand));
-
-            ItemStack toUse = bagInventory.getStackInSlot(randomSlot);
+            ItemStack toUse = pickRandomStack(bagInventory);
             if (toUse.isEmpty()) return new ActionResult<>(EnumActionResult.FAIL, player.getHeldItem(hand));
 
             return toUse.useItemRightClick(world, player, hand);
@@ -131,7 +131,7 @@ public class ItemRandomizerBag extends Item {
      * @param bagInventory
      * @return
      */
-    public static int pickRandomSlot(IItemHandler bagInventory) {
+    public static ItemStack pickRandomStack(IItemHandler bagInventory) {
         //Find how many stacks are non-empty, and save them in a list
         int nonempty = 0;
         List<ItemStack> nonEmptyStacks = new ArrayList<>(INV_SIZE);
@@ -148,12 +148,16 @@ public class ItemRandomizerBag extends Item {
         if (nonEmptyStacks.size() != originalSlots.size())
             throw new Error("NonEmptyStacks and OriginalSlots not same size");
 
-        if (nonempty == 0) return -1;
+        if (nonempty == 0) return ItemStack.EMPTY;
 
         //Pick random slot
         int randomSlot = rand.nextInt(nonempty);
+        if (randomSlot < 0 || randomSlot > bagInventory.getSlots()) return ItemStack.EMPTY;
 
-        return originalSlots.get(randomSlot);
+        int originalSlot = originalSlots.get(randomSlot);
+        if (originalSlot < 0 || originalSlot > bagInventory.getSlots()) return ItemStack.EMPTY;
+
+        return bagInventory.getStackInSlot(originalSlot);
     }
 
     @Override
@@ -171,5 +175,10 @@ public class ItemRandomizerBag extends Item {
     public void addInformation(ItemStack stack, @Nullable World world, List<String> tooltip, ITooltipFlag flag) {
         tooltip.add(TextFormatting.BLUE + "Rightclick" + TextFormatting.GRAY + " to place a random block");
         tooltip.add(TextFormatting.BLUE + "Sneak + rightclick" + TextFormatting.GRAY + " to open inventory");
+    }
+
+    @Override
+    public String getUnlocalizedName() {
+        return super.getUnlocalizedName();
     }
 }
