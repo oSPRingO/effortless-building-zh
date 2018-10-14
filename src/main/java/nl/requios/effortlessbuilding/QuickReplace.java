@@ -23,6 +23,7 @@ public class QuickReplace {
     //and players will rarely switch between blocks that quickly.
 
     private static Dictionary<UUID, IBlockState> blockStates = new Hashtable<>();
+    private static Dictionary<UUID, ItemStack> itemStacks = new Hashtable<>();
 
     public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
         if (event.getWorld().isRemote) return;
@@ -34,6 +35,7 @@ public class QuickReplace {
         //TODO base on player facing instead, no more messages (or break block clientside)
 
         blockStates.put(event.getPlayer().getUniqueID(), event.getPlacedBlock());
+        itemStacks.put(event.getPlayer().getUniqueID(), event.getPlayer().getHeldItem(event.getHand()));
 
         //RayTraceResult result = event.getWorld().rayTraceBlocks(event.getPlayer().getPositionEyes(1f), event.getPlayer().getLookVec());
         EffortlessBuilding.packetHandler.sendTo(new QuickReplaceMessage(), (EntityPlayerMP) event.getPlayer());
@@ -57,8 +59,8 @@ public class QuickReplace {
         }
 
         IBlockState blockState = blockStates.get(player.getUniqueID());
+        ItemStack itemStack = itemStacks.get(player.getUniqueID());
 
-        ItemStack itemStack = player.getHeldItem(player.swingingHand); //TODO check hand
         //SurvivalHelper.dropBlock(player.world, placedAgainstBlockPos, player);
         //player.world.setBlockState(placedAgainstBlockPos, blockState);
         SurvivalHelper.placeBlock(player.world, player, placedAgainstBlockPos, blockState, itemStack, message.getSideHit(), true, false);

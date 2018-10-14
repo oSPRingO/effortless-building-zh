@@ -21,6 +21,7 @@ import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
 import nl.requios.effortlessbuilding.Array;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.Mirror;
@@ -72,13 +73,9 @@ public class ItemRandomizerBag extends Item {
                 pos = pos.offset(facing);
             }
 
-//            if (!player.isCreative()) {
-//                toPlace.shrink(1);
-//            }
-
             IBlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(world, pos, facing,
                     hitX, hitY, hitZ, toPlace.getMetadata(), player, hand);
-            //world.setBlockState(pos, blockState);
+
             SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, false, true);
 
             //Synergy
@@ -158,6 +155,16 @@ public class ItemRandomizerBag extends Item {
         if (originalSlot < 0 || originalSlot > bagInventory.getSlots()) return ItemStack.EMPTY;
 
         return bagInventory.getStackInSlot(originalSlot);
+    }
+
+    public static ItemStack findStack(IItemHandler bagInventory, Item item) {
+        for (int i = 0; i < bagInventory.getSlots(); i++) {
+            ItemStack stack = bagInventory.getStackInSlot(i);
+            if (!stack.isEmpty() && stack.getItem() == item) {
+                return stack;
+            }
+        }
+        return ItemStack.EMPTY;
     }
 
     @Override
