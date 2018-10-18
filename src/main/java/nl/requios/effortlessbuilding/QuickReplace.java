@@ -19,18 +19,18 @@ public class QuickReplace {
     //Dilemma in getting blockstate from event to when message is received:
     // 1) send via client. Then hacking makes it possible to place any block.
     // 2) save serverside. Messages may not be received chronologically so data could get switched.
-    //Solution for now: save blockstate per player. Messages from 1 player will rarely come unchronologically
+    //Solution for now: save data serverside and per player. Messages from 1 player will rarely come unchronologically
     //and players will rarely switch between blocks that quickly.
 
     private static Dictionary<UUID, IBlockState> blockStates = new Hashtable<>();
     private static Dictionary<UUID, ItemStack> itemStacks = new Hashtable<>();
 
-    public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
-        if (event.getWorld().isRemote) return;
+    public static boolean onBlockPlaced(BlockEvent.PlaceEvent event) {
+        if (event.getWorld().isRemote) return true;
         //Only serverside
 
         BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(event.getPlayer());
-        if (!buildSettings.doQuickReplace()) return;
+        if (!buildSettings.doQuickReplace()) return false;
 
         //TODO base on player facing instead, no more messages (or break block clientside)
 
@@ -40,7 +40,7 @@ public class QuickReplace {
         //RayTraceResult result = event.getWorld().rayTraceBlocks(event.getPlayer().getPositionEyes(1f), event.getPlayer().getLookVec());
         EffortlessBuilding.packetHandler.sendTo(new QuickReplaceMessage(), (EntityPlayerMP) event.getPlayer());
 
-        event.setCanceled(true);
+        return true;
     }
 
     public static void onMessageReceived(EntityPlayer player, QuickReplaceMessage message) {
@@ -61,14 +61,7 @@ public class QuickReplace {
         IBlockState blockState = blockStates.get(player.getUniqueID());
         ItemStack itemStack = itemStacks.get(player.getUniqueID());
 
-        //SurvivalHelper.dropBlock(player.world, placedAgainstBlockPos, player);
-        //player.world.setBlockState(placedAgainstBlockPos, blockState);
         SurvivalHelper.placeBlock(player.world, player, placedAgainstBlockPos, blockState, itemStack, message.getSideHit(), true, false);
-
-//        //Shrink itemstack with 1
-//        if (!player.isCreative() && Block.getBlockFromItem(itemStack.getItem()) == blockState.getBlock()) {
-//            itemStack.shrink(1);
-//        }
 
         //Mirror and Array synergy
         BlockSnapshot blockSnapshot = new BlockSnapshot(player.world, placedAgainstBlockPos, blockState);

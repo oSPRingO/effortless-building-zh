@@ -62,14 +62,14 @@ public class Mirror {
     }
 
     //Called from EventHandler
-    public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
-        if (event.getWorld().isRemote) return;
+    public static boolean onBlockPlaced(BlockEvent.PlaceEvent event) {
+        if (event.getWorld().isRemote) return false;
 
         //find mirrorsettings for the player that placed the block
         MirrorSettings m = BuildSettingsManager.getBuildSettings(event.getPlayer()).getMirrorSettings();
-        if (m == null) return;
+        if (m == null) return false;
 
-        if (!m.enabled || (!m.mirrorX && !m.mirrorY && !m.mirrorZ)) return;
+        if (!m.enabled || (!m.mirrorX && !m.mirrorY && !m.mirrorZ)) return false;
 
         //if within mirror distance, mirror
         BlockPos oldBlockPos = event.getPos();
@@ -77,7 +77,7 @@ public class Mirror {
         if (oldBlockPos.getX() + 0.5 < m.position.x - m.radius || oldBlockPos.getX() + 0.5 > m.position.x + m.radius ||
                 oldBlockPos.getY() + 0.5 < m.position.y - m.radius || oldBlockPos.getY() + 0.5 > m.position.y + m.radius ||
                 oldBlockPos.getZ() + 0.5 < m.position.z - m.radius || oldBlockPos.getZ() + 0.5 > m.position.z + m.radius)
-            return;
+            return false;
 
         ItemStack itemStack = event.getPlayer().getHeldItem(event.getHand());
 
@@ -98,6 +98,8 @@ public class Mirror {
         if (m.mirrorZ) {
             placeMirrorZ(event.getWorld(), event.getPlayer(), m, oldBlockPos, event.getPlacedBlock(), bagInventory, itemStack);
         }
+
+        return true;
     }
 
     private static void placeMirrorX(World world, EntityPlayer player, MirrorSettings m, BlockPos oldBlockPos, IBlockState oldBlockState, IItemHandler bagInventory, ItemStack itemStack) {

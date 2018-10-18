@@ -35,14 +35,14 @@ public class Array {
     }
 
     //Called from EventHandler
-    public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
-        if (event.getWorld().isRemote) return;
+    public static boolean onBlockPlaced(BlockEvent.PlaceEvent event) {
+        if (event.getWorld().isRemote) return false;
 
         //find arraysettings for the player that placed the block
         ArraySettings a = BuildSettingsManager.getBuildSettings(event.getPlayer()).getArraySettings();
-        if (a == null || !a.enabled) return;
+        if (a == null || !a.enabled) return false;
 
-        if (a.offset.getX() == 0 && a.offset.getY() == 0 && a.offset.getZ() == 0) return;
+        if (a.offset.getX() == 0 && a.offset.getY() == 0 && a.offset.getZ() == 0) return false;
 
         BlockPos pos = event.getPos();
         Vec3i offset = new Vec3i(a.offset.getX(), a.offset.getY(), a.offset.getZ());
@@ -76,7 +76,8 @@ public class Array {
                 SurvivalHelper.placeBlock(event.getWorld(), event.getPlayer(), pos, blockState, itemStack, EnumFacing.NORTH, true, false);
             }
         }
-        //EffortlessBuilding.log(event.getPlayer(), String.valueOf(event.getPlayer().getHeldItem(event.getHand()).getCount()));
+
+        return true;
     }
 
     private static IBlockState getBlockStateFromRandomizerBag(IItemHandler bagInventory, World world, EntityPlayer player, BlockPos pos, ItemStack itemStack) {

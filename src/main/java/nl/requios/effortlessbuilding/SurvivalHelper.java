@@ -46,7 +46,7 @@ public class SurvivalHelper {
 
         Block block = ((ItemBlock) itemstack.getItem()).getBlock();
 
-        if (!itemstack.isEmpty() && canPlayerEdit(player, world, pos, itemstack) && mayPlace(world, block, pos, skipCollisionCheck, facing.getOpposite(), player))
+        if (!itemstack.isEmpty() && canPlayerEdit(player, world, pos, itemstack) && mayPlace(world, block, blockState, pos, skipCollisionCheck, facing.getOpposite(), player))
         {
             //Drop existing block
             //TODO check if can replace
@@ -117,7 +117,7 @@ public class SurvivalHelper {
     }
 
     //From World#mayPlace
-    private static boolean mayPlace(World world, Block blockIn, BlockPos pos, boolean skipCollisionCheck, EnumFacing sidePlacedOn, @Nullable Entity placer)
+    private static boolean mayPlace(World world, Block blockIn, IBlockState newBlockState, BlockPos pos, boolean skipCollisionCheck, EnumFacing sidePlacedOn, @Nullable Entity placer)
     {
         IBlockState iblockstate1 = world.getBlockState(pos);
         AxisAlignedBB axisalignedbb = skipCollisionCheck ? null : blockIn.getDefaultState().getCollisionBoundingBox(world, pos);
@@ -126,16 +126,21 @@ public class SurvivalHelper {
         {
             return false;
         }
-        else if (iblockstate1.getMaterial() == Material.CIRCUITS && blockIn == Blocks.ANVIL)
+
+        //Check if same block
+        //Necessary otherwise extra items will be dropped
+        if (iblockstate1 == newBlockState) {
+            return false;
+        }
+
+        if (iblockstate1.getMaterial() == Material.CIRCUITS && blockIn == Blocks.ANVIL)
         {
             return true;
         }
-        else
-        {
-            //TODO check config for allow to replace
-            return true;
-            //TODO fix check canPlaceBlockOnSide
-            //return /*iblockstate1.getBlock().isReplaceable(world, pos) &&*/ blockIn.canPlaceBlockOnSide(world, pos, sidePlacedOn);
-        }
+
+        //TODO check config for allow to replace
+        return true;
+        //TODO fix check canPlaceBlockOnSide
+        //return /*iblockstate1.getBlock().isReplaceable(world, pos) &&*/ blockIn.canPlaceBlockOnSide(world, pos, sidePlacedOn);
     }
 }
