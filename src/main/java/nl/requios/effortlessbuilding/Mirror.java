@@ -3,6 +3,7 @@ package nl.requios.effortlessbuilding;
 import net.minecraft.block.*;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -11,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -259,9 +261,7 @@ public class Mirror {
         double x = m.position.x + (m.position.x - oldBlockPos.getX() - 0.5);
         BlockPos newBlockPos = new BlockPos(x, oldBlockPos.getY(), oldBlockPos.getZ());
         //break block
-        if (event.getWorld().isBlockLoaded(newBlockPos, true)) {
-            breakBlock(event, newBlockPos);
-        }
+        breakBlock(event, newBlockPos);
         if (m.mirrorY) breakMirrorY(event, m, newBlockPos);
         if (m.mirrorZ) breakMirrorZ(event, m, newBlockPos);
     }
@@ -270,10 +270,8 @@ public class Mirror {
         //find mirror position
         double y = m.position.y + (m.position.y - oldBlockPos.getY() - 0.5);
         BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), y, oldBlockPos.getZ());
-        //place block
-        if (event.getWorld().isBlockLoaded(newBlockPos, true)) {
-            breakBlock(event, newBlockPos);
-        }
+        //break block
+        breakBlock(event, newBlockPos);
         if (m.mirrorZ) breakMirrorZ(event, m, newBlockPos);
     }
 
@@ -281,17 +279,14 @@ public class Mirror {
         //find mirror position
         double z = m.position.z + (m.position.z - oldBlockPos.getZ() - 0.5);
         BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), oldBlockPos.getY(), z);
-        //place block
-        if (event.getWorld().isBlockLoaded(newBlockPos, true)) {
-            breakBlock(event, newBlockPos);
-        }
+        //break block
+        breakBlock(event, newBlockPos);
     }
 
     private static void breakBlock(BlockEvent.BreakEvent event, BlockPos newBlockPos) {
-        //TODO check if can break
+        if (!event.getWorld().isBlockLoaded(newBlockPos, false)) return;
 
-        SurvivalHelper.dropBlock(event.getWorld(), newBlockPos, event.getPlayer());
-        event.getWorld().setBlockToAir(newBlockPos);
+        SurvivalHelper.breakBlock(event.getWorld(), event.getPlayer(), newBlockPos);
 
         //Array synergy
         BlockEvent.BreakEvent breakEvent = new BlockEvent.BreakEvent(event.getWorld(), newBlockPos, event.getState(), event.getPlayer());
@@ -308,11 +303,8 @@ public class Mirror {
 
         if (m == null || !m.enabled || (!m.mirrorX && !m.mirrorY && !m.mirrorZ)) return;
 
-        double playerX = player.prevPosX + (player.posX - player.prevPosX) * event.getPartialTicks();
-        double playerY = player.prevPosY + (player.posY - player.prevPosY) * event.getPartialTicks();
-        double playerZ = player.prevPosZ + (player.posZ - player.prevPosZ) * event.getPartialTicks();
+        RenderHelper.begin(event.getPartialTicks());
 
-        Vec3d playerPos = new Vec3d(playerX, playerY, playerZ);
         Vec3d pos = m.position.add(epsilon);
         int radius = m.radius;
 
@@ -320,45 +312,47 @@ public class Mirror {
             Vec3d posA = new Vec3d(pos.x, pos.y - radius, pos.z - radius);
             Vec3d posB = new Vec3d(pos.x, pos.y + radius, pos.z + radius);
 
-            drawMirrorPlane(playerPos, posA, posB, colorX, m.drawLines, m.drawPlanes);
+            drawMirrorPlane(posA, posB, colorX, m.drawLines, m.drawPlanes);
         }
         if (m.mirrorY) {
             Vec3d posA = new Vec3d(pos.x - radius, pos.y, pos.z - radius);
             Vec3d posB = new Vec3d(pos.x + radius, pos.y, pos.z + radius);
 
-            drawMirrorPlaneY(playerPos, posA, posB, colorY, m.drawLines, m.drawPlanes);
+            drawMirrorPlaneY(posA, posB, colorY, m.drawLines, m.drawPlanes);
         }
         if (m.mirrorZ) {
             Vec3d posA = new Vec3d(pos.x - radius, pos.y - radius, pos.z);
             Vec3d posB = new Vec3d(pos.x + radius, pos.y + radius, pos.z);
 
-            drawMirrorPlane(playerPos, posA, posB, colorZ, m.drawLines, m.drawPlanes);
+            drawMirrorPlane(posA, posB, colorZ, m.drawLines, m.drawPlanes);
         }
 
         //Draw axis coordinated colors if two or more axes are enabled
         //(If only one is enabled the lines are that planes color)
         if (m.drawLines && ((m.mirrorX && m.mirrorY) || (m.mirrorX && m.mirrorZ) || (m.mirrorY && m.mirrorZ))) {
-            drawMirrorLines(playerPos, m);
+            drawMirrorLines(m);
         }
+
+        //Render block outlines
+        RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
+        if (objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
+        {
+            BlockPos blockPos = objectMouseOver.getBlockPos();
+            if (!buildSettings.doQuickReplace()) blockPos = blockPos.offset(objectMouseOver.sideHit);
+
+            //RenderHelper.renderBlockOutline(blockPos);
+            if (m.mirrorX) drawBlockOutlineX(buildSettings, blockPos);
+            if (m.mirrorY) drawBlockOutlineY(buildSettings, blockPos);
+            if (m.mirrorZ) drawBlockOutlineZ(buildSettings, blockPos);
+        }
+
+        RenderHelper.end();
     }
 
     @SideOnly(Side.CLIENT)
-    public static void drawMirrorPlane(Vec3d playerPos, Vec3d posA, Vec3d posB, Color c, boolean drawLines, boolean drawPlanes) {
-
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-        GL11.glPushMatrix();
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-
-        GL11.glTranslated(-playerPos.x, -playerPos.y, -playerPos.z);
+    public static void drawMirrorPlane(Vec3d posA, Vec3d posB, Color c, boolean drawLines, boolean drawPlanes) {
 
         GL11.glColor4d(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha);
-        GL11.glLineWidth(2);
-        GL11.glDepthMask(false);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
 
@@ -384,28 +378,12 @@ public class Mirror {
 
             tessellator.draw();
         }
-
-        GL11.glDepthMask(true);
-        GL11.glPopMatrix();
-        GL11.glPopAttrib();
     }
 
     @SideOnly(Side.CLIENT)
-    public static void drawMirrorPlaneY(Vec3d playerPos, Vec3d posA, Vec3d posB, Color c, boolean drawLines, boolean drawPlanes) {
-
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-        GL11.glPushMatrix();
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glTranslated(-playerPos.x, -playerPos.y, -playerPos.z);
+    public static void drawMirrorPlaneY(Vec3d posA, Vec3d posB, Color c, boolean drawLines, boolean drawPlanes) {
 
         GL11.glColor4d(c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());
-        GL11.glLineWidth(2);
-        GL11.glDepthMask(false);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
 
@@ -431,30 +409,15 @@ public class Mirror {
 
             tessellator.draw();
         }
-
-        GL11.glDepthMask(true);
-        GL11.glPopMatrix();
-        GL11.glPopAttrib();
     }
 
     @SideOnly(Side.CLIENT)
-    public static void drawMirrorLines(Vec3d playerPos, MirrorSettings m) {
+    public static void drawMirrorLines(MirrorSettings m) {
 
         Vec3d pos = m.position.add(epsilon);
 
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-        GL11.glPushMatrix();
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glTranslated(-playerPos.x, -playerPos.y, -playerPos.z);
-
         GL11.glColor4d(100, 100, 100, 255);
         GL11.glLineWidth(2);
-        GL11.glDepthMask(false);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferBuilder = tessellator.getBuffer();
 
@@ -468,11 +431,50 @@ public class Mirror {
         bufferBuilder.pos(pos.x, pos.y, pos.z + m.radius).color(colorX.getRed(), colorX.getGreen(), colorX.getBlue(), lineAlpha).endVertex();
 
         tessellator.draw();
-
-        GL11.glDepthMask(true);
-        GL11.glPopMatrix();
-        GL11.glPopAttrib();
     }
 
+    @SideOnly(Side.CLIENT)
+    public static void drawBlockOutlineX(BuildSettingsManager.BuildSettings buildSettings, BlockPos oldBlockPos) {
+        MirrorSettings m = buildSettings.getMirrorSettings();
+        //find mirror position
+        double x = m.position.x + (m.position.x - oldBlockPos.getX() - 0.5);
+        BlockPos newBlockPos = new BlockPos(x, oldBlockPos.getY(), oldBlockPos.getZ());
+
+        RenderHelper.renderBlockOutline(newBlockPos);
+
+        //Array synergy
+        Array.drawBlockOutlines(buildSettings.getArraySettings(), newBlockPos);
+
+        if (m.mirrorY) drawBlockOutlineY(buildSettings, newBlockPos);
+        if (m.mirrorZ) drawBlockOutlineZ(buildSettings, newBlockPos);
+    }
+
+    @SideOnly(Side.CLIENT)
+    public static void drawBlockOutlineY(BuildSettingsManager.BuildSettings buildSettings, BlockPos oldBlockPos) {
+        MirrorSettings m = buildSettings.getMirrorSettings();
+        //find mirror position
+        double y = m.position.y + (m.position.y - oldBlockPos.getY() - 0.5);
+        BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), y, oldBlockPos.getZ());
+
+        RenderHelper.renderBlockOutline(newBlockPos);
+
+        //Array synergy
+        Array.drawBlockOutlines(buildSettings.getArraySettings(), newBlockPos);
+
+        if (m.mirrorZ) drawBlockOutlineZ(buildSettings, newBlockPos);
+    }
+
+    @SideOnly(Side.CLIENT)
+    public static void drawBlockOutlineZ(BuildSettingsManager.BuildSettings buildSettings, BlockPos oldBlockPos) {
+        MirrorSettings m = buildSettings.getMirrorSettings();
+        //find mirror position
+        double z = m.position.z + (m.position.z - oldBlockPos.getZ() - 0.5);
+        BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), oldBlockPos.getY(), z);
+
+        RenderHelper.renderBlockOutline(newBlockPos);
+
+        //Array synergy
+        Array.drawBlockOutlines(buildSettings.getArraySettings(), newBlockPos);
+    }
 
 }

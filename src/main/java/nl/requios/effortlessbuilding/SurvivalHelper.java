@@ -1,18 +1,15 @@
 package nl.requios.effortlessbuilding;
 
-import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -27,8 +24,11 @@ import java.util.List;
 
 public class SurvivalHelper {
 
-    //From ItemBlock#onItemUse
+    //Used for all placing of blocks in this mod.
+    //Checks if area is loaded, if player has the right permissions, if existing block can be replaced (drops it if so) and consumes an item from the stack.
+    //Based on ItemBlock#onItemUse
     public static boolean placeBlock(World world, EntityPlayer player, BlockPos pos, IBlockState blockState, ItemStack itemstack, EnumFacing facing, boolean skipCollisionCheck, boolean playSound) {
+        if (!world.isBlockLoaded(pos, true)) return false;
 
         //Randomizer bag synergy
         //Find itemstack that belongs to the blockstate
@@ -39,18 +39,20 @@ public class SurvivalHelper {
 
         //Check if itemstack is correct
         if (!(itemstack.getItem() instanceof ItemBlock) || Block.getBlockFromItem(itemstack.getItem()) != blockState.getBlock()) {
-            EffortlessBuilding.log(player, "Cannot place block", true);
+            EffortlessBuilding.log(player, "Cannot replace block", true);
             EffortlessBuilding.log("SurvivalHelper#placeBlock: itemstack " + itemstack.toString() + " does not match blockstate " + blockState.toString());
             return false;
         }
 
         Block block = ((ItemBlock) itemstack.getItem()).getBlock();
 
-        if (!itemstack.isEmpty() && canPlayerEdit(player, world, pos, itemstack) && mayPlace(world, block, blockState, pos, skipCollisionCheck, facing.getOpposite(), player))
+        if (!itemstack.isEmpty() && canPlayerEdit(player, world, pos, itemstack) &&
+            mayPlace(world, block, blockState, pos, skipCollisionCheck, facing.getOpposite(), player) &&
+            canReplace(world, player, pos))
         {
             //Drop existing block
             //TODO check if can replace
-            dropBlock(world, pos, player);
+            dropBlock(world, player, pos);
 
             //From ItemBlock#placeBlockAt
             if (!world.setBlockState(pos, blockState, 11)) return false;
@@ -79,18 +81,49 @@ public class SurvivalHelper {
         return false;
     }
 
-    public static boolean canBreak(){
-        //Can break using held tool? (or in creative)
-        return true;
+    //Used for all breaking of blocks in this mod.
+    //Checks if area is loaded, if appropriate tool is used in survival mode, and drops the block directly into the players inventory
+    public static boolean breakBlock(World world, EntityPlayer player, BlockPos pos) {
+        if (!world.isBlockLoaded(pos, false)) return false;
+
+        //Check if can break
+        if (canBreak(world, player, pos))
+        {
+            //Drop existing block
+            dropBlock(world, player, pos);
+
+            //Damage tool
+            player.getHeldItemMainhand().onBlockDestroyed(world, world.getBlockState(pos), pos, player);
+
+            world.setBlockToAir(pos);
+            return true;
+        }
+        return false;
     }
 
-    public static boolean canReplace(){
-        //Can be harvested with hand? (or in creative)
-        return true;
+    //Can break using held tool? (or in creative)
+    public static boolean canBreak(World world, EntityPlayer player, BlockPos pos) {
+        if (player.isCreative()) return true;
+
+        IBlockState blockState = world.getBlockState(pos);
+        if (blockState.getBlock().canHarvestBlock(world, pos, player)) return true;
+
+        return false;
+    }
+
+    //Can be harvested with hand? (or in creative)
+    public static boolean canReplace(World world, EntityPlayer player, BlockPos pos){
+        if (player.isCreative()) return true;
+
+        IBlockState state = world.getBlockState(pos);
+        state = state.getBlock().getActualState(state, world, pos);
+        if (state.getMaterial().isToolNotRequired()) return true;
+
+        return false;
     }
 
     //Gives items directly to player
-    public static void dropBlock(World world, BlockPos pos, EntityPlayer player){
+    public static void dropBlock(World world, EntityPlayer player, BlockPos pos){
         if (player.isCreative()) return;
 
         IBlockState blockState = world.getBlockState(pos);

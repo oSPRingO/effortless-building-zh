@@ -1,6 +1,6 @@
 key.effortlessbuilding.category=Effortless Building
-key.hud.desc=Open Settings
-key.replace.desc=Toggle QuickReplace
-key.creative.desc=Toggle Creative/Survival
+key.effortlessbuilding.hud.desc=Open Settings
+key.effortlessbuilding.replace.desc=Toggle QuickReplace
+key.effortlessbuilding.creative.desc=Toggle Survival/Creative Mode
 
 item.effortlessbuilding:randomizer_bag.name=Randomizer Bag
