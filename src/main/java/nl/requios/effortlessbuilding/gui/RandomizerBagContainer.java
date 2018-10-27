@@ -47,8 +47,16 @@ public class RandomizerBagContainer extends Container {
     }
 
     @Override
+    public Slot getSlot(int parSlotIndex)
+    {
+        if(parSlotIndex >= inventorySlots.size())
+            parSlotIndex = inventorySlots.size() - 1;
+        return super.getSlot(parSlotIndex);
+    }
+
+    @Override
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int slotIndex) {
-        ItemStack itemstack = null;
+        ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.inventorySlots.get(slotIndex);
 
         if (slot != null && slot.getHasStack()) {
@@ -59,7 +67,7 @@ public class RandomizerBagContainer extends Container {
             if (slotIndex < INV_START) {
                 // try to place in player inventory / action bar
                 if (!this.mergeItemStack(itemstack1, INV_START, HOTBAR_END + 1, true)) {
-                    return null;
+                    return ItemStack.EMPTY;
                 }
 
                 slot.onSlotChange(itemstack1, itemstack);
@@ -72,7 +80,7 @@ public class RandomizerBagContainer extends Container {
                 if (slotIndex >= INV_START) {
                     // place in custom inventory
                     if (!this.mergeItemStack(itemstack1, 0, INV_START, false)) {
-                        return null;
+                        return ItemStack.EMPTY;
                     }
                 }
 
@@ -85,7 +93,7 @@ public class RandomizerBagContainer extends Container {
             }
 
             if (itemstack1.getCount() == itemstack.getCount()) {
-                return null;
+                return ItemStack.EMPTY;
             }
 
             slot.onTake(playerIn, itemstack1);
@@ -102,9 +110,26 @@ public class RandomizerBagContainer extends Container {
     @Override
     public ItemStack slotClick(int slot, int dragType, ClickType clickTypeIn, EntityPlayer player) {
         // this will prevent the player from interacting with the item that opened the inventory:
+        ItemStack clickItemStack = super.slotClick(slot, dragType, clickTypeIn, player);
         if (slot >= 0 && getSlot(slot) != null && getSlot(slot).getStack() == player.getHeldItem(EnumHand.MAIN_HAND)) {
-            return null;
+            return ItemStack.EMPTY;
         }
-        return super.slotClick(slot, dragType, clickTypeIn, player);
+        return clickItemStack;
     }
+
+    /**
+     * Callback for when the crafting gui is closed.
+     */
+//    @Override
+//    public void onContainerClosed(EntityPlayer player)
+//    {
+//        if(player.inventory.getItemStack() != null)
+//        {
+//            player.entityDropItem(player.inventory.getItemStack(), 0.5f);
+//        }
+//        if(!player.world.isRemote)
+//        {
+//            detectAndSendChanges();
+//        }
+//    }
 }
