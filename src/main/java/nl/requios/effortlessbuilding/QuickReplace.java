@@ -46,8 +46,6 @@ public class QuickReplace {
         BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(player);
         if (!buildSettings.doQuickReplace()) return;
 
-        //TODO check for bedrock, end portal etc in survival
-
         if (!message.isBlockHit() || message.getBlockPos() == null) return;
 
         BlockPos placedAgainstBlockPos = message.getBlockPos();
@@ -63,6 +61,7 @@ public class QuickReplace {
         SurvivalHelper.placeBlock(player.world, player, placedAgainstBlockPos, blockState, itemStack, message.getSideHit(), true, false);
 
         //Mirror and Array synergy
+        blockState = player.world.getBlockState(placedAgainstBlockPos);
         BlockSnapshot blockSnapshot = new BlockSnapshot(player.world, placedAgainstBlockPos, blockState);
         BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, blockState, player, EnumHand.MAIN_HAND);
         Mirror.onBlockPlaced(placeEvent);

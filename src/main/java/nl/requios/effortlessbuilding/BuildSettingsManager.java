@@ -11,13 +11,17 @@ import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 @Mod.EventBusSubscriber
 public class BuildSettingsManager {
 
+    //Retrieves the buildsettings of a player through the buildModifier capability
+    //Never returns null
     public static BuildSettings getBuildSettings(EntityPlayer player){
         if (player.hasCapability(BuildModifierCapability.buildModifier, null)) {
             BuildModifierCapability.IBuildModifier capability = player.getCapability(BuildModifierCapability.buildModifier, null);
+            if (capability.getBuildModifierData() == null) {
+                capability.setBuildModifierData(new BuildSettings());
+            }
             return capability.getBuildModifierData();
         }
-        EffortlessBuilding.log("buildsettings is null");
-        return null;
+        throw new IllegalArgumentException("Player does not have buildModifier capability");
     }
 
     public static void setBuildSettings(EntityPlayer player, BuildSettings buildSettings) {
