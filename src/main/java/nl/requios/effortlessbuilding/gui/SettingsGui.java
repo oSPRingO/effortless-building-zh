@@ -2,8 +2,10 @@ package nl.requios.effortlessbuilding.gui;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiButtonImage;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
@@ -14,27 +16,32 @@ import nl.requios.effortlessbuilding.Mirror;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class SettingsGui extends GuiScreen {
 
-    protected List<GuiTextField> textFieldList = new ArrayList<>();
+    protected static final ResourceLocation BUILDING_ICONS = new ResourceLocation(EffortlessBuilding.MODID, "textures/gui/building_icons.png");
+
+    protected List<GuiNumberField> numberFieldList = new ArrayList<>();
 
     protected List<GuiButton> mirrorButtonList = new ArrayList<>();
-    protected List<GuiTextField> mirrorTextFieldList = new ArrayList<>();
-    protected List<GuiTextField> arrayTextFieldList = new ArrayList<>();
+    protected List<GuiIconButton> mirrorIconButtonList = new ArrayList<>();
+    protected List<GuiNumberField> mirrorNumberFieldList = new ArrayList<>();
+    protected List<GuiNumberField> arrayNumberFieldList = new ArrayList<>();
 
-    private GuiTextField textMirrorPosX, textMirrorPosY, textMirrorPosZ, textMirrorRadius;
+    private GuiNumberField textMirrorPosX, textMirrorPosY, textMirrorPosZ, textMirrorRadius;
     private GuiCheckBox buttonMirrorEnabled, buttonMirrorX, buttonMirrorY, buttonMirrorZ;
-    private GuiButton buttonDrawPlanes, buttonDrawLines;
-    private boolean drawPlanes, drawLines;
-    private GuiButton buttonCurrentPosition, buttonClose;
+    private GuiIconButton buttonCurrentPosition, buttonToggleOdd, buttonDrawPlanes, buttonDrawLines;
+    private boolean drawPlanes, drawLines, toggleOdd;
+    private GuiButton buttonClose;
 
     private GuiCheckBox buttonArrayEnabled;
-    private GuiTextField textArrayOffsetX, textArrayOffsetY, textArrayOffsetZ, textArrayCount;
+    private GuiNumberField textArrayOffsetX, textArrayOffsetY, textArrayOffsetZ, textArrayCount;
 
     private int left, right, top, bottom;
 
@@ -53,17 +60,20 @@ public class SettingsGui extends GuiScreen {
         buttonList.add(buttonMirrorEnabled);
 
         y = top + 18;
-        textMirrorPosX = new GuiTextField(id++, fontRenderer, left + 70, y, 50, 18);
-        textMirrorPosX.setText("0.5");
-        mirrorTextFieldList.add(textMirrorPosX);
+        textMirrorPosX = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 58, y, 62, 18);
+        textMirrorPosX.setNumber(0);
+        textMirrorPosX.setTooltip(Arrays.asList("The position of the mirror.", "For odd numbered builds add 0.5."));
+        mirrorNumberFieldList.add(textMirrorPosX);
 
-        textMirrorPosY = new GuiTextField(id++, fontRenderer, left + 140, y, 50, 18);
-        textMirrorPosY.setText("64.5");
-        mirrorTextFieldList.add(textMirrorPosY);
+        textMirrorPosY = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 138, y, 62, 18);
+        textMirrorPosY.setNumber(64);
+        textMirrorPosY.setTooltip(Arrays.asList("The position of the mirror.", "For odd numbered builds add 0.5."));
+        mirrorNumberFieldList.add(textMirrorPosY);
 
-        textMirrorPosZ = new GuiTextField(id++, fontRenderer, left + 210, y, 50, 18);
-        textMirrorPosZ.setText("0.5");
-        mirrorTextFieldList.add(textMirrorPosZ);
+        textMirrorPosZ = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 218, y, 62, 18);
+        textMirrorPosZ.setNumber(0);
+        textMirrorPosZ.setTooltip(Arrays.asList("The position of the mirror.", "For odd numbered builds add 0.5."));
+        mirrorNumberFieldList.add(textMirrorPosZ);
 
         y = top + 50;
         buttonMirrorX = new GuiCheckBox(id++, left + 60, y, " X", true);
@@ -76,19 +86,27 @@ public class SettingsGui extends GuiScreen {
         mirrorButtonList.add(buttonMirrorZ);
 
         y = top + 47;
-        textMirrorRadius = new GuiTextField(id++, fontRenderer, left + 220, y, 60, 18);
-        textMirrorRadius.setText("50");
-        mirrorTextFieldList.add(textMirrorRadius);
+        textMirrorRadius = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 218, y, 62, 18);
+        textMirrorRadius.setNumber(50);
+        textMirrorRadius.setTooltip("How far the mirror reaches in any direction.");
+        mirrorNumberFieldList.add(textMirrorRadius);
 
         y = top + 72;
-        buttonCurrentPosition = new GuiButton(id++, left + 5, y, 110, 20, "Set to current pos");
-        mirrorButtonList.add(buttonCurrentPosition);
+        buttonCurrentPosition = new GuiIconButton(id++, left + 5, y, 0, 0, BUILDING_ICONS);
+        buttonCurrentPosition.setTooltip("Set mirror position to current player position");
+        mirrorIconButtonList.add(buttonCurrentPosition);
 
-        buttonDrawLines = new GuiButton(id++, left + 127, y, 70, 20, "Show lines");
-        mirrorButtonList.add(buttonDrawLines);
+        buttonToggleOdd = new GuiIconButton(id++, left + 35, y, 0, 20, BUILDING_ICONS);
+        buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+        mirrorIconButtonList.add(buttonToggleOdd);
 
-        buttonDrawPlanes = new GuiButton(id++, left + 209, y, 75, 20, "Show area");
-        mirrorButtonList.add(buttonDrawPlanes);
+        buttonDrawLines = new GuiIconButton(id++, left + 65, y, 0, 40, BUILDING_ICONS);
+        buttonDrawLines.setTooltip("Show lines");
+        mirrorIconButtonList.add(buttonDrawLines);
+
+        buttonDrawPlanes = new GuiIconButton(id++, left + 95, y, 0, 60, BUILDING_ICONS);
+        buttonDrawPlanes.setTooltip("Show area");
+        mirrorIconButtonList.add(buttonDrawPlanes);
 
         //ARRAY
         y = top + 100;
@@ -96,22 +114,26 @@ public class SettingsGui extends GuiScreen {
         buttonList.add(buttonArrayEnabled);
 
         y = top + 120;
-        textArrayOffsetX = new GuiTextField(id++, fontRenderer, left + 70, y, 50, 18);
-        textArrayOffsetX.setText("0");
-        arrayTextFieldList.add(textArrayOffsetX);
+        textArrayOffsetX = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 70, y, 50, 18);
+        textArrayOffsetX.setNumber(0);
+        textArrayOffsetX.setTooltip("How much each copy is shifted.");
+        arrayNumberFieldList.add(textArrayOffsetX);
 
-        textArrayOffsetY = new GuiTextField(id++, fontRenderer, left + 140, y, 50, 18);
-        textArrayOffsetY.setText("0");
-        arrayTextFieldList.add(textArrayOffsetY);
+        textArrayOffsetY = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 140, y, 50, 18);
+        textArrayOffsetY.setNumber(0);
+        textArrayOffsetY.setTooltip("How much each copy is shifted.");
+        arrayNumberFieldList.add(textArrayOffsetY);
 
-        textArrayOffsetZ = new GuiTextField(id++, fontRenderer, left + 210, y, 50, 18);
-        textArrayOffsetZ.setText("0");
-        arrayTextFieldList.add(textArrayOffsetZ);
+        textArrayOffsetZ = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 210, y, 50, 18);
+        textArrayOffsetZ.setNumber(0);
+        textArrayOffsetZ.setTooltip("How much each copy is shifted.");
+        arrayNumberFieldList.add(textArrayOffsetZ);
 
         y = top + 150;
-        textArrayCount = new GuiTextField(id++, fontRenderer, left + 55, y, 50, 18);
-        textArrayCount.setText("5");
-        arrayTextFieldList.add(textArrayCount);
+        textArrayCount = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 55, y, 50, 18);
+        textArrayCount.setNumber(5);
+        textArrayCount.setTooltip("How many copies should be made.");
+        arrayNumberFieldList.add(textArrayCount);
 
         //CLOSE
         y = height - 40;
@@ -123,36 +145,47 @@ public class SettingsGui extends GuiScreen {
             //MIRROR
             Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
             buttonMirrorEnabled.setIsChecked(m.enabled);
-            textMirrorPosX.setText(String.valueOf(m.position.x));
-            textMirrorPosY.setText(String.valueOf(m.position.y));
-            textMirrorPosZ.setText(String.valueOf(m.position.z));
+            textMirrorPosX.setNumber(m.position.x);
+            textMirrorPosY.setNumber(m.position.y);
+            textMirrorPosZ.setNumber(m.position.z);
             buttonMirrorX.setIsChecked(m.mirrorX);
             buttonMirrorY.setIsChecked(m.mirrorY);
             buttonMirrorZ.setIsChecked(m.mirrorZ);
-            textMirrorRadius.setText(String.valueOf(m.radius));
+            textMirrorRadius.setNumber(m.radius);
             drawLines = m.drawLines;
             drawPlanes = m.drawPlanes;
-            buttonDrawLines.displayString = drawLines ? "Hide lines" : "Show lines";
-            buttonDrawPlanes.displayString = drawPlanes ? "Hide area" : "Show area";
+            buttonDrawLines.setUseAlternateIcon(drawLines);
+            buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
+            buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
+            buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
+            if (textMirrorPosX.getNumber() == Math.floor(textMirrorPosX.getNumber())) {
+                toggleOdd = false;
+                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+            } else {
+                toggleOdd = true;
+                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
+            }
+            buttonToggleOdd.setUseAlternateIcon(toggleOdd);
 
             //ARRAY
             Array.ArraySettings a = buildSettings.getArraySettings();
             buttonArrayEnabled.setIsChecked(a.enabled);
-            textArrayOffsetX.setText(String.valueOf(a.offset.getX()));
-            textArrayOffsetY.setText(String.valueOf(a.offset.getY()));
-            textArrayOffsetZ.setText(String.valueOf(a.offset.getZ()));
-            textArrayCount.setText(String.valueOf(a.count));
+            textArrayOffsetX.setNumber(a.offset.getX());
+            textArrayOffsetY.setNumber(a.offset.getY());
+            textArrayOffsetZ.setNumber(a.offset.getZ());
+            textArrayCount.setNumber(a.count);
         }
 
         buttonList.addAll(mirrorButtonList);
-        textFieldList.addAll(mirrorTextFieldList);
-        textFieldList.addAll(arrayTextFieldList);
+        buttonList.addAll(mirrorIconButtonList);
+        numberFieldList.addAll(mirrorNumberFieldList);
+        numberFieldList.addAll(arrayNumberFieldList);
     }
 
     @Override
     //Process general logic, i.e. hide buttons
     public void updateScreen() {
-        textFieldList.forEach(GuiTextField::updateCursorCounter);
+        numberFieldList.forEach(GuiNumberField::update);
     }
 
     @Override
@@ -170,16 +203,17 @@ public class SettingsGui extends GuiScreen {
 
             y = top + 18 + 5;
             fontRenderer.drawString("Position", left + offset, y, 0xFFFFFF, true);
-            fontRenderer.drawString("X", left + 50 + offset, y, 0xFFFFFF, true);
+            fontRenderer.drawString("X", left + 40 + offset, y, 0xFFFFFF, true);
             fontRenderer.drawString("Y", left + 120 + offset, y, 0xFFFFFF, true);
-            fontRenderer.drawString("Z", left + 190 + offset, y, 0xFFFFFF, true);
+            fontRenderer.drawString("Z", left + 200 + offset, y, 0xFFFFFF, true);
 
             y = top + 52;
             fontRenderer.drawString("Direction", left + offset, y, 0xFFFFFF, true);
             fontRenderer.drawString("Size", left + 190, y, 0xFFFFFF, true);
 
             mirrorButtonList.forEach(button -> button.drawButton(this.mc, mouseX, mouseY, partialTicks));
-            mirrorTextFieldList.forEach(textField -> textField.drawTextBox());
+            mirrorIconButtonList.forEach(button -> button.drawButton(this.mc, mouseX, mouseY, partialTicks));
+            mirrorNumberFieldList.forEach(numberField -> numberField.drawNumberField(this.mc, mouseX, mouseY, partialTicks));
         } else {
             fontRenderer.drawString("Mirror disabled", left + offset, y, 0x999999, true);
         }
@@ -198,23 +232,30 @@ public class SettingsGui extends GuiScreen {
             y = top + 150 + 5;
             fontRenderer.drawString("Count", left + offset, y, 0xFFFFFF, true);
 
-            arrayTextFieldList.forEach(textField -> textField.drawTextBox());
+            arrayNumberFieldList.forEach(numberField -> numberField.drawNumberField(this.mc, mouseX, mouseY, partialTicks));
         } else {
             fontRenderer.drawString("Array disabled", left + offset, y, 0x999999, true);
         }
 
         buttonClose.drawButton(this.mc, mouseX, mouseY, partialTicks);
+
+        //Draw tooltips last
+        if (buttonMirrorEnabled.isChecked())
+        {
+            mirrorIconButtonList.forEach(iconButton -> iconButton.drawTooltip(this, mouseX, mouseY));
+            mirrorNumberFieldList.forEach(numberField -> numberField.drawTooltip(this, mouseX, mouseY));
+        }
+        if (buttonArrayEnabled.isChecked())
+        {
+            arrayNumberFieldList.forEach(numberField -> numberField.drawTooltip(this, mouseX, mouseY));
+        }
     }
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
         super.keyTyped(typedChar, keyCode);
-        if (Character.isDigit(typedChar) || typedChar == '.' || typedChar == '-' || keyCode == Keyboard.KEY_BACK || keyCode == Keyboard.KEY_DELETE) {
-            for (GuiTextField textField : textFieldList) {
-                if (textField.isFocused()) {
-                    textField.textboxKeyTyped(typedChar, keyCode);
-                }
-            }
+        for (GuiNumberField numberField : numberFieldList) {
+            numberField.keyTyped(typedChar, keyCode);
         }
         if (keyCode == ClientProxy.keyBindings[0].getKeyCode()) {
             Minecraft.getMinecraft().player.closeScreen();
@@ -224,7 +265,30 @@ public class SettingsGui extends GuiScreen {
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
-        textFieldList.forEach(textField -> textField.mouseClicked(mouseX, mouseY, mouseButton));
+        numberFieldList.forEach(numberField -> numberField.mouseClicked(mouseX, mouseY, mouseButton));
+
+        boolean insideMirrorEnabledLabel = mouseX >= left && mouseX < right && mouseY >= top - 2 && mouseY < top + 10;
+        boolean insideArrayEnabledLabel = mouseX >= left && mouseX < right && mouseY >= top + 100 && mouseY < top + 112;
+
+        if (insideMirrorEnabledLabel) {
+            buttonMirrorEnabled.setIsChecked(!buttonMirrorEnabled.isChecked());
+            buttonMirrorEnabled.playPressSound(this.mc.getSoundHandler());
+            actionPerformed(buttonMirrorEnabled);
+        }
+
+        if (insideArrayEnabledLabel) {
+            buttonArrayEnabled.setIsChecked(!buttonArrayEnabled.isChecked());
+            buttonArrayEnabled.playPressSound(this.mc.getSoundHandler());
+            actionPerformed(buttonArrayEnabled);
+        }
+    }
+
+    @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
+        int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+        numberFieldList.forEach(numberField -> numberField.handleMouseInput(mouseX, mouseY));
     }
 
     @Override
@@ -235,18 +299,36 @@ public class SettingsGui extends GuiScreen {
         }
         if (button == buttonCurrentPosition) {
             Vec3d pos = new Vec3d(Math.floor(mc.player.posX) + 0.5, Math.floor(mc.player.posY) + 0.5, Math.floor(mc.player.posZ) + 0.5);
-            textMirrorPosX.setText(String.valueOf(pos.x));
-            textMirrorPosY.setText(String.valueOf(pos.y));
-            textMirrorPosZ.setText(String.valueOf(pos.z));
+            textMirrorPosX.setNumber(pos.x);
+            textMirrorPosY.setNumber(pos.y);
+            textMirrorPosZ.setNumber(pos.z);
+        }
+        if (button == buttonToggleOdd) {
+            toggleOdd = !toggleOdd;
+            buttonToggleOdd.setUseAlternateIcon(toggleOdd);
+            if (toggleOdd) {
+                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
+                textMirrorPosX.setNumber(textMirrorPosX.getNumber() + 0.5);
+                textMirrorPosY.setNumber(textMirrorPosY.getNumber() + 0.5);
+                textMirrorPosZ.setNumber(textMirrorPosZ.getNumber() + 0.5);
+            } else {
+                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+                textMirrorPosX.setNumber(Math.floor(textMirrorPosX.getNumber()));
+                textMirrorPosY.setNumber(Math.floor(textMirrorPosY.getNumber()));
+                textMirrorPosZ.setNumber(Math.floor(textMirrorPosZ.getNumber()));
+            }
         }
         if (button == buttonDrawLines) {
             drawLines = !drawLines;
-            buttonDrawLines.displayString = drawLines ? "Hide lines" : "Show lines";
+            buttonDrawLines.setUseAlternateIcon(drawLines);
+            buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
         }
         if (button == buttonDrawPlanes) {
             drawPlanes = !drawPlanes;
-            buttonDrawPlanes.displayString = drawPlanes ? "Hide area" : "Show area";
+            buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
+            buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
         }
+        numberFieldList.forEach(numberField -> numberField.actionPerformed(button));
     }
 
     @Override
@@ -256,9 +338,9 @@ public class SettingsGui extends GuiScreen {
         //MIRROR
         boolean mirrorEnabled = buttonMirrorEnabled.isChecked();
 
-        Vec3d mirrorPos = new Vec3d(0.5, 64.5, 0.5);
+        Vec3d mirrorPos = new Vec3d(0, 64, 0);
         try {
-            mirrorPos = new Vec3d(Double.parseDouble(textMirrorPosX.getText()), Double.parseDouble(textMirrorPosY.getText()), Double.parseDouble(textMirrorPosZ.getText()));
+            mirrorPos = new Vec3d(textMirrorPosX.getNumber(), textMirrorPosY.getNumber(), textMirrorPosZ.getNumber());
         } catch (NumberFormatException | NullPointerException ex) {
             EffortlessBuilding.log(Minecraft.getMinecraft().player, "Mirror position not valid.", true);
             EffortlessBuilding.log("Mirror position not valid. Resetting to default.");
@@ -270,7 +352,7 @@ public class SettingsGui extends GuiScreen {
 
         int mirrorRadius = 50;
         try {
-            mirrorRadius = Math.min(Integer.parseInt(textMirrorRadius.getText()), Mirror.MAX_RADIUS);
+            mirrorRadius = Math.min((int) textMirrorRadius.getNumber(), Mirror.MAX_RADIUS);
         } catch (NumberFormatException | NullPointerException ex) {
             EffortlessBuilding.log(Minecraft.getMinecraft().player, "Mirror radius not valid.", true);
             EffortlessBuilding.log("Mirror radius not valid. Resetting to default.");
@@ -284,7 +366,7 @@ public class SettingsGui extends GuiScreen {
         boolean arrayEnabled = buttonArrayEnabled.isChecked();
         BlockPos arrayOffset = new BlockPos(0, 0, 0);
         try {
-            arrayOffset = new BlockPos(Integer.parseInt(textArrayOffsetX.getText()), Integer.parseInt(textArrayOffsetY.getText()), Integer.parseInt(textArrayOffsetZ.getText()));
+            arrayOffset = new BlockPos(textArrayOffsetX.getNumber(), textArrayOffsetY.getNumber(), textArrayOffsetZ.getNumber());
         } catch (NumberFormatException | NullPointerException ex) {
             EffortlessBuilding.log(Minecraft.getMinecraft().player, "Array offset not valid.", true);
             EffortlessBuilding.log("Array offset not valid. Resetting to default.");
@@ -292,7 +374,7 @@ public class SettingsGui extends GuiScreen {
 
         int arrayCount = 5;
         try {
-            arrayCount = Integer.parseInt(textArrayCount.getText());
+            arrayCount = (int) textArrayCount.getNumber();
         } catch (NumberFormatException | NullPointerException ex) {
             EffortlessBuilding.log(Minecraft.getMinecraft().player, "Array count not valid.", true);
             EffortlessBuilding.log("Array count not valid. Resetting to default.");
