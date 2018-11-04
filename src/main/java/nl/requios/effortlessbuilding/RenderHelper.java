@@ -6,6 +6,8 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemTool;
 import net.minecraft.util.math.*;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -110,30 +112,48 @@ public class RenderHelper {
                 drawMirrorLines(m);
             }
 
-            //Render block outlines
-            RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
-            if (objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
-            {
-                BlockPos blockPos = objectMouseOver.getBlockPos();
-                if (!buildSettings.doQuickReplace()) blockPos = blockPos.offset(objectMouseOver.sideHit);
+        }
 
-                //RenderHelper.renderBlockOutline(blockPos);
+        //Render block outlines
+        RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
+        if (objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
+        {
+            BlockPos blockPos = objectMouseOver.getBlockPos();
+
+            //Check if tool (or none) in hand
+            ItemStack mainhand = player.getHeldItemMainhand();
+            //ItemStack offhand = player.getHeldItemOffhand();
+            //boolean noneInHand = mainhand.isEmpty() && (offhand.isEmpty() || offhand.getItem() instanceof ItemTool);
+            boolean toolInHand = !mainhand.isEmpty() && mainhand.getItem() instanceof ItemTool;
+            if (!buildSettings.doQuickReplace() && !toolInHand) {
+                blockPos = blockPos.offset(objectMouseOver.sideHit);
+            }
+
+            if (buildSettings.doQuickReplace() && !toolInHand) {
+                //Get under tall grass and other replaceable blocks
+                if (player.world.getBlockState(blockPos).getBlock().isReplaceable(player.world, blockPos)) {
+                    blockPos = blockPos.down();
+                }
+            }
+
+            //TODO render current block outline based on config
+            if (buildSettings.doQuickReplace()) {
+                RenderHelper.renderBlockOutline(blockPos);
+            }
+
+            //Mirror
+            if (m != null && m.enabled && (m.mirrorX || m.mirrorY || m.mirrorZ) &&
+                    !(blockPos.getX() + 0.5 < m.position.x - m.radius) && !(blockPos.getX() + 0.5 > m.position.x + m.radius) &&
+                    !(blockPos.getY() + 0.5 < m.position.y - m.radius) && !(blockPos.getY() + 0.5 > m.position.y + m.radius) &&
+                    !(blockPos.getZ() + 0.5 < m.position.z - m.radius) && !(blockPos.getZ() + 0.5 > m.position.z + m.radius))
+            {
                 if (m.mirrorX) drawMirrorBlockOutlineX(buildSettings, blockPos);
                 if (m.mirrorY) drawMirrorBlockOutlineY(buildSettings, blockPos);
                 if (m.mirrorZ) drawMirrorBlockOutlineZ(buildSettings, blockPos);
             }
-        }
 
-        //Array
-        if (a != null && a.enabled && (a.offset.getX() != 0 || a.offset.getY() != 0 || a.offset.getZ() != 0))
-        {
-            //Render block outlines
-            RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
-            if (objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
-            {
-                BlockPos blockPos = objectMouseOver.getBlockPos();
-                if (!buildSettings.doQuickReplace()) blockPos = blockPos.offset(objectMouseOver.sideHit);
-
+            //Array
+            if (a != null && a.enabled && (a.offset.getX() != 0 || a.offset.getY() != 0 || a.offset.getZ() != 0)) {
                 drawArrayBlockOutlines(a, blockPos);
             }
         }

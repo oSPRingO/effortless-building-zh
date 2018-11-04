@@ -11,8 +11,12 @@ import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -79,4 +83,29 @@ public class EventHandler
         Array.onBlockBroken(event);
     }
 
+    @SubscribeEvent
+    public static void breakSpeed(PlayerEvent.BreakSpeed event) {
+        //TODO disable with config
+        EntityPlayer player = event.getEntityPlayer();
+        World world = player.world;
+        BlockPos pos = event.getPos();
+
+        //EffortlessBuilding.log(player, String.valueOf(event.getNewSpeed()));
+
+        float originalBlockHardness = event.getState().getBlockHardness(world, pos);
+        float totalBlockHardness = 0;
+        totalBlockHardness += Mirror.getTotalBlockHardness(world, player, pos);
+        totalBlockHardness += Array.getTotalBlockHardness(world, player, pos);
+
+        //TODO get percentage from config
+        float percentage = 0.5f;
+        totalBlockHardness *= percentage;
+        totalBlockHardness += originalBlockHardness;
+
+        float newSpeed = event.getOriginalSpeed() / totalBlockHardness * originalBlockHardness;
+        if (Float.isNaN(newSpeed) || newSpeed == 0f) newSpeed = 1f;
+        event.setNewSpeed(newSpeed);
+
+        //EffortlessBuilding.log(player, String.valueOf(event.getNewSpeed()));
+    }
 }

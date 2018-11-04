@@ -9,6 +9,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.items.IItemHandler;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
@@ -45,14 +46,14 @@ public class Array {
         BlockPos pos = event.getPos();
         Vec3i offset = new Vec3i(a.offset.getX(), a.offset.getY(), a.offset.getZ());
 
-        //Randomizer bag synergy
-        IItemHandler bagInventory = null;
-        if (event.getPlayer().getHeldItemMainhand().getItem() instanceof ItemRandomizerBag) {
-            bagInventory = ItemRandomizerBag.getBagInventory(event.getPlayer().getHeldItemMainhand());
-        }
-
         //Get itemstack
         ItemStack itemStack = event.getPlayer().getHeldItem(event.getHand());
+
+        //Randomizer bag synergy
+        IItemHandler bagInventory = null;
+        if (!itemStack.isEmpty() && itemStack.getItem() instanceof ItemRandomizerBag) {
+            bagInventory = ItemRandomizerBag.getBagInventory(itemStack);
+        }
 
         for (int i = 0; i < a.count; i++) {
             pos = pos.add(offset);
@@ -65,7 +66,7 @@ public class Array {
                 if (bagInventory != null) {
                     itemStack = ItemRandomizerBag.pickRandomStack(bagInventory);
                     if (itemStack.isEmpty()) continue;
-                    blockState = getBlockStateFromRandomizerBag(bagInventory, event.getWorld(), event.getPlayer(), event.getPos(), itemStack);
+                    blockState = getBlockStateFromRandomizerBag(bagInventory, event.getWorld(), event.getPlayer(), event.getPos(), itemStack, event.getHand());
                     if (blockState == null) continue;
                 }
 
@@ -78,16 +79,16 @@ public class Array {
         return true;
     }
 
-    private static IBlockState getBlockStateFromRandomizerBag(IItemHandler bagInventory, World world, EntityPlayer player, BlockPos pos, ItemStack itemStack) {
+    private static IBlockState getBlockStateFromRandomizerBag(IItemHandler bagInventory, World world, EntityPlayer player, BlockPos pos, ItemStack itemStack, EnumHand hand) {
         //TODO get facing from getPlacedAgainst and getPlacedBlock
-        return Block.getBlockFromItem(itemStack.getItem()).getStateForPlacement(world, pos, EnumFacing.NORTH, 0, 0, 0, itemStack.getMetadata(), player, EnumHand.MAIN_HAND);
+        return Block.getBlockFromItem(itemStack.getItem()).getStateForPlacement(world, pos, EnumFacing.NORTH, 0, 0, 0, itemStack.getMetadata(), player, hand);
     }
 
     //Called from EventHandler
     public static void onBlockBroken(BlockEvent.BreakEvent event) {
         if (event.getWorld().isRemote) return;
 
-        //find arraysettings for the player that placed the block
+        //find arraysettings for the player that broke the block
         ArraySettings a = BuildSettingsManager.getBuildSettings(event.getPlayer()).getArraySettings();
         if (a == null || !a.enabled) return;
 
@@ -99,6 +100,25 @@ public class Array {
             pos = pos.add(offset);
             SurvivalHelper.breakBlock(event.getWorld(), event.getPlayer(), pos);
         }
+    }
+
+    //Called from EventHandler
+    public static float getTotalBlockHardness(World world, EntityPlayer player, BlockPos pos) {
+        float hardness = 0;
+
+        //find arraysettings for the player that broke the block
+        ArraySettings a = BuildSettingsManager.getBuildSettings(player).getArraySettings();
+        if (a == null || !a.enabled) return 0;
+
+        if (a.offset.getX() == 0 && a.offset.getY() == 0 && a.offset.getZ() == 0) return 0;
+
+        Vec3i offset = new Vec3i(a.offset.getX(), a.offset.getY(), a.offset.getZ());
+        for (int i = 0; i < a.count; i++) {
+            pos = pos.add(offset);
+            if (SurvivalHelper.canBreak(world, player, pos))
+                hardness += world.getBlockState(pos).getBlockHardness(world, pos);
+        }
+        return hardness;
     }
 
 }

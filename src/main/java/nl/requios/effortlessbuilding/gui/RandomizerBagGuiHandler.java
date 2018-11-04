@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 
 import javax.annotation.Nullable;
@@ -17,8 +18,10 @@ public class RandomizerBagGuiHandler implements IGuiHandler {
     public Object getServerGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
         if (ID == EffortlessBuilding.RANDOMIZER_BAG_GUI) {
             // Use the player's held item to create the container
-            return new RandomizerBagContainer(player.inventory,
-                    player.getHeldItem(EnumHand.MAIN_HAND).getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null));
+            IItemHandler capability = player.getHeldItemMainhand().hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null) ?
+                    player.getHeldItemMainhand().getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null) :
+                    player.getHeldItemOffhand().getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+            return new RandomizerBagContainer(player.inventory, capability);
         }
         return null;
     }
@@ -29,8 +32,10 @@ public class RandomizerBagGuiHandler implements IGuiHandler {
     public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
         if (ID == EffortlessBuilding.RANDOMIZER_BAG_GUI) {
             // Use the player's held item to create the client-side gui container
-            return new RandomizerBagGuiContainer(player.inventory,
-                    player.getHeldItem(EnumHand.MAIN_HAND).getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null));
+            IItemHandler capability = player.getHeldItemMainhand().hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null) ?
+                    player.getHeldItemMainhand().getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null) :
+                    player.getHeldItemOffhand().getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+            return new RandomizerBagGuiContainer(player.inventory, capability);
         }
         return null;
     }

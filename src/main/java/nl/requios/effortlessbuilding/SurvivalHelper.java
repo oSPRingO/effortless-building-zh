@@ -4,9 +4,11 @@ import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Enchantments;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
@@ -14,11 +16,13 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.List;
 
@@ -39,7 +43,7 @@ public class SurvivalHelper {
 
         //Check if itemstack is correct
         if (!(itemstack.getItem() instanceof ItemBlock) || Block.getBlockFromItem(itemstack.getItem()) != blockState.getBlock()) {
-            EffortlessBuilding.log(player, "Cannot replace block", true);
+            EffortlessBuilding.log(player, "Cannot (re)place block", true);
             EffortlessBuilding.log("SurvivalHelper#placeBlock: itemstack " + itemstack.toString() + " does not match blockstate " + blockState.toString());
             return false;
         }
@@ -106,9 +110,36 @@ public class SurvivalHelper {
         if (player.isCreative()) return true;
 
         IBlockState blockState = world.getBlockState(pos);
-        if (blockState.getBlock().canHarvestBlock(world, pos, player)) return true;
+        return canHarvestBlock(blockState.getBlock(), player, world, pos);
 
-        return false;
+    }
+
+    //From ForgeHooks#canHarvestBlock
+    public static boolean canHarvestBlock(@Nonnull Block block, @Nonnull EntityPlayer player, @Nonnull IBlockAccess world, @Nonnull BlockPos pos)
+    {
+        IBlockState state = world.getBlockState(pos);
+        state = state.getBlock().getActualState(state, world, pos);
+        if (state.getMaterial().isToolNotRequired())
+        {
+            return true;
+        }
+
+        ItemStack stack = player.getHeldItemMainhand();
+        String tool = block.getHarvestTool(state);
+        if (stack.isEmpty() || tool == null)
+        {
+            return player.canHarvestBlock(state);
+        }
+
+        if (stack.getItemDamage() >= stack.getMaxDamage()) return false;
+
+        int toolLevel = stack.getItem().getHarvestLevel(stack, tool, player, state);
+        if (toolLevel < 0)
+        {
+            return player.canHarvestBlock(state);
+        }
+
+        return toolLevel >= block.getHarvestLevel(state);
     }
 
     //Can be harvested with hand? (or in creative)
@@ -128,7 +159,8 @@ public class SurvivalHelper {
 
         IBlockState blockState = world.getBlockState(pos);
 
-        List<ItemStack> drops = blockState.getBlock().getDrops(world, pos, blockState, 0);
+        int fortune = EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, player.getHeldItemMainhand());
+        List<ItemStack> drops = blockState.getBlock().getDrops(world, pos, blockState, fortune);
         for (ItemStack drop : drops)
         {
             ItemHandlerHelper.giveItemToPlayer(player, drop);

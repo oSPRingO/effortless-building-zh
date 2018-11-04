@@ -90,25 +90,25 @@ public class ItemRandomizerBag extends Item {
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+        ItemStack bag = player.getHeldItem(hand);
 
         if (player.isSneaking()) {
-            if (world.isRemote) return new ActionResult<>(EnumActionResult.SUCCESS, player.getHeldItem(hand));
+            if (world.isRemote) return new ActionResult<>(EnumActionResult.SUCCESS, bag);
             //Open inventory
             player.openGui(EffortlessBuilding.instance, EffortlessBuilding.RANDOMIZER_BAG_GUI, world, 0, 0, 0);
         } else {
             //Use item
             //Get bag inventory
-            ItemStack bag = player.getHeldItem(hand);
             IItemHandler bagInventory = getBagInventory(bag);
             if (bagInventory == null)
-                return new ActionResult<>(EnumActionResult.FAIL, player.getHeldItem(hand));
+                return new ActionResult<>(EnumActionResult.FAIL, bag);
 
             ItemStack toUse = pickRandomStack(bagInventory);
-            if (toUse.isEmpty()) return new ActionResult<>(EnumActionResult.FAIL, player.getHeldItem(hand));
+            if (toUse.isEmpty()) return new ActionResult<>(EnumActionResult.FAIL, bag);
 
             return toUse.useItemRightClick(world, player, hand);
         }
-        return new ActionResult<>(EnumActionResult.PASS, player.getHeldItem(hand));
+        return new ActionResult<>(EnumActionResult.PASS, bag);
     }
 
     /**

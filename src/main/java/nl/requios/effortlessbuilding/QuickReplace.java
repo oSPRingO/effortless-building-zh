@@ -23,6 +23,7 @@ public class QuickReplace {
 
     private static Dictionary<UUID, IBlockState> blockStates = new Hashtable<>();
     private static Dictionary<UUID, ItemStack> itemStacks = new Hashtable<>();
+    private static Dictionary<UUID, EnumHand> hands = new Hashtable<>();
 
     public static boolean onBlockPlaced(BlockEvent.PlaceEvent event) {
         if (event.getWorld().isRemote) return true;
@@ -35,6 +36,7 @@ public class QuickReplace {
 
         blockStates.put(event.getPlayer().getUniqueID(), event.getPlacedBlock());
         itemStacks.put(event.getPlayer().getUniqueID(), event.getPlayer().getHeldItem(event.getHand()));
+        hands.put(event.getPlayer().getUniqueID(), event.getHand());
 
         //RayTraceResult result = event.getWorld().rayTraceBlocks(event.getPlayer().getPositionEyes(1f), event.getPlayer().getLookVec());
         EffortlessBuilding.packetHandler.sendTo(new QuickReplaceMessage(), (EntityPlayerMP) event.getPlayer());
@@ -57,13 +59,14 @@ public class QuickReplace {
 
         IBlockState blockState = blockStates.get(player.getUniqueID());
         ItemStack itemStack = itemStacks.get(player.getUniqueID());
+        EnumHand hand = hands.get(player.getUniqueID());
 
         SurvivalHelper.placeBlock(player.world, player, placedAgainstBlockPos, blockState, itemStack, message.getSideHit(), true, false);
 
         //Mirror and Array synergy
         blockState = player.world.getBlockState(placedAgainstBlockPos);
         BlockSnapshot blockSnapshot = new BlockSnapshot(player.world, placedAgainstBlockPos, blockState);
-        BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, blockState, player, EnumHand.MAIN_HAND);
+        BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, blockState, player, hand);
         Mirror.onBlockPlaced(placeEvent);
         Array.onBlockPlaced(placeEvent);
     }

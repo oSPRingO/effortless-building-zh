@@ -29,7 +29,7 @@ public class EffortlessBuilding
 {
     public static final String MODID = "effortlessbuilding";
     public static final String NAME = "Effortless Building";
-    public static final String VERSION = "0.3.3";
+    public static final String VERSION = "0.3.4";
 
     @Mod.Instance(EffortlessBuilding.MODID)
     public static EffortlessBuilding instance;
