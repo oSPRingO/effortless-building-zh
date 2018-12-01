@@ -14,11 +14,14 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.config.Config;
+import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -55,6 +58,15 @@ public class EventHandler
     }
 
     @SubscribeEvent
+    public void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event)
+    {
+        if (event.getModID().equals(EffortlessBuilding.MODID))
+        {
+            ConfigManager.sync(EffortlessBuilding.MODID, Config.Type.INSTANCE);
+        }
+    }
+
+    @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (placedBlock) {
             placedBlock = false;
@@ -85,7 +97,9 @@ public class EventHandler
 
     @SubscribeEvent
     public static void breakSpeed(PlayerEvent.BreakSpeed event) {
-        //TODO disable with config
+        //Disable if config says so
+        if (!BuildConfig.survivalBalancers.increasedMiningTime) return;
+
         EntityPlayer player = event.getEntityPlayer();
         World world = player.world;
         BlockPos pos = event.getPos();
@@ -97,8 +111,8 @@ public class EventHandler
         totalBlockHardness += Mirror.getTotalBlockHardness(world, player, pos);
         totalBlockHardness += Array.getTotalBlockHardness(world, player, pos);
 
-        //TODO get percentage from config
-        float percentage = 0.5f;
+        //Grabbing percentage from config
+        float percentage = (float) BuildConfig.survivalBalancers.miningTimePercentage / 100;
         totalBlockHardness *= percentage;
         totalBlockHardness += originalBlockHardness;
 

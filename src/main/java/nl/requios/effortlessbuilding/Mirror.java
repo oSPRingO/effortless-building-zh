@@ -13,12 +13,10 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.BlockSnapshot;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.items.IItemHandler;
+import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 public class Mirror {
-
-    //TODO config file
-    public static final int MAX_RADIUS = 200;
 
     public static class MirrorSettings {
         public boolean enabled = false;
@@ -39,6 +37,10 @@ public class Mirror {
             this.radius = radius;
             this.drawLines = drawLines;
             this.drawPlanes = drawPlanes;
+        }
+
+        public int getReach() {
+            return radius * 2;
         }
     }
 

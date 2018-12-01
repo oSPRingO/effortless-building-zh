@@ -88,25 +88,32 @@ public class ClientProxy implements IProxy {
 
     @SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
     public static void onKeyPress(InputEvent.KeyInputEvent event) {
-        // check each enumerated key binding type for pressed and take appropriate action
         EntityPlayerSP player = Minecraft.getMinecraft().player;
+
+        //Remember to send packet to server if necessary
+        //Show HUD
         if (keyBindings[0].isPressed()) {
-            // do stuff for this key binding here
-            // remember you may need to send packet to server
-            if (Minecraft.getMinecraft().currentScreen == null) {
-                Minecraft.getMinecraft().displayGuiScreen(new SettingsGui());
+            //Disabled if max reach is 0, might be set in the config that way.
+            if (BuildSettingsManager.getMaxReach(player) == 0) {
+                EffortlessBuilding.log(player, "Effortless Building is disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
             } else {
-                player.closeScreen();
+                if (Minecraft.getMinecraft().currentScreen == null) {
+                    Minecraft.getMinecraft().displayGuiScreen(new SettingsGui());
+                } else {
+                    player.closeScreen();
+                }
             }
         }
+
+        //QuickReplace toggle
         if (keyBindings[1].isPressed()) {
-            // do stuff for this key binding here
-            // remember you may need to send packet to server
             BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(player);
             buildSettings.setQuickReplace(!buildSettings.doQuickReplace());
             EffortlessBuilding.log(player, "Set "+ TextFormatting.GOLD + "Quick Replace " + TextFormatting.RESET + (buildSettings.doQuickReplace() ? "on" : "off"));
             EffortlessBuilding.packetHandler.sendToServer(new BuildSettingsMessage(buildSettings));
         }
+
+        //Creative/survival mode toggle
         if (keyBindings[2].isPressed()) {
             if (player.isCreative()) {
                 player.sendChatMessage("/gamemode 0");
@@ -121,6 +128,7 @@ public class ClientProxy implements IProxy {
         if (event.phase != TickEvent.Phase.START) return;
 
         RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
+        //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
         if (objectMouseOver == null) return;
 
         if (currentLookAt == null) {

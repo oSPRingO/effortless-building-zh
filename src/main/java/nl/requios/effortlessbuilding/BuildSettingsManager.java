@@ -2,6 +2,7 @@ package nl.requios.effortlessbuilding;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
@@ -26,7 +27,7 @@ public class BuildSettingsManager {
 
     public static void setBuildSettings(EntityPlayer player, BuildSettings buildSettings) {
         if (player == null) {
-            EffortlessBuilding.log("cannot set buildsettings, player is null");
+            EffortlessBuilding.log("Cannot set buildsettings, player is null");
             return;
         }
         if (player.hasCapability(BuildModifierCapability.buildModifier, null)) {
@@ -37,20 +38,74 @@ public class BuildSettingsManager {
         }
     }
 
+    public static String sanitize(BuildSettings buildSettings, EntityPlayer player) {
+        int maxReach = getMaxReach(player);
+        String error = "";
+
+        //Mirror settings
+        Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
+        if (m.radius < 1) {
+            m.radius = 1;
+            error += "Mirror size is too small. Size has been reset to 1. ";
+        }
+        if (m.getReach() > maxReach) {
+            m.radius = maxReach / 2;
+            error += "Mirror exceeds your maximum reach. Reach has been reset to max. ";
+        }
+
+        //Array settings
+        Array.ArraySettings a = buildSettings.getArraySettings();
+        if (a.count < 0) {
+            a.count = 0;
+            error += "Array count cannot be negative. Count has been reset to 0. ";
+        }
+
+        if (a.getReach() > maxReach) {
+            a.count = 0;
+            error += "Array exceeds your maximum reach. Count has been reset to 0. ";
+        }
+
+        //Other
+        if (buildSettings.reachUpgrade < 0) {
+            buildSettings.reachUpgrade = 0;
+        }
+        if (buildSettings.reachUpgrade > 3) {
+            buildSettings.reachUpgrade = 3;
+        }
+
+        return error;
+    }
+
+    public static int getMaxReach(EntityPlayer player) {
+        if (player.isCreative()) return BuildConfig.reach.maxReachCreative;
+
+        //Check buildsettings for reachUpgrade
+        int reachUpgrade = getBuildSettings(player).getReachUpgrade();
+        switch (reachUpgrade) {
+            case 0: return BuildConfig.reach.maxReachLevel0;
+            case 1: return BuildConfig.reach.maxReachLevel1;
+            case 2: return BuildConfig.reach.maxReachLevel2;
+            case 3: return BuildConfig.reach.maxReachLevel3;
+        }
+        return BuildConfig.reach.maxReachLevel0;
+    }
+
     public static class BuildSettings {
         private Mirror.MirrorSettings mirrorSettings;
         private Array.ArraySettings arraySettings;
         private boolean quickReplace = false;
+        private int reachUpgrade = 0;
 
         public BuildSettings() {
             mirrorSettings = new Mirror.MirrorSettings();
             arraySettings = new Array.ArraySettings();
         }
 
-        public BuildSettings(Mirror.MirrorSettings mirrorSettings, Array.ArraySettings arraySettings, boolean quickReplace) {
+        public BuildSettings(Mirror.MirrorSettings mirrorSettings, Array.ArraySettings arraySettings, boolean quickReplace, int reachUpgrade) {
             this.mirrorSettings = mirrorSettings;
             this.arraySettings = arraySettings;
             this.quickReplace = quickReplace;
+            this.reachUpgrade = reachUpgrade;
         }
 
         public Mirror.MirrorSettings getMirrorSettings() {
@@ -75,6 +130,14 @@ public class BuildSettingsManager {
 
         public void setQuickReplace(boolean quickReplace) {
             this.quickReplace = quickReplace;
+        }
+
+        public int getReachUpgrade() {
+            return reachUpgrade;
+        }
+
+        public void setReachUpgrade(int reachUpgrade) {
+            this.reachUpgrade = reachUpgrade;
         }
     }
 

@@ -1,4 +1,4 @@
-package nl.requios.effortlessbuilding;
+package nl.requios.effortlessbuilding.helper;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
@@ -20,6 +20,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 import javax.annotation.Nonnull;

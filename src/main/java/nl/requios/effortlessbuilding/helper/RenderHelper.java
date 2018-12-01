@@ -1,4 +1,4 @@
-package nl.requios.effortlessbuilding;
+package nl.requios.effortlessbuilding.helper;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -13,6 +13,7 @@ import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
+import nl.requios.effortlessbuilding.*;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.Color;
 
@@ -116,7 +117,8 @@ public class RenderHelper {
 
         //Render block outlines
         RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
-        if (objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
+        //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
+        if (objectMouseOver != null && objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
         {
             BlockPos blockPos = objectMouseOver.getBlockPos();
 
@@ -136,8 +138,8 @@ public class RenderHelper {
                 }
             }
 
-            //TODO render current block outline based on config
-            if (buildSettings.doQuickReplace()) {
+            //Render current block outline based on config, or when QuickReplace is enabled
+            if (buildSettings.doQuickReplace() || BuildConfig.visuals.showOutlineOnCurrentBlock) {
                 RenderHelper.renderBlockOutline(blockPos);
             }
 

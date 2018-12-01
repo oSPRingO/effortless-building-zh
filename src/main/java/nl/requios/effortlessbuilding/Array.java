@@ -12,11 +12,10 @@ import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.items.IItemHandler;
+import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 public class Array {
-    //TODO config file
-    public static final int MAX_COUNT = 100;
 
     public static class ArraySettings{
         public boolean enabled = false;
@@ -30,6 +29,16 @@ public class Array {
             this.enabled = enabled;
             this.offset = offset;
             this.count = count;
+        }
+
+        public int getReach() {
+            //find largest offset
+            int x = Math.abs(offset.getX());
+            int y = Math.abs(offset.getY());
+            int z = Math.abs(offset.getZ());
+            int largestOffset = Math.max(Math.max(x, y), z);
+
+            return largestOffset * count;
         }
     }
 

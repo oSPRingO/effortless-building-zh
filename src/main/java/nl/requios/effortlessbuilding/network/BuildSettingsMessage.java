@@ -1,9 +1,7 @@
 package nl.requios.effortlessbuilding.network;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -51,6 +49,8 @@ public class BuildSettingsMessage implements IMessage {
         buf.writeInt(a.count);
 
         buf.writeBoolean(buildSettings.doQuickReplace());
+
+        buf.writeInt(buildSettings.getReachUpgrade());
     }
 
     @Override
@@ -73,7 +73,10 @@ public class BuildSettingsMessage implements IMessage {
         Array.ArraySettings a = new Array.ArraySettings(arrayEnabled, arrayOffset, arrayCount);
 
         boolean quickReplace = buf.readBoolean();
-        buildSettings = new BuildSettings(m, a, quickReplace);
+
+        int reachUpgrade = buf.readInt();
+
+        buildSettings = new BuildSettings(m, a, quickReplace, reachUpgrade);
     }
 
     // The params of the IMessageHandler are <REQ, REPLY>
@@ -88,15 +91,9 @@ public class BuildSettingsMessage implements IMessage {
             EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
             // The value that was sent
             BuildSettings buildSettings = message.buildSettings;
-            Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
-            Array.ArraySettings a = buildSettings.getArraySettings();
 
             // Sanitize
-            m.radius = Math.min(m.radius, Mirror.MAX_RADIUS);
-            m.radius = Math.max(1, m.radius);
-
-            a.count = Math.min(a.count, Array.MAX_COUNT);
-            a.count = Math.max(0, a.count);
+            BuildSettingsManager.sanitize(buildSettings, player);
 
             // Execute the action on the main server thread by adding it as a scheduled task
             IThreadListener threadListener = EffortlessBuilding.proxy.getThreadListenerFromContext(ctx);

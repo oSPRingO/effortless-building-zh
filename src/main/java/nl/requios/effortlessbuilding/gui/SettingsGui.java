@@ -1,11 +1,11 @@
 package nl.requios.effortlessbuilding.gui;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
 import nl.requios.effortlessbuilding.Array;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
@@ -59,17 +59,17 @@ public class SettingsGui extends GuiScreen {
         y = top + 18;
         textMirrorPosX = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 58, y, 62, 18);
         textMirrorPosX.setNumber(0);
-        textMirrorPosX.setTooltip(Arrays.asList("The position of the mirror.", "For odd numbered builds add 0.5."));
+        textMirrorPosX.setTooltip(Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         mirrorNumberFieldList.add(textMirrorPosX);
 
         textMirrorPosY = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 138, y, 62, 18);
         textMirrorPosY.setNumber(64);
-        textMirrorPosY.setTooltip(Arrays.asList("The position of the mirror.", "For odd numbered builds add 0.5."));
+        textMirrorPosY.setTooltip(Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         mirrorNumberFieldList.add(textMirrorPosY);
 
         textMirrorPosZ = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 218, y, 62, 18);
         textMirrorPosZ.setNumber(0);
-        textMirrorPosZ.setTooltip(Arrays.asList("The position of the mirror.", "For odd numbered builds add 0.5."));
+        textMirrorPosZ.setTooltip(Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         mirrorNumberFieldList.add(textMirrorPosZ);
 
         y = top + 50;
@@ -85,7 +85,10 @@ public class SettingsGui extends GuiScreen {
         y = top + 47;
         textMirrorRadius = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 218, y, 62, 18);
         textMirrorRadius.setNumber(50);
-        textMirrorRadius.setTooltip("How far the mirror reaches in any direction.");
+        //TODO change to diameter (remove /2)
+        textMirrorRadius.setTooltip(Arrays.asList("How far the mirror reaches in any direction.",
+                TextFormatting.GRAY + "Max: " + TextFormatting.GOLD + BuildSettingsManager.getMaxReach(mc.player) / 2,
+                TextFormatting.GRAY + "Upgradeable in survival with reach upgrades."));
         mirrorNumberFieldList.add(textMirrorRadius);
 
         y = top + 72;
@@ -206,7 +209,7 @@ public class SettingsGui extends GuiScreen {
 
             y = top + 52;
             fontRenderer.drawString("Direction", left + offset, y, 0xFFFFFF, true);
-            fontRenderer.drawString("Size", left + 190, y, 0xFFFFFF, true);
+            fontRenderer.drawString("Reach", left + 176 + offset, y, 0xFFFFFF, true);
 
             mirrorButtonList.forEach(button -> button.drawButton(this.mc, mouseX, mouseY, partialTicks));
             mirrorIconButtonList.forEach(button -> button.drawButton(this.mc, mouseX, mouseY, partialTicks));
@@ -228,6 +231,12 @@ public class SettingsGui extends GuiScreen {
 
             y = top + 150 + 5;
             fontRenderer.drawString("Count", left + offset, y, 0xFFFFFF, true);
+
+            int currentReach = Math.max(-1, getArrayReach());
+            int maxReach = BuildSettingsManager.getMaxReach(mc.player);
+            TextFormatting reachColor = isCurrentReachValid(currentReach, maxReach) ? TextFormatting.GRAY : TextFormatting.RED;
+            String reachText = "Reach: " + reachColor + currentReach + TextFormatting.GRAY + "/" + TextFormatting.GRAY + maxReach;
+            fontRenderer.drawString(reachText, left + 176 + offset, y, 0xFFFFFF, true);
 
             arrayNumberFieldList.forEach(numberField -> numberField.drawNumberField(this.mc, mouseX, mouseY, partialTicks));
         } else {
@@ -255,7 +264,7 @@ public class SettingsGui extends GuiScreen {
             numberField.keyTyped(typedChar, keyCode);
         }
         if (keyCode == ClientProxy.keyBindings[0].getKeyCode()) {
-            Minecraft.getMinecraft().player.closeScreen();
+            mc.player.closeScreen();
         }
     }
 
@@ -339,8 +348,7 @@ public class SettingsGui extends GuiScreen {
         try {
             mirrorPos = new Vec3d(textMirrorPosX.getNumber(), textMirrorPosY.getNumber(), textMirrorPosZ.getNumber());
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuilding.log(Minecraft.getMinecraft().player, "Mirror position not valid.", true);
-            EffortlessBuilding.log("Mirror position not valid. Resetting to default.");
+            EffortlessBuilding.log(mc.player, "Mirror position not valid.");
         }
 
         boolean mirrorX = buttonMirrorX.isChecked();
@@ -349,13 +357,10 @@ public class SettingsGui extends GuiScreen {
 
         int mirrorRadius = 50;
         try {
-            mirrorRadius = Math.min((int) textMirrorRadius.getNumber(), Mirror.MAX_RADIUS);
+            mirrorRadius = (int) textMirrorRadius.getNumber();
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuilding.log(Minecraft.getMinecraft().player, "Mirror radius not valid.", true);
-            EffortlessBuilding.log("Mirror radius not valid. Resetting to default.");
+            EffortlessBuilding.log(mc.player, "Mirror radius not valid.");
         }
-        mirrorRadius = Math.max(1, mirrorRadius);
-        mirrorRadius = Math.min(Mirror.MAX_RADIUS, mirrorRadius);
 
         Mirror.MirrorSettings m = new Mirror.MirrorSettings(mirrorEnabled, mirrorPos, mirrorX, mirrorY, mirrorZ, mirrorRadius, drawLines, drawPlanes);
 
@@ -365,19 +370,15 @@ public class SettingsGui extends GuiScreen {
         try {
             arrayOffset = new BlockPos(textArrayOffsetX.getNumber(), textArrayOffsetY.getNumber(), textArrayOffsetZ.getNumber());
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuilding.log(Minecraft.getMinecraft().player, "Array offset not valid.", true);
-            EffortlessBuilding.log("Array offset not valid. Resetting to default.");
+            EffortlessBuilding.log(mc.player, "Array offset not valid.");
         }
 
         int arrayCount = 5;
         try {
             arrayCount = (int) textArrayCount.getNumber();
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuilding.log(Minecraft.getMinecraft().player, "Array count not valid.", true);
-            EffortlessBuilding.log("Array count not valid. Resetting to default.");
+            EffortlessBuilding.log(mc.player, "Array count not valid.");
         }
-        arrayCount = Math.max(1, arrayCount);
-        arrayCount = Math.min(Array.MAX_COUNT, arrayCount);
 
         Array.ArraySettings a = new Array.ArraySettings(arrayEnabled, arrayOffset, arrayCount);
 
@@ -385,9 +386,32 @@ public class SettingsGui extends GuiScreen {
         if (buildSettings == null) buildSettings = new BuildSettingsManager.BuildSettings();
         buildSettings.setMirrorSettings(m);
         buildSettings.setArraySettings(a);
+
+        //Sanitize
+        String error = BuildSettingsManager.sanitize(buildSettings, mc.player);
+        if (!error.isEmpty()) EffortlessBuilding.log(mc.player, error);
+
         BuildSettingsManager.setBuildSettings(mc.player, buildSettings);
 
         //Send to server
         EffortlessBuilding.packetHandler.sendToServer(new BuildSettingsMessage(buildSettings));
+    }
+
+    private int getArrayReach() {
+        try
+        {
+            //find largest offset
+            double x = Math.abs(textArrayOffsetX.getNumber());
+            double y = Math.abs(textArrayOffsetY.getNumber());
+            double z = Math.abs(textArrayOffsetZ.getNumber());
+            double largestOffset = Math.max(Math.max(x, y), z);
+            return (int) (largestOffset * textArrayCount.getNumber());
+        } catch (NumberFormatException | NullPointerException ex) {
+            return -1;
+        }
+    }
+
+    private boolean isCurrentReachValid(int currentReach, int maxReach) {
+        return currentReach <= maxReach && currentReach > -1;
     }
 }

@@ -49,6 +49,7 @@ public class BuildModifierCapability {
         public NBTBase writeNBT(Capability<IBuildModifier> capability, IBuildModifier instance, EnumFacing side) {
             NBTTagCompound compound = new NBTTagCompound();
             BuildSettings buildSettings = instance.getBuildModifierData();
+            if (buildSettings == null) buildSettings = new BuildSettings();
 
             //MIRROR
             Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
@@ -70,6 +71,8 @@ public class BuildModifierCapability {
             compound.setInteger("arrayOffsetY", a.offset.getY());
             compound.setInteger("arrayOffsetZ", a.offset.getZ());
             compound.setInteger("arrayCount", a.count);
+
+            compound.setInteger("reachUpgrade", buildSettings.getReachUpgrade());
 
             //compound.setBoolean("quickReplace", buildSettings.doQuickReplace()); dont save quickreplace
             return compound;
@@ -96,9 +99,11 @@ public class BuildModifierCapability {
             int arrayCount = compound.getInteger("arrayCount");
             Array.ArraySettings arraySettings = new Array.ArraySettings(arrayEnabled, arrayOffset, arrayCount);
 
+            int reachUpgrade = compound.getInteger("reachUpgrade");
+
             //boolean quickReplace = compound.getBoolean("quickReplace"); //dont load quickreplace
 
-            BuildSettings buildSettings = new BuildSettings(mirrorSettings, arraySettings, false);
+            BuildSettings buildSettings = new BuildSettings(mirrorSettings, arraySettings, false, reachUpgrade);
             instance.setBuildModifierData(buildSettings);
         }
     }
