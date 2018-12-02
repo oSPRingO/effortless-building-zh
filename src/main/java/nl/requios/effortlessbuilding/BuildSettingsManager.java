@@ -46,23 +46,23 @@ public class BuildSettingsManager {
         Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
         if (m.radius < 1) {
             m.radius = 1;
-            error += "Mirror size is too small. Size has been reset to 1. ";
+            error += "Mirror size is too small. Size has been set to 1. ";
         }
         if (m.getReach() > maxReach) {
             m.radius = maxReach / 2;
-            error += "Mirror exceeds your maximum reach. Reach has been reset to max. ";
+            error += "Mirror exceeds your maximum reach. Reach has been set to max. ";
         }
 
         //Array settings
         Array.ArraySettings a = buildSettings.getArraySettings();
         if (a.count < 0) {
             a.count = 0;
-            error += "Array count cannot be negative. Count has been reset to 0. ";
+            error += "Array count cannot be negative. Count has been set to 0. ";
         }
 
         if (a.getReach() > maxReach) {
             a.count = 0;
-            error += "Array exceeds your maximum reach. Count has been reset to 0. ";
+            error += "Array exceeds your maximum reach. Count has been set to 0. ";
         }
 
         //Other

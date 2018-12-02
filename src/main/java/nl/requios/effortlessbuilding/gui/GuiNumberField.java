@@ -73,6 +73,10 @@ public class GuiNumberField extends Gui {
     }
 
     public void drawNumberField(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
+        textField.y = y + 1;
+        minusButton.y = y - 1;
+        plusButton.y = y - 1;
+
         textField.drawTextBox();
         minusButton.drawButton(mc, mouseX, mouseY, partialTicks);
         plusButton.drawButton(mc, mouseX, mouseY, partialTicks);
@@ -131,19 +135,20 @@ public class GuiNumberField extends Gui {
 //        }
     }
 
-    public void handleMouseInput(int mouseX, int mouseY) {
-        boolean insideTextField = mouseX >= x + buttonWidth && mouseX < x + width - buttonWidth && mouseY >= y && mouseY < y + height;
-
-        if (insideTextField)
-        {
-            int valueChanged = 0;
-            if (Mouse.getEventDWheel() > 0)
-                valueChanged = 1;
-            if (Mouse.getEventDWheel() < 0)
-                valueChanged = -1;
-
-            if (valueChanged != 0)
-                setNumber(getNumber() + valueChanged);
-        }
-    }
+    //Scroll inside textfield to change number
+//    public void handleMouseInput(int mouseX, int mouseY) {
+//        boolean insideTextField = mouseX >= x + buttonWidth && mouseX < x + width - buttonWidth && mouseY >= y && mouseY < y + height;
+//
+//        if (insideTextField)
+//        {
+//            int valueChanged = 0;
+//            if (Mouse.getEventDWheel() > 0)
+//                valueChanged = 1;
+//            if (Mouse.getEventDWheel() < 0)
+//                valueChanged = -1;
+//
+//            if (valueChanged != 0)
+//                setNumber(getNumber() + valueChanged);
+//        }
+//    }
 }
