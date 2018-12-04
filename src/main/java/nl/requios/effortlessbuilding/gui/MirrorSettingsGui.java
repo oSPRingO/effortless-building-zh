@@ -123,6 +123,8 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonList.addAll(mirrorButtonList);
         buttonList.addAll(mirrorIconButtonList);
 
+        setCollapsed(!buttonMirrorEnabled.isChecked());
+
         return id;
     }
 
@@ -219,6 +221,9 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
     @Override
     public void actionPerformed(GuiButton button) {
         super.actionPerformed(button);
+        if (button == buttonMirrorEnabled) {
+            setCollapsed(!buttonMirrorEnabled.isChecked());
+        }
         if (button == buttonCurrentPosition) {
             Vec3d pos = new Vec3d(Math.floor(mc.player.posX) + 0.5, Math.floor(mc.player.posY) + 0.5, Math.floor(mc.player.posZ) + 0.5);
             textMirrorPosX.setNumber(pos.x);
@@ -280,5 +285,10 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
     @Override
     protected String getName() {
         return "Mirror";
+    }
+
+    @Override
+    protected int getExpandedHeight() {
+        return 100;
     }
 }

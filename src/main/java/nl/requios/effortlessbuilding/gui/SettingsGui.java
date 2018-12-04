@@ -24,17 +24,13 @@ public class SettingsGui extends GuiScreen {
     public void initGui() {
         int id = 0;
 
-        scrollPane = new GuiScrollPane(this, fontRenderer, 8, height - 17);
+        scrollPane = new GuiScrollPane(this, fontRenderer, 8, height - 30);
 
         mirrorSettingsGui = new MirrorSettingsGui(scrollPane);
         scrollPane.listEntries.add(mirrorSettingsGui);
 
         arraySettingsGui = new ArraySettingsGui(scrollPane);
         scrollPane.listEntries.add(arraySettingsGui);
-
-        //TODO for testing
-        mirrorSettingsGui = new MirrorSettingsGui(scrollPane);
-        scrollPane.listEntries.add(mirrorSettingsGui);
 
         id = scrollPane.initGui(id, buttonList);
 

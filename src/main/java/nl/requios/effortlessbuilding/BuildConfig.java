@@ -19,13 +19,13 @@ public class BuildConfig {
         @Comment({"Maximum reach in survival without upgrades",
                  "Reach upgrades are craftable consumables that permanently increase reach.",
                  "Set to 0 to disable Effortless Building until the player has consumed a reach upgrade."})
-        public int maxReachLevel0 = 10;
+        public int maxReachLevel0 = 20;
 
         @Comment("Maximum reach in survival with one upgrade")
-        public int maxReachLevel1 = 20;
+        public int maxReachLevel1 = 50;
 
         @Comment("Maximum reach in survival with two upgrades")
-        public int maxReachLevel2 = 50;
+        public int maxReachLevel2 = 100;
 
         @Comment("Maximum reach in survival with three upgrades")
         public int maxReachLevel3 = 200;

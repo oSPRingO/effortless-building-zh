@@ -13,6 +13,8 @@ public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScroll
     public GuiScrollPane scrollPane;
     protected FontRenderer fontRenderer;
     protected Minecraft mc;
+
+    protected boolean isCollapsed = true;
     protected int left, right, top, bottom;
 
     public GuiCollapsibleScrollEntry(GuiScrollPane scrollPane) {
@@ -78,7 +80,24 @@ public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScroll
 
     }
 
+    @Override
+    public int getHeight() {
+        return isCollapsed ? getCollapsedHeight() : getExpandedHeight();
+    }
+
+    public void setCollapsed(boolean collapsed) {
+        this.isCollapsed = collapsed;
+    }
+
     protected String getName() {
         return "Collapsible scroll entry";
+    }
+
+    protected int getCollapsedHeight() {
+        return 24;
+    }
+
+    protected int getExpandedHeight() {
+        return 100;
     }
 }

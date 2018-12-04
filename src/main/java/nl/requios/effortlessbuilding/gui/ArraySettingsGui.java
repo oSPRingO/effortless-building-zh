@@ -65,6 +65,8 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
             textArrayCount.setNumber(a.count);
         }
 
+        setCollapsed(!buttonArrayEnabled.isChecked());
+
         return id;
     }
 
@@ -154,6 +156,9 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
     @Override
     public void actionPerformed(GuiButton button) {
         super.actionPerformed(button);
+        if (button == buttonArrayEnabled) {
+            setCollapsed(!buttonArrayEnabled.isChecked());
+        }
         arrayNumberFieldList.forEach(numberField -> numberField.actionPerformed(button));
     }
 
@@ -179,6 +184,11 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
     @Override
     protected String getName() {
         return "Array";
+    }
+
+    @Override
+    protected int getExpandedHeight() {
+        return 80;
     }
 
     private int getArrayReach() {
