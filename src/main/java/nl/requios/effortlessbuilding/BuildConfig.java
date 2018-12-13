@@ -47,7 +47,7 @@ public class BuildConfig {
     }
 
     public static class Visuals {
-        @Comment({"Shows a white block outline for the block you manually place,",
+        @Comment({"Shows a block preview for the block you manually place,",
                  "in addition to blocks placed by the mirror or array."})
         public boolean showOutlineOnCurrentBlock = false;
     }

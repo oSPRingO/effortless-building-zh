@@ -71,7 +71,6 @@ public class QuickReplaceMessage implements IMessage {
                 //Send back your info
                 return new QuickReplaceMessage(ClientProxy.previousLookAt);
 
-                //TODO break block then return
 //                Minecraft.getMinecraft().addScheduledTask(() -> {
 //                    EffortlessBuilding.packetHandler.sendToServer(new QuickReplaceMessage(Minecraft.getMinecraft().objectMouseOver));
 //                });
