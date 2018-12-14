@@ -21,7 +21,7 @@ import nl.requios.effortlessbuilding.capability.*;
 import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
-import nl.requios.effortlessbuilding.network.QuickReplaceMessage;
+import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 import nl.requios.effortlessbuilding.proxy.IProxy;
 import org.apache.logging.log4j.Logger;
 
@@ -63,13 +63,14 @@ public class EffortlessBuilding
     {
         logger = event.getModLog();
 
-        CapabilityManager.INSTANCE.register(BuildModifierCapability.IBuildModifier.class, new BuildModifierCapability.Storage(), BuildModifierCapability.BuildModifier.class);
+        CapabilityManager.INSTANCE.register(
+                BuildModifierCapabilityManager.IBuildModifierCapability.class, new BuildModifierCapabilityManager.Storage(), BuildModifierCapabilityManager.BuildModifierCapability.class);
 
         EffortlessBuilding.packetHandler.registerMessage(BuildSettingsMessage.MessageHandler.class, BuildSettingsMessage.class, 0, Side.SERVER);
         EffortlessBuilding.packetHandler.registerMessage(BuildSettingsMessage.MessageHandler.class, BuildSettingsMessage.class, 0, Side.CLIENT);
 
-        EffortlessBuilding.packetHandler.registerMessage(QuickReplaceMessage.MessageHandler.class, QuickReplaceMessage.class, 1, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(QuickReplaceMessage.MessageHandler.class, QuickReplaceMessage.class, 1, Side.CLIENT);
+        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 1, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 1, Side.CLIENT);
 
         proxy.preInit(event);
     }

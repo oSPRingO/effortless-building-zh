@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -14,6 +15,9 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.items.IItemHandler;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Array {
 
@@ -42,21 +46,33 @@ public class Array {
         }
     }
 
-    //Called from EventHandler
-    public static boolean onBlockPlaced(BlockEvent.PlaceEvent event) {
-        if (event.getWorld().isRemote) return false;
+    public static List<BlockPos> findCoordinates(EntityPlayer player, BlockPos startPos) {
+        List<BlockPos> coordinates = new ArrayList<>();
 
-        //find arraysettings for the player that placed the block
-        ArraySettings a = BuildSettingsManager.getBuildSettings(event.getPlayer()).getArraySettings();
-        if (a == null || !a.enabled) return false;
+        //find arraysettings for the player
+        ArraySettings a = BuildSettingsManager.getBuildSettings(player).getArraySettings();
+        if (!isEnabled(a)) return coordinates;
 
-        if (a.offset.getX() == 0 && a.offset.getY() == 0 && a.offset.getZ() == 0) return false;
-
-        BlockPos pos = event.getPos();
+        BlockPos pos = startPos;
         Vec3i offset = new Vec3i(a.offset.getX(), a.offset.getY(), a.offset.getZ());
 
-        //Get itemstack
-        ItemStack itemStack = event.getPlayer().getHeldItem(event.getHand());
+        for (int i = 0; i < a.count; i++) {
+            pos = pos.add(offset);
+            coordinates.add(pos);
+        }
+
+        return coordinates;
+    }
+
+    public static List<IBlockState> findBlockStates(EntityPlayer player, BlockPos startPos, IBlockState blockState, ItemStack itemStack, List<ItemStack> itemStacks) {
+        List<IBlockState> blockStates = new ArrayList<>();
+
+        //find arraysettings for the player that placed the block
+        ArraySettings a = BuildSettingsManager.getBuildSettings(player).getArraySettings();
+        if (!isEnabled(a)) return blockStates;
+
+        BlockPos pos = startPos;
+        Vec3i offset = new Vec3i(a.offset.getX(), a.offset.getY(), a.offset.getZ());
 
         //Randomizer bag synergy
         IItemHandler bagInventory = null;
@@ -66,68 +82,26 @@ public class Array {
 
         for (int i = 0; i < a.count; i++) {
             pos = pos.add(offset);
-            if (event.getWorld().isBlockLoaded(pos, true)) {
-                if (itemStack.isEmpty()) break;
 
-                IBlockState blockState = event.getPlacedBlock();
-
-                //Randomizer bag synergy
-                if (bagInventory != null) {
-                    itemStack = ItemRandomizerBag.pickRandomStack(bagInventory);
-                    if (itemStack.isEmpty()) continue;
-                    blockState = getBlockStateFromRandomizerBag(bagInventory, event.getWorld(), event.getPlayer(), event.getPos(), itemStack, event.getHand());
-                    if (blockState == null) continue;
-                }
-
-                //TODO check if can place (ItemBlock) and if can break replaced
-
-                SurvivalHelper.placeBlock(event.getWorld(), event.getPlayer(), pos, blockState, itemStack, EnumFacing.NORTH, true, false);
+            //Randomizer bag synergy
+            if (bagInventory != null) {
+                itemStack = ItemRandomizerBag.pickRandomStack(bagInventory);
+                blockState = BuildModifiers.getBlockStateFromItem(itemStack, player, startPos, EnumFacing.UP, new Vec3d(0, 0, 0), EnumHand.MAIN_HAND);
             }
+
+            blockStates.add(blockState);
+            itemStacks.add(itemStack);
         }
+
+        return blockStates;
+    }
+
+    public static boolean isEnabled(ArraySettings a) {
+        if (a == null || !a.enabled) return false;
+
+        if (a.offset.getX() == 0 && a.offset.getY() == 0 && a.offset.getZ() == 0) return false;
 
         return true;
-    }
-
-    private static IBlockState getBlockStateFromRandomizerBag(IItemHandler bagInventory, World world, EntityPlayer player, BlockPos pos, ItemStack itemStack, EnumHand hand) {
-        //TODO get facing from getPlacedAgainst and getPlacedBlock
-        return Block.getBlockFromItem(itemStack.getItem()).getStateForPlacement(world, pos, EnumFacing.NORTH, 0, 0, 0, itemStack.getMetadata(), player, hand);
-    }
-
-    //Called from EventHandler
-    public static void onBlockBroken(BlockEvent.BreakEvent event) {
-        if (event.getWorld().isRemote) return;
-
-        //find arraysettings for the player that broke the block
-        ArraySettings a = BuildSettingsManager.getBuildSettings(event.getPlayer()).getArraySettings();
-        if (a == null || !a.enabled) return;
-
-        if (a.offset.getX() == 0 && a.offset.getY() == 0 && a.offset.getZ() == 0) return;
-
-        BlockPos pos = event.getPos();
-        Vec3i offset = new Vec3i(a.offset.getX(), a.offset.getY(), a.offset.getZ());
-        for (int i = 0; i < a.count; i++) {
-            pos = pos.add(offset);
-            SurvivalHelper.breakBlock(event.getWorld(), event.getPlayer(), pos);
-        }
-    }
-
-    //Called from EventHandler
-    public static float getTotalBlockHardness(World world, EntityPlayer player, BlockPos pos) {
-        float hardness = 0;
-
-        //find arraysettings for the player that broke the block
-        ArraySettings a = BuildSettingsManager.getBuildSettings(player).getArraySettings();
-        if (a == null || !a.enabled) return 0;
-
-        if (a.offset.getX() == 0 && a.offset.getY() == 0 && a.offset.getZ() == 0) return 0;
-
-        Vec3i offset = new Vec3i(a.offset.getX(), a.offset.getY(), a.offset.getZ());
-        for (int i = 0; i < a.count; i++) {
-            pos = pos.add(offset);
-            if (SurvivalHelper.canBreak(world, player, pos))
-                hardness += world.getBlockState(pos).getBlockHardness(world, pos);
-        }
-        return hardness;
     }
 
 }

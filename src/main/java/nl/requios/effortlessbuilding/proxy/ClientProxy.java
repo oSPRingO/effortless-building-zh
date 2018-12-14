@@ -11,7 +11,9 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -127,6 +129,8 @@ public class ClientProxy implements IProxy {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
 
+        //TODO increase range using getLookingAt
+        // Would also need other trigger than onBlockPlaced
         RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
         //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
         if (objectMouseOver == null) return;
@@ -148,7 +152,14 @@ public class ClientProxy implements IProxy {
                 }
             }
         }
+    }
 
-
+    private static float rayTraceRange = 32f;
+    public static RayTraceResult getLookingAt(EntityPlayer player) {
+        World world = player.world;
+        Vec3d look = player.getLookVec();
+        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+        Vec3d end = new Vec3d(player.posX + look.x * rayTraceRange, player.posY + player.getEyeHeight() + look.y * rayTraceRange, player.posZ + look.z * rayTraceRange);
+        return world.rayTraceBlocks(start, end, false, false, false);
     }
 }

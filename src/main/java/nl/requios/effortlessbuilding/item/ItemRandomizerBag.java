@@ -24,13 +24,15 @@ import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
 public class ItemRandomizerBag extends Item {
     public static final int INV_SIZE = 5;
 
-    private static Random rand = new Random(1337);
+    private static long currentSeed = 1337;
+    private static Random rand = new Random(currentSeed);
 
     public ItemRandomizerBag() {
         this.setRegistryName(EffortlessBuilding.MODID, "randomizer_bag");
@@ -181,5 +183,14 @@ public class ItemRandomizerBag extends Item {
     @Override
     public String getUnlocalizedName() {
         return super.getUnlocalizedName();
+    }
+
+    public static void resetRandomness() {
+        rand.setSeed(currentSeed);
+    }
+
+    public static void renewRandomness() {
+        currentSeed = Calendar.getInstance().getTimeInMillis();
+        rand.setSeed(currentSeed);
     }
 }

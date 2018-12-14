@@ -10,9 +10,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.*;
+import net.minecraftforge.client.ForgeHooksClient;
+import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -22,6 +24,9 @@ import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.Color;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Mod.EventBusSubscriber(Side.CLIENT)
 public class RenderHelper {
@@ -33,15 +38,23 @@ public class RenderHelper {
     private static final int planeAlpha = 75;
     private static final Vec3d epsilon = new Vec3d(0.001, 0.001, 0.001); //prevents z-fighting
 
-    public static void begin(float partialTicks) {
+    private static List<BlockPos> previousCoordinates;
+
+    private static void begin(float partialTicks) {
         EntityPlayer player = Minecraft.getMinecraft().player;
         double playerX = player.prevPosX + (player.posX - player.prevPosX) * partialTicks;
         double playerY = player.prevPosY + (player.posY - player.prevPosY) * partialTicks;
         double playerZ = player.prevPosZ + (player.posZ - player.prevPosZ) * partialTicks;
         Vec3d playerPos = new Vec3d(playerX, playerY, playerZ);
 
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
         GL11.glPushMatrix();
+        GL11.glTranslated(-playerPos.x, -playerPos.y, -playerPos.z);
+
+        GL11.glDepthMask(false);
+    }
+
+    private static void beginLines() {
+        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
         GL11.glDisable(GL11.GL_CULL_FACE);
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
@@ -49,16 +62,21 @@ public class RenderHelper {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
-        GL11.glTranslated(-playerPos.x, -playerPos.y, -playerPos.z);
-
         GL11.glLineWidth(2);
-        GL11.glDepthMask(false);
     }
 
-    public static void end() {
-        GL11.glDepthMask(true);
-        GL11.glPopMatrix();
+    private static void endLines() {
         GL11.glPopAttrib();
+    }
+
+    private static void beginBlockPreviews() {
+        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
+        GL11.glEnable(GL11.GL_CULL_FACE);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+        GlStateManager.enableBlend();
+        GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
+        GL14.glBlendColor(1F, 1F, 1F, 0.6f);
     }
 
     public static void renderBlockOutline(BlockPos pos) {
@@ -71,20 +89,40 @@ public class RenderHelper {
 
         AxisAlignedBB aabb = new AxisAlignedBB(pos1, pos2.add(1, 1, 1)).grow(0.0020000000949949026);
 
-        RenderGlobal.drawSelectionBoundingBox(aabb, 1f, 1f, 1f, 0.6f);
+        RenderGlobal.drawSelectionBoundingBox(aabb, 0f, 0f, 0f, 0.4f);
+    }
+
+    private static void endBlockPreviews() {
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        GlStateManager.disableBlend();
+        GL11.glPopAttrib();
+    }
+
+    private static void end() {
+        GL11.glDepthMask(true);
+        GL11.glPopMatrix();
+    }
+
+    private static void renderBlockPreview(BlockRendererDispatcher dispatcher, BlockPos blockPos, IBlockState blockState) {
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+        GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.translate(-0.005f, -0.005f, 0.005f);
+        GlStateManager.scale(1.01f, 1.01f, 1.01f);
+        dispatcher.renderBlockBrightness(blockState, 1f);
+        GlStateManager.popMatrix();
     }
 
     @SubscribeEvent
     public static void onRender(RenderWorldLastEvent event) {
         EntityPlayer player = Minecraft.getMinecraft().player;
         BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(player);
-        if (buildSettings == null) return;
-        Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
-        Array.ArraySettings a = buildSettings.getArraySettings();
 
         begin(event.getPartialTicks());
 
-        //Mirror
+        //Mirror lines and areas
+        beginLines();
+        Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
         if (m != null && m.enabled && (m.mirrorX || m.mirrorY || m.mirrorZ))
         {
             Vec3d pos = m.position.add(epsilon);
@@ -118,84 +156,73 @@ public class RenderHelper {
             {
                 drawMirrorLines(m);
             }
-
         }
+        endLines();
 
         //Render block previews
         RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
         //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
         if (objectMouseOver != null && objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
         {
-            BlockPos blockPos = objectMouseOver.getBlockPos();
-            ItemStack stack = ItemStack.EMPTY;
-            ItemStack mainhand = player.getHeldItemMainhand();
-            IBlockState blockState = null;
-            if (mainhand.getItem() instanceof ItemBlock) {
-                stack = mainhand;
-                Block block = ((ItemBlock) stack.getItem()).getBlock();
-                Vec3d hitVec = objectMouseOver.hitVec;
-                hitVec = new Vec3d(Math.abs(hitVec.x - ((int) hitVec.x)), Math.abs(hitVec.y - ((int) hitVec.y)), Math.abs(hitVec.z - ((int) hitVec.z)));
-                blockState = block.getStateForPlacement(player.world, blockPos, objectMouseOver.sideHit,
-                        ((float) hitVec.x), ((float) hitVec.y), ((float) hitVec.z), stack.getMetadata(), player, EnumHand.MAIN_HAND);
-            }
-            if (mainhand.getItem() instanceof ItemRandomizerBag) {
-                //TODO figure this out
-            }
-            //TODO check offhand
+            beginBlockPreviews();
+            BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+            BlockPos startPos = objectMouseOver.getBlockPos();
 
             //Check if tool (or none) in hand
+            ItemStack mainhand = player.getHeldItemMainhand();
             boolean toolInHand = !mainhand.isEmpty() && mainhand.getItem() instanceof ItemTool;
-            if (!buildSettings.doQuickReplace() && !toolInHand) {
-                blockPos = blockPos.offset(objectMouseOver.sideHit);
+            boolean replaceable =
+                    player.world.getBlockState(startPos).getBlock().isReplaceable(player.world, startPos);
+            if (!buildSettings.doQuickReplace() && !toolInHand && !replaceable) {
+                startPos = startPos.offset(objectMouseOver.sideHit);
             }
 
-            if (buildSettings.doQuickReplace() && !toolInHand) {
-                //Get under tall grass and other replaceable blocks
-                if (player.world.getBlockState(blockPos).getBlock().isReplaceable(player.world, blockPos)) {
-                    blockPos = blockPos.down();
+            //Get under tall grass and other replaceable blocks
+            if (buildSettings.doQuickReplace() && !toolInHand && replaceable) {
+                startPos = startPos.down();
+            }
+
+            //get coordinates
+            List<BlockPos> newCoordinates = BuildModifiers.findCoordinates(player, startPos);
+
+            if (BuildModifiers.isEnabled(buildSettings, startPos) || BuildConfig.visuals.alwaysShowBlockPreview) {
+                //check if they are different from previous
+                if (!BuildModifiers.compareCoordinates(previousCoordinates, newCoordinates)) {
+                    previousCoordinates = newCoordinates;
+                    //if so, renew randomness of randomizer bag
+                    ItemRandomizerBag.renewRandomness();
+                }
+
+                Vec3d hitVec = objectMouseOver.hitVec;
+                hitVec = new Vec3d(Math.abs(hitVec.x - ((int) hitVec.x)), Math.abs(hitVec.y - ((int) hitVec.y)),
+                        Math.abs(hitVec.z - ((int) hitVec.z)));
+                List<ItemStack> itemStacks = new ArrayList<>();
+                List<IBlockState> blockStates = BuildModifiers.findBlockStates(player, startPos, hitVec, objectMouseOver.sideHit, itemStacks);
+
+                //check if valid blockstates
+                if (blockStates.size() != 0 && newCoordinates.size() == blockStates.size()) {
+                    for (int i = 0; i < newCoordinates.size(); i++) {
+                        BlockPos blockPos = newCoordinates.get(i);
+                        IBlockState blockState = blockStates.get(i);
+                        renderBlockPreview(dispatcher, blockPos, blockState);
+                    }
                 }
             }
+            endBlockPreviews();
 
-            //Render current block outline based on config, or when QuickReplace is enabled
-            if (buildSettings.doQuickReplace() || BuildConfig.visuals.showOutlineOnCurrentBlock) {
-                RenderHelper.renderBlockOutline(blockPos);
-            }
+            beginLines();
+            //Draw outlines if tool in hand
+            if (toolInHand) {
+                for (int i = 1; i < newCoordinates.size(); i++) {
+                    BlockPos coordinate = newCoordinates.get(i);
 
-            //TODO testing
-            if (blockState != null) {
-                BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-                GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-                GlStateManager.pushMatrix();//Push matrix again just because
-                GL11.glEnable(GL11.GL_CULL_FACE);
-                GL11.glEnable(GL11.GL_TEXTURE_2D);
-                Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-                GlStateManager.enableBlend();
-                GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
-                GlStateManager.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-                GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);
-                GlStateManager.translate(-0.005f, -0.005f, 0.005f);
-                GlStateManager.scale(1.01f, 1.01f, 1.01f);
-                GL14.glBlendColor(1F, 1F, 1F, 0.6f);
-                dispatcher.renderBlockBrightness(blockState, 1f);
-                GlStateManager.popMatrix();
-                GL11.glPopAttrib();
+                    IBlockState blockState = player.world.getBlockState(coordinate);
+                    if (!blockState.getBlock().isAir(blockState, player.world, coordinate)) {
+                        renderBlockOutline(coordinate);
+                    }
+                }
             }
-
-            //Mirror
-            if (m != null && m.enabled && (m.mirrorX || m.mirrorY || m.mirrorZ) &&
-                    !(blockPos.getX() + 0.5 < m.position.x - m.radius) && !(blockPos.getX() + 0.5 > m.position.x + m.radius) &&
-                    !(blockPos.getY() + 0.5 < m.position.y - m.radius) && !(blockPos.getY() + 0.5 > m.position.y + m.radius) &&
-                    !(blockPos.getZ() + 0.5 < m.position.z - m.radius) && !(blockPos.getZ() + 0.5 > m.position.z + m.radius))
-            {
-                if (m.mirrorX) drawMirrorBlockOutlineX(buildSettings, blockPos);
-                if (m.mirrorY) drawMirrorBlockOutlineY(buildSettings, blockPos);
-                if (m.mirrorZ) drawMirrorBlockOutlineZ(buildSettings, blockPos);
-            }
-
-            //Array
-            if (a != null && a.enabled && (a.offset.getX() != 0 || a.offset.getY() != 0 || a.offset.getZ() != 0)) {
-                drawArrayBlockOutlines(a, blockPos);
-            }
+            endLines();
         }
 
         end();
@@ -283,63 +310,6 @@ public class RenderHelper {
         bufferBuilder.pos(pos.x, pos.y, pos.z + m.radius).color(colorZ.getRed(), colorZ.getGreen(), colorZ.getBlue(), lineAlpha).endVertex();
 
         tessellator.draw();
-    }
-
-    public static void drawMirrorBlockOutlineX(BuildSettingsManager.BuildSettings buildSettings, BlockPos oldBlockPos) {
-        Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
-        //find mirror position
-        double x = m.position.x + (m.position.x - oldBlockPos.getX() - 0.5);
-        BlockPos newBlockPos = new BlockPos(x, oldBlockPos.getY(), oldBlockPos.getZ());
-
-        RenderHelper.renderBlockOutline(newBlockPos);
-
-        //Array synergy
-        drawArrayBlockOutlines(buildSettings.getArraySettings(), newBlockPos);
-
-        if (m.mirrorY) drawMirrorBlockOutlineY(buildSettings, newBlockPos);
-        if (m.mirrorZ) drawMirrorBlockOutlineZ(buildSettings, newBlockPos);
-    }
-
-    public static void drawMirrorBlockOutlineY(BuildSettingsManager.BuildSettings buildSettings, BlockPos oldBlockPos) {
-        Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
-        //find mirror position
-        double y = m.position.y + (m.position.y - oldBlockPos.getY() - 0.5);
-        BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), y, oldBlockPos.getZ());
-
-        RenderHelper.renderBlockOutline(newBlockPos);
-
-        //Array synergy
-        drawArrayBlockOutlines(buildSettings.getArraySettings(), newBlockPos);
-
-        if (m.mirrorZ) drawMirrorBlockOutlineZ(buildSettings, newBlockPos);
-    }
-
-    public static void drawMirrorBlockOutlineZ(BuildSettingsManager.BuildSettings buildSettings, BlockPos oldBlockPos) {
-        Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
-        //find mirror position
-        double z = m.position.z + (m.position.z - oldBlockPos.getZ() - 0.5);
-        BlockPos newBlockPos = new BlockPos(oldBlockPos.getX(), oldBlockPos.getY(), z);
-
-        RenderHelper.renderBlockOutline(newBlockPos);
-
-        //Array synergy
-        drawArrayBlockOutlines(buildSettings.getArraySettings(), newBlockPos);
-    }
-
-
-    //----Array----
-
-    public static void drawArrayBlockOutlines(Array.ArraySettings a, BlockPos pos) {
-        if (a == null || !a.enabled || (a.offset.getX() == 0 && a.offset.getY() == 0 && a.offset.getZ() == 0)) return;
-
-        Vec3i offset = new Vec3i(a.offset.getX(), a.offset.getY(), a.offset.getZ());
-
-        //RenderHelper.renderBlockOutline(blockPos);
-        for (int i = 0; i < a.count; i++)
-        {
-            pos = pos.add(offset);
-            RenderHelper.renderBlockOutline(pos);
-        }
     }
 
 }

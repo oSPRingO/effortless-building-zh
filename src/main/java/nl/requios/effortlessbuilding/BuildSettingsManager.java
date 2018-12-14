@@ -2,27 +2,27 @@ package nl.requios.effortlessbuilding;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-import nl.requios.effortlessbuilding.capability.BuildModifierCapability;
+import nl.requios.effortlessbuilding.capability.BuildModifierCapabilityManager;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 
 @Mod.EventBusSubscriber
 public class BuildSettingsManager {
 
-    //Retrieves the buildsettings of a player through the buildModifier capability
+    //Retrieves the buildsettings of a player through the buildModifierCapability capability
     //Never returns null
     public static BuildSettings getBuildSettings(EntityPlayer player){
-        if (player.hasCapability(BuildModifierCapability.buildModifier, null)) {
-            BuildModifierCapability.IBuildModifier capability = player.getCapability(BuildModifierCapability.buildModifier, null);
+        if (player.hasCapability(BuildModifierCapabilityManager.buildModifierCapability, null)) {
+            BuildModifierCapabilityManager.IBuildModifierCapability capability = player.getCapability(
+                    BuildModifierCapabilityManager.buildModifierCapability, null);
             if (capability.getBuildModifierData() == null) {
                 capability.setBuildModifierData(new BuildSettings());
             }
             return capability.getBuildModifierData();
         }
-        throw new IllegalArgumentException("Player does not have buildModifier capability");
+        throw new IllegalArgumentException("Player does not have buildModifierCapability capability");
     }
 
     public static void setBuildSettings(EntityPlayer player, BuildSettings buildSettings) {
@@ -30,8 +30,9 @@ public class BuildSettingsManager {
             EffortlessBuilding.log("Cannot set buildsettings, player is null");
             return;
         }
-        if (player.hasCapability(BuildModifierCapability.buildModifier, null)) {
-            BuildModifierCapability.IBuildModifier capability = player.getCapability(BuildModifierCapability.buildModifier, null);
+        if (player.hasCapability(BuildModifierCapabilityManager.buildModifierCapability, null)) {
+            BuildModifierCapabilityManager.IBuildModifierCapability capability = player.getCapability(
+                    BuildModifierCapabilityManager.buildModifierCapability, null);
             capability.setBuildModifierData(buildSettings);
         } else {
             EffortlessBuilding.log(player, "Saving buildsettings failed.");

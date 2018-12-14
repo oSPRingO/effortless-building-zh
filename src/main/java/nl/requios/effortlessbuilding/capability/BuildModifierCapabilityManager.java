@@ -19,18 +19,18 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber
-public class BuildModifierCapability {
+public class BuildModifierCapabilityManager {
 
-    @CapabilityInject(IBuildModifier.class)
-    public final static Capability<IBuildModifier> buildModifier = null;
+    @CapabilityInject(IBuildModifierCapability.class)
+    public final static Capability<IBuildModifierCapability> buildModifierCapability = null;
 
-    public interface IBuildModifier {
+    public interface IBuildModifierCapability {
         BuildSettings getBuildModifierData();
 
         void setBuildModifierData(BuildSettings buildSettings);
     }
 
-    public static class BuildModifier implements IBuildModifier {
+    public static class BuildModifierCapability implements IBuildModifierCapability {
         private BuildSettings buildSettings;
 
         @Override
@@ -44,9 +44,9 @@ public class BuildModifierCapability {
         }
     }
 
-    public static class Storage implements Capability.IStorage<IBuildModifier> {
+    public static class Storage implements Capability.IStorage<IBuildModifierCapability> {
         @Override
-        public NBTBase writeNBT(Capability<IBuildModifier> capability, IBuildModifier instance, EnumFacing side) {
+        public NBTBase writeNBT(Capability<IBuildModifierCapability> capability, IBuildModifierCapability instance, EnumFacing side) {
             NBTTagCompound compound = new NBTTagCompound();
             BuildSettings buildSettings = instance.getBuildModifierData();
             if (buildSettings == null) buildSettings = new BuildSettings();
@@ -79,7 +79,7 @@ public class BuildModifierCapability {
         }
 
         @Override
-        public void readNBT(Capability<IBuildModifier> capability, IBuildModifier instance, EnumFacing side, NBTBase nbt) {
+        public void readNBT(Capability<IBuildModifierCapability> capability, IBuildModifierCapability instance, EnumFacing side, NBTBase nbt) {
             NBTTagCompound compound = (NBTTagCompound) nbt;
 
             //MIRROR
@@ -109,35 +109,35 @@ public class BuildModifierCapability {
     }
 
     public static class Provider implements ICapabilitySerializable<NBTBase> {
-        IBuildModifier inst = buildModifier.getDefaultInstance();
+        IBuildModifierCapability inst = buildModifierCapability.getDefaultInstance();
 
         @Override
         public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
-            return capability == buildModifier;
+            return capability == buildModifierCapability;
         }
 
         @Override
         public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-            if (capability == buildModifier) return buildModifier.<T>cast(inst);
+            if (capability == buildModifierCapability) return buildModifierCapability.<T>cast(inst);
             return null;
         }
 
         @Override
         public NBTBase serializeNBT() {
-            return buildModifier.getStorage().writeNBT(buildModifier, inst, null);
+            return buildModifierCapability.getStorage().writeNBT(buildModifierCapability, inst, null);
         }
 
         @Override
         public void deserializeNBT(NBTBase nbt) {
-            buildModifier.getStorage().readNBT(buildModifier, inst, null, nbt);
+            buildModifierCapability.getStorage().readNBT(buildModifierCapability, inst, null, nbt);
         }
     }
 
     // Allows for the capability to persist after death.
     @SubscribeEvent
     public static void clonePlayer(PlayerEvent.Clone event) {
-        IBuildModifier original = event.getOriginal().getCapability(buildModifier, null);
-        IBuildModifier clone = event.getEntity().getCapability(buildModifier, null);
+        IBuildModifierCapability original = event.getOriginal().getCapability(buildModifierCapability, null);
+        IBuildModifierCapability clone = event.getEntity().getCapability(buildModifierCapability, null);
         clone.setBuildModifierData(original.getBuildModifierData());
     }
 }
