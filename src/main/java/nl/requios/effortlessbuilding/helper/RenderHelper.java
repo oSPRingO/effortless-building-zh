@@ -1,20 +1,25 @@
 package nl.requios.effortlessbuilding.helper;
 
+import com.google.common.collect.Maps;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.math.*;
-import net.minecraftforge.client.ForgeHooksClient;
-import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.IWorldEventListener;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -25,11 +30,13 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.Color;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Mod.EventBusSubscriber(Side.CLIENT)
-public class RenderHelper {
+public class RenderHelper implements IWorldEventListener {
 
     private static final Color colorX = new Color(255, 72, 52);
     private static final Color colorY = new Color(67, 204, 51);
@@ -76,20 +83,7 @@ public class RenderHelper {
         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
-        GL14.glBlendColor(1F, 1F, 1F, 0.6f);
-    }
-
-    public static void renderBlockOutline(BlockPos pos) {
-        renderBlockOutline(pos, pos);
-    }
-
-    //Renders outline. Pos1 has to be minimal x,y,z and pos2 maximal x,y,z
-    public static void renderBlockOutline(BlockPos pos1, BlockPos pos2) {
-        GL11.glLineWidth(2);
-
-        AxisAlignedBB aabb = new AxisAlignedBB(pos1, pos2.add(1, 1, 1)).grow(0.0020000000949949026);
-
-        RenderGlobal.drawSelectionBoundingBox(aabb, 0f, 0f, 0f, 0.4f);
+        GL14.glBlendColor(1F, 1F, 1F, 0.8f);
     }
 
     private static void endBlockPreviews() {
@@ -109,8 +103,21 @@ public class RenderHelper {
         GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.translate(-0.005f, -0.005f, 0.005f);
         GlStateManager.scale(1.01f, 1.01f, 1.01f);
-        dispatcher.renderBlockBrightness(blockState, 1f);
+        dispatcher.renderBlockBrightness(blockState, 0.85f);
         GlStateManager.popMatrix();
+    }
+
+    public static void renderBlockOutline(BlockPos pos) {
+        renderBlockOutline(pos, pos);
+    }
+
+    //Renders outline. Pos1 has to be minimal x,y,z and pos2 maximal x,y,z
+    public static void renderBlockOutline(BlockPos pos1, BlockPos pos2) {
+        GL11.glLineWidth(2);
+
+        AxisAlignedBB aabb = new AxisAlignedBB(pos1, pos2.add(1, 1, 1)).grow(0.0020000000949949026);
+
+        RenderGlobal.drawSelectionBoundingBox(aabb, 0f, 0f, 0f, 0.4f);
     }
 
     @SubscribeEvent
@@ -170,7 +177,7 @@ public class RenderHelper {
 
             //Check if tool (or none) in hand
             ItemStack mainhand = player.getHeldItemMainhand();
-            boolean toolInHand = !mainhand.isEmpty() && mainhand.getItem() instanceof ItemTool;
+            boolean toolInHand = mainhand.isEmpty() || (!mainhand.isEmpty() && mainhand.getItem() instanceof ItemTool);
             boolean replaceable =
                     player.world.getBlockState(startPos).getBlock().isReplaceable(player.world, startPos);
             if (!buildSettings.doQuickReplace() && !toolInHand && !replaceable) {
@@ -201,10 +208,16 @@ public class RenderHelper {
 
                 //check if valid blockstates
                 if (blockStates.size() != 0 && newCoordinates.size() == blockStates.size()) {
-                    for (int i = 0; i < newCoordinates.size(); i++) {
+                    for (int i = newCoordinates.size() - 1; i >= 0; i--) {
                         BlockPos blockPos = newCoordinates.get(i);
                         IBlockState blockState = blockStates.get(i);
-                        renderBlockPreview(dispatcher, blockPos, blockState);
+                        ItemStack itemstack = itemStacks.get(i);
+                        //Check if can place
+                        if (!itemstack.isEmpty() && SurvivalHelper.canPlayerEdit(player, player.world, blockPos, itemstack) &&
+                            SurvivalHelper.mayPlace(player.world, Block.getBlockFromItem(itemstack.getItem()), blockState, blockPos, true, EnumFacing.UP, player) &&
+                            SurvivalHelper.canReplace(player.world, player, blockPos)) {
+                            renderBlockPreview(dispatcher, blockPos, blockState);
+                        }
                     }
                 }
             }
@@ -217,7 +230,8 @@ public class RenderHelper {
                     BlockPos coordinate = newCoordinates.get(i);
 
                     IBlockState blockState = player.world.getBlockState(coordinate);
-                    if (!blockState.getBlock().isAir(blockState, player.world, coordinate)) {
+                    if (!blockState.getBlock().isAir(blockState, player.world, coordinate) &&
+                        SurvivalHelper.canBreak(player.world, player, coordinate)) {
                         renderBlockOutline(coordinate);
                     }
                 }
@@ -312,4 +326,82 @@ public class RenderHelper {
         tessellator.draw();
     }
 
+    //IWORLDEVENTLISTENER IMPLEMENTATION
+    @Override
+    public void notifyBlockUpdate(World worldIn, BlockPos pos, IBlockState oldState, IBlockState newState, int flags) {
+
+    }
+
+    @Override
+    public void notifyLightSet(BlockPos pos) {
+
+    }
+
+    @Override
+    public void markBlockRangeForRenderUpdate(int x1, int y1, int z1, int x2, int y2, int z2) {
+
+    }
+
+    @Override
+    public void playSoundToAllNearExcept(@Nullable EntityPlayer player, SoundEvent soundIn, SoundCategory category,
+                                         double x, double y, double z, float volume, float pitch) {
+
+    }
+
+    @Override
+    public void playRecord(SoundEvent soundIn, BlockPos pos) {
+
+    }
+
+    @Override
+    public void spawnParticle(int particleID, boolean ignoreRange, double xCoord, double yCoord, double zCoord,
+                              double xSpeed, double ySpeed, double zSpeed, int... parameters) {
+
+    }
+
+    @Override
+    public void spawnParticle(int id, boolean ignoreRange, boolean p_190570_3_, double x, double y, double z,
+                              double xSpeed, double ySpeed, double zSpeed, int... parameters) {
+
+    }
+
+    @Override
+    public void onEntityAdded(Entity entityIn) {
+
+    }
+
+    @Override
+    public void onEntityRemoved(Entity entityIn) {
+
+    }
+
+    @Override
+    public void broadcastSound(int soundID, BlockPos pos, int data) {
+
+    }
+
+    @Override
+    public void playEvent(EntityPlayer player, int type, BlockPos blockPosIn, int data) {
+
+    }
+
+    //Sends breaking progress for all coordinates to renderglobal, so all blocks get visually broken
+    @Override
+    public void sendBlockBreakProgress(int breakerId, BlockPos pos, int progress) {
+        Minecraft mc = Minecraft.getMinecraft();
+
+        BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(mc.player);
+        if (!BuildModifiers.isEnabled(buildSettings, pos)) return;
+
+        List<BlockPos> coordinates = BuildModifiers.findCoordinates(mc.player, pos);
+        for (int i = 1; i < coordinates.size(); i++) {
+            BlockPos coordinate = coordinates.get(i);
+            if (SurvivalHelper.canBreak(mc.world, mc.player, coordinate)) {
+                //Send i as entity id because only one block can be broken per id
+                //Unless i happens to be the player id, then take something else
+                int fakeId = mc.player.getEntityId() != i ? i : coordinates.size();
+                mc.renderGlobal.sendBlockBreakProgress(fakeId, coordinate, progress);
+            }
+        }
+    }
 }

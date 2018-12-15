@@ -2,20 +2,27 @@ package nl.requios.effortlessbuilding.proxy;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.util.IThreadListener;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.*;
@@ -28,8 +35,12 @@ import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.gui.SettingsGui;
+import nl.requios.effortlessbuilding.helper.RenderHelper;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import org.lwjgl.input.Keyboard;
+import scala.collection.parallel.ParIterableLike;
+
+import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber(Side.CLIENT)
 public class ClientProxy implements IProxy {
@@ -85,6 +96,13 @@ public class ClientProxy implements IProxy {
 
         for (Item item : EffortlessBuilding.ITEMS) {
             ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(item.getRegistryName(), "inventory"));
+        }
+    }
+
+    @SubscribeEvent
+    public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
+        if (event.getEntity() == Minecraft.getMinecraft().player) {
+            event.getWorld().addEventListener(new RenderHelper());
         }
     }
 

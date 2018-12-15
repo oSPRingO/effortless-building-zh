@@ -89,6 +89,7 @@ public class Array {
                 blockState = BuildModifiers.getBlockStateFromItem(itemStack, player, startPos, EnumFacing.UP, new Vec3d(0, 0, 0), EnumHand.MAIN_HAND);
             }
 
+            //blockState = blockState.getBlock().getStateForPlacement(player.world, pos, )
             blockStates.add(blockState);
             itemStacks.add(itemStack);
         }

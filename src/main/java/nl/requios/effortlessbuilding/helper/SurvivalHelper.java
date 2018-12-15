@@ -1,6 +1,7 @@
 package nl.requios.effortlessbuilding.helper;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -20,6 +21,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
@@ -108,11 +110,12 @@ public class SurvivalHelper {
 
     //Can break using held tool? (or in creative)
     public static boolean canBreak(World world, EntityPlayer player, BlockPos pos) {
+        IBlockState blockState = world.getBlockState(pos);
+        if (blockState.getBlock() instanceof BlockLiquid) return false;
+
         if (player.isCreative()) return true;
 
-        IBlockState blockState = world.getBlockState(pos);
         return canHarvestBlock(blockState.getBlock(), player, world, pos);
-
     }
 
     //From ForgeHooks#canHarvestBlock
@@ -169,21 +172,23 @@ public class SurvivalHelper {
     }
 
     //From EntityPlayer#canPlayerEdit
-    private static boolean canPlayerEdit(EntityPlayer player, World world, BlockPos pos, ItemStack stack)
+    public static boolean canPlayerEdit(EntityPlayer player, World world, BlockPos pos, ItemStack stack)
     {
         if (player.capabilities.allowEdit)
         {
+            //True in creative and survival mode
             return true;
         }
         else
         {
+            //Adventure mode
             Block block = world.getBlockState(pos).getBlock();
             return stack.canPlaceOn(block) || stack.canEditBlocks();
         }
     }
 
     //From World#mayPlace
-    private static boolean mayPlace(World world, Block blockIn, IBlockState newBlockState, BlockPos pos, boolean skipCollisionCheck, EnumFacing sidePlacedOn, @Nullable Entity placer)
+    public static boolean mayPlace(World world, Block blockIn, IBlockState newBlockState, BlockPos pos, boolean skipCollisionCheck, EnumFacing sidePlacedOn, @Nullable Entity placer)
     {
         IBlockState iblockstate1 = world.getBlockState(pos);
         AxisAlignedBB axisalignedbb = skipCollisionCheck ? null : blockIn.getDefaultState().getCollisionBoundingBox(world, pos);
@@ -204,9 +209,11 @@ public class SurvivalHelper {
             return true;
         }
 
-        //TODO check config for allow to replace
-        return true;
-        //TODO fix check canPlaceBlockOnSide
-        //return /*iblockstate1.getBlock().isReplaceable(world, pos) &&*/ blockIn.canPlaceBlockOnSide(world, pos, sidePlacedOn);
+        //Check quickreplace
+        if (placer instanceof EntityPlayer && BuildSettingsManager.getBuildSettings(((EntityPlayer) placer)).doQuickReplace()) {
+            return true;
+        }
+
+        return iblockstate1.getBlock().isReplaceable(world, pos) && blockIn.canPlaceBlockOnSide(world, pos, sidePlacedOn);
     }
 }

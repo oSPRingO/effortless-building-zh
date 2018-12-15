@@ -101,7 +101,7 @@ public class EventHandler
             IBlockState blockState = world.getBlockState(coordinate);
             //add hardness for each blockstate, if can break
             if (SurvivalHelper.canBreak(world, player, coordinate))
-                totalBlockHardness += world.getBlockState(coordinate).getBlockHardness(world, coordinate);
+                totalBlockHardness += blockState.getBlockHardness(world, coordinate);
         }
 
         //Grabbing percentage from config

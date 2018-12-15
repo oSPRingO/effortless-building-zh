@@ -86,13 +86,17 @@ public class BuildModifiers {
     public static void onBlockBroken(BlockEvent.BreakEvent event) {
         if (event.getWorld().isRemote) return;
 
-        //get coordinates
-        List<BlockPos> coordinates = findCoordinates(event.getPlayer(), event.getPos());
+        BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(event.getPlayer());
+        //Only use own break event if anything is enabled
+        if (isEnabled(buildSettings, event.getPos())) {
+            //get coordinates
+            List<BlockPos> coordinates = findCoordinates(event.getPlayer(), event.getPos());
 
-        //break all those blocks
-        for (BlockPos coordinate : coordinates) {
-            if (event.getWorld().isBlockLoaded(coordinate, false)) {
-                SurvivalHelper.breakBlock(event.getWorld(), event.getPlayer(), coordinate);
+            //break all those blocks
+            for (BlockPos coordinate : coordinates) {
+                if (event.getWorld().isBlockLoaded(coordinate, false)) {
+                    SurvivalHelper.breakBlock(event.getWorld(), event.getPlayer(), coordinate);
+                }
             }
         }
     }
@@ -102,12 +106,12 @@ public class BuildModifiers {
         //Add current block being placed too
         coordinates.add(startPos);
 
-        List<BlockPos> mirrorCoordinates = Mirror.findCoordinates(player, startPos);
-        coordinates.addAll(mirrorCoordinates);
-        coordinates.addAll(Array.findCoordinates(player, startPos));
+        List<BlockPos> arrayCoordinates = Array.findCoordinates(player, startPos);
+        coordinates.addAll(arrayCoordinates);
+        coordinates.addAll(Mirror.findCoordinates(player, startPos));
         //get array for each coordinate
-        for (BlockPos coordinate : mirrorCoordinates) {
-            coordinates.addAll(Array.findCoordinates(player, coordinate));
+        for (BlockPos coordinate : arrayCoordinates) {
+            coordinates.addAll(Mirror.findCoordinates(player, coordinate));
         }
 
         return coordinates;
@@ -137,16 +141,25 @@ public class BuildModifiers {
         blockStates.add(blockState);
         itemStacks.add(itemStack);
 
-        List<IBlockState> mirrorBlockStates = Mirror.findBlockStates(player, startPos, blockState, itemStack, itemStacks);
-        blockStates.addAll(mirrorBlockStates);
-        blockStates.addAll(Array.findBlockStates(player, startPos, blockState, itemStack, itemStacks));
+        List<IBlockState> arrayBlockStates = Array.findBlockStates(player, startPos, blockState, itemStack, itemStacks);
+        blockStates.addAll(arrayBlockStates);
+        blockStates.addAll(Mirror.findBlockStates(player, startPos, blockState, itemStack, itemStacks));
         //add array for each mirror coordinate
-        List<BlockPos> findCoordinates = Mirror.findCoordinates(player, startPos);
-        for (int i = 0; i < findCoordinates.size(); i++) {
-            BlockPos coordinate = findCoordinates.get(i);
-            IBlockState blockState1 = mirrorBlockStates.get(i);
-            blockStates.addAll(Array.findBlockStates(player, coordinate, blockState1, itemStack, itemStacks));
+        List<BlockPos> arrayCoordinates = Array.findCoordinates(player, startPos);
+        for (int i = 0; i < arrayCoordinates.size(); i++) {
+            BlockPos coordinate = arrayCoordinates.get(i);
+            IBlockState blockState1 = arrayBlockStates.get(i);
+            blockStates.addAll(Mirror.findBlockStates(player, coordinate, blockState1, itemStack, itemStacks));
         }
+
+        //Adjust blockstates for torches and ladders etc to place on a valid side
+        //TODO optimize findCoordinates (done twice now)
+        //TODO fix mirror
+//        List<BlockPos> coordinates = findCoordinates(player, startPos);
+//        for (int i = 0; i < blockStates.size(); i++) {
+//            blockStates.set(i, blockStates.get(i).getBlock().getStateForPlacement(player.world, coordinates.get(i), facing,
+//                    (float) hitVec.x, (float) hitVec.y, (float) hitVec.z, itemStacks.get(i).getMetadata(), player, EnumHand.MAIN_HAND));
+//        }
 
         return blockStates;
     }

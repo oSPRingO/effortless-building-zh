@@ -26,7 +26,7 @@ public class Mirror {
         public Vec3d position = new Vec3d(0.5, 64.5, 0.5);
         public boolean mirrorX = true, mirrorY = false, mirrorZ = false;
         public int radius = 20;
-        public boolean drawLines = true, drawPlanes = false;
+        public boolean drawLines = true, drawPlanes = true;
 
         public MirrorSettings() {
         }
