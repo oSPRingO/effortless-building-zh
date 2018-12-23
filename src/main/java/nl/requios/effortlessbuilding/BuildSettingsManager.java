@@ -6,6 +6,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import nl.requios.effortlessbuilding.capability.BuildModifierCapabilityManager;
+import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 
 @Mod.EventBusSubscriber
@@ -40,7 +41,7 @@ public class BuildSettingsManager {
     }
 
     public static String sanitize(BuildSettings buildSettings, EntityPlayer player) {
-        int maxReach = getMaxReach(player);
+        int maxReach = ReachHelper.getMaxReach(player);
         String error = "";
 
         //Mirror settings
@@ -75,20 +76,6 @@ public class BuildSettingsManager {
         }
 
         return error;
-    }
-
-    public static int getMaxReach(EntityPlayer player) {
-        if (player.isCreative()) return BuildConfig.reach.maxReachCreative;
-
-        //Check buildsettings for reachUpgrade
-        int reachUpgrade = getBuildSettings(player).getReachUpgrade();
-        switch (reachUpgrade) {
-            case 0: return BuildConfig.reach.maxReachLevel0;
-            case 1: return BuildConfig.reach.maxReachLevel1;
-            case 2: return BuildConfig.reach.maxReachLevel2;
-            case 3: return BuildConfig.reach.maxReachLevel3;
-        }
-        return BuildConfig.reach.maxReachLevel0;
     }
 
     public static class BuildSettings {

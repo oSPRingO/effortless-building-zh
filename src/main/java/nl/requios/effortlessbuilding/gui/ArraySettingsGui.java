@@ -8,10 +8,10 @@ import net.minecraftforge.fml.client.config.GuiCheckBox;
 import nl.requios.effortlessbuilding.Array;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
@@ -103,7 +103,7 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
             textArrayCount.y = yy;
 
             int currentReach = Math.max(-1, getArrayReach());
-            int maxReach = BuildSettingsManager.getMaxReach(mc.player);
+            int maxReach = ReachHelper.getMaxReach(mc.player);
             TextFormatting reachColor = isCurrentReachValid(currentReach, maxReach) ? TextFormatting.GRAY : TextFormatting.RED;
             String reachText = "Reach: " + reachColor + currentReach + TextFormatting.GRAY + "/" + TextFormatting.GRAY + maxReach;
             fontRenderer.drawString(reachText, left + 176 + offset, yy + 5, 0xFFFFFF, true);

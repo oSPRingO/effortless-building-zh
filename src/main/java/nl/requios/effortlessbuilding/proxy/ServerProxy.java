@@ -8,6 +8,7 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import nl.requios.effortlessbuilding.command.CommandReach;
 
 public class ServerProxy implements IProxy
 {
@@ -30,7 +31,6 @@ public class ServerProxy implements IProxy
     @Override
     public void serverStarting(FMLServerStartingEvent event)
     {
-        //event.registerServerCommand(new CommandStructureCapture());
     }
 
     @Override

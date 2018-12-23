@@ -7,18 +7,18 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.model.ModelLoader;
@@ -26,21 +26,26 @@ import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.*;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
+import nl.requios.effortlessbuilding.BuildConfig;
+import nl.requios.effortlessbuilding.BuildModifiers;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.command.CommandReach;
 import nl.requios.effortlessbuilding.gui.SettingsGui;
+import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.RenderHelper;
+import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
+import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
+import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import org.lwjgl.input.Keyboard;
-import scala.collection.parallel.ParIterableLike;
-
-import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber(Side.CLIENT)
 public class ClientProxy implements IProxy {
@@ -85,7 +90,7 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void serverStarting(FMLServerStartingEvent event) {
-        // This will never get called on client side
+        //This will get called clientside
     }
 
     @SubscribeEvent
@@ -106,6 +111,47 @@ public class ClientProxy implements IProxy {
         }
     }
 
+    @SubscribeEvent
+    public static void onMouseInput(InputEvent.MouseInputEvent event) {
+        Minecraft mc = Minecraft.getMinecraft();
+        EntityPlayerSP player = mc.player;
+
+        if (!BuildModifiers.isEnabled(BuildSettingsManager.getBuildSettings(player), player.getPosition())) return;
+
+        if (mc.gameSettings.keyBindUseItem.isPressed()) {
+            //KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
+
+            ItemStack currentItemStack = player.getHeldItem(EnumHand.MAIN_HAND);
+            if (currentItemStack.getItem() instanceof ItemBlock || currentItemStack.getItem() instanceof ItemRandomizerBag) {
+                //find position in distance
+                RayTraceResult lookingAt = getLookingAt(player);
+                if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
+                    EffortlessBuilding.packetHandler.sendToServer(new BlockPlacedMessage(lookingAt));
+                }
+            }
+        }
+
+        if (mc.gameSettings.keyBindAttack.isKeyDown()) {
+            //KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
+
+            //Break block in distance in creative (or survival if enabled in config)
+            if (ReachHelper.canBreakFar(player)) {
+                RayTraceResult lookingAt = getLookingAt(player);
+                if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
+                    EffortlessBuilding.packetHandler.sendToServer(new BlockBrokenMessage(lookingAt));
+
+                    //play sound
+                    BlockPos blockPos = lookingAt.getBlockPos();
+                    IBlockState state = player.world.getBlockState(blockPos);
+                    SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
+                    player.world.playSound(player, blockPos, soundtype.getBreakSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+                    player.swingArm(EnumHand.MAIN_HAND);
+                }
+            }
+        }
+        event.setResult(Event.Result.ALLOW);
+    }
+
     @SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
     public static void onKeyPress(InputEvent.KeyInputEvent event) {
         EntityPlayerSP player = Minecraft.getMinecraft().player;
@@ -114,7 +160,7 @@ public class ClientProxy implements IProxy {
         //Show HUD
         if (keyBindings[0].isPressed()) {
             //Disabled if max reach is 0, might be set in the config that way.
-            if (BuildSettingsManager.getMaxReach(player) == 0) {
+            if (ReachHelper.getMaxReach(player) == 0) {
                 EffortlessBuilding.log(player, "Effortless Building is disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
             } else {
                 if (Minecraft.getMinecraft().currentScreen == null) {
@@ -147,8 +193,6 @@ public class ClientProxy implements IProxy {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.START) return;
 
-        //TODO increase range using getLookingAt
-        // Would also need other trigger than onBlockPlaced
         RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
         //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
         if (objectMouseOver == null) return;
@@ -172,12 +216,16 @@ public class ClientProxy implements IProxy {
         }
     }
 
-    private static float rayTraceRange = 32f;
     public static RayTraceResult getLookingAt(EntityPlayer player) {
-        World world = player.world;
-        Vec3d look = player.getLookVec();
-        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
-        Vec3d end = new Vec3d(player.posX + look.x * rayTraceRange, player.posY + player.getEyeHeight() + look.y * rayTraceRange, player.posZ + look.z * rayTraceRange);
-        return world.rayTraceBlocks(start, end, false, false, false);
+//        World world = player.world;
+
+        //base distance off of player ability (config)
+        float raytraceRange = ReachHelper.getMaxReach(player) / 4f;
+
+//        Vec3d look = player.getLookVec();
+//        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+//        Vec3d end = new Vec3d(player.posX + look.x * raytraceRange, player.posY + player.getEyeHeight() + look.y * raytraceRange, player.posZ + look.z * raytraceRange);
+        return player.rayTrace(raytraceRange, 1f);
+//        return world.rayTraceBlocks(start, end, false, false, false);
     }
 }

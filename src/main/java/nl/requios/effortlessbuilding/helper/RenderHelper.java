@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemTool;
 import net.minecraft.util.EnumFacing;
@@ -26,6 +27,8 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.*;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
+import nl.requios.effortlessbuilding.item.ItemReachUpgrade1;
+import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.Color;
@@ -167,21 +170,21 @@ public class RenderHelper implements IWorldEventListener {
         endLines();
 
         //Render block previews
-        RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
+        RayTraceResult lookingAt = ClientProxy.getLookingAt(player);
         //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
-        if (objectMouseOver != null && objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK)
+        if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK)
         {
             beginBlockPreviews();
             BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-            BlockPos startPos = objectMouseOver.getBlockPos();
+            BlockPos startPos = lookingAt.getBlockPos();
 
             //Check if tool (or none) in hand
             ItemStack mainhand = player.getHeldItemMainhand();
-            boolean toolInHand = mainhand.isEmpty() || (!mainhand.isEmpty() && mainhand.getItem() instanceof ItemTool);
+            boolean toolInHand = !(!mainhand.isEmpty() && (mainhand.getItem() instanceof ItemBlock || mainhand.getItem() instanceof ItemRandomizerBag));
             boolean replaceable =
                     player.world.getBlockState(startPos).getBlock().isReplaceable(player.world, startPos);
             if (!buildSettings.doQuickReplace() && !toolInHand && !replaceable) {
-                startPos = startPos.offset(objectMouseOver.sideHit);
+                startPos = startPos.offset(lookingAt.sideHit);
             }
 
             //Get under tall grass and other replaceable blocks
@@ -189,10 +192,10 @@ public class RenderHelper implements IWorldEventListener {
                 startPos = startPos.down();
             }
 
-            //get coordinates
-            List<BlockPos> newCoordinates = BuildModifiers.findCoordinates(player, startPos);
-
             if (BuildModifiers.isEnabled(buildSettings, startPos) || BuildConfig.visuals.alwaysShowBlockPreview) {
+                //get coordinates
+                List<BlockPos> newCoordinates = BuildModifiers.findCoordinates(player, startPos);
+
                 //check if they are different from previous
                 if (!BuildModifiers.compareCoordinates(previousCoordinates, newCoordinates)) {
                     previousCoordinates = newCoordinates;
@@ -200,11 +203,11 @@ public class RenderHelper implements IWorldEventListener {
                     ItemRandomizerBag.renewRandomness();
                 }
 
-                Vec3d hitVec = objectMouseOver.hitVec;
+                Vec3d hitVec = lookingAt.hitVec;
                 hitVec = new Vec3d(Math.abs(hitVec.x - ((int) hitVec.x)), Math.abs(hitVec.y - ((int) hitVec.y)),
                         Math.abs(hitVec.z - ((int) hitVec.z)));
                 List<ItemStack> itemStacks = new ArrayList<>();
-                List<IBlockState> blockStates = BuildModifiers.findBlockStates(player, startPos, hitVec, objectMouseOver.sideHit, itemStacks);
+                List<IBlockState> blockStates = BuildModifiers.findBlockStates(player, startPos, hitVec, lookingAt.sideHit, itemStacks);
 
                 //check if valid blockstates
                 if (blockStates.size() != 0 && newCoordinates.size() == blockStates.size()) {
@@ -225,14 +228,22 @@ public class RenderHelper implements IWorldEventListener {
 
             beginLines();
             //Draw outlines if tool in hand
-            if (toolInHand) {
-                for (int i = 1; i < newCoordinates.size(); i++) {
-                    BlockPos coordinate = newCoordinates.get(i);
+            //Find proper raytrace: either normal range or increased range depending on canBreakFar
+            RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
+            RayTraceResult breakingRaytrace = ReachHelper.canBreakFar(player) ? lookingAt : objectMouseOver;
+            if (toolInHand && breakingRaytrace != null && breakingRaytrace.typeOfHit == RayTraceResult.Type.BLOCK) {
+                List<BlockPos> breakCoordinates = BuildModifiers.findCoordinates(player, breakingRaytrace.getBlockPos());
+
+                //Only render first outline if further than normal reach
+                boolean excludeFirst = objectMouseOver != null && objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK;
+                for (int i = excludeFirst ? 1 : 0; i < breakCoordinates.size(); i++) {
+                    BlockPos coordinate = breakCoordinates.get(i);
 
                     IBlockState blockState = player.world.getBlockState(coordinate);
-                    if (!blockState.getBlock().isAir(blockState, player.world, coordinate) &&
-                        SurvivalHelper.canBreak(player.world, player, coordinate)) {
-                        renderBlockOutline(coordinate);
+                    if (!blockState.getBlock().isAir(blockState, player.world, coordinate)) {
+                        if (SurvivalHelper.canBreak(player.world, player, coordinate) || i == 0) {
+                            renderBlockOutline(coordinate);
+                        }
                     }
                 }
             }

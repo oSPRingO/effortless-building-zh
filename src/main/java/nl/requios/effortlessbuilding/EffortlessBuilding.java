@@ -3,10 +3,12 @@ package nl.requios.effortlessbuilding;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -18,8 +20,13 @@ import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.capability.*;
+import nl.requios.effortlessbuilding.command.CommandReach;
 import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
+import nl.requios.effortlessbuilding.item.ItemReachUpgrade1;
+import nl.requios.effortlessbuilding.item.ItemReachUpgrade2;
+import nl.requios.effortlessbuilding.item.ItemReachUpgrade3;
+import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 import nl.requios.effortlessbuilding.proxy.IProxy;
@@ -47,12 +54,18 @@ public class EffortlessBuilding
     public static final SimpleNetworkWrapper packetHandler = NetworkRegistry.INSTANCE.newSimpleChannel(EffortlessBuilding.MODID);
 
     public static final ItemRandomizerBag ITEM_RANDOMIZER_BAG = new ItemRandomizerBag();
+    public static final ItemReachUpgrade1 ITEM_REACH_UPGRADE_1 = new ItemReachUpgrade1();
+    public static final ItemReachUpgrade2 ITEM_REACH_UPGRADE_2 = new ItemReachUpgrade2();
+    public static final ItemReachUpgrade3 ITEM_REACH_UPGRADE_3 = new ItemReachUpgrade3();
 
     public static final Block[] BLOCKS = {
     };
 
     public static final Item[] ITEMS = {
-            ITEM_RANDOMIZER_BAG
+            ITEM_RANDOMIZER_BAG,
+            ITEM_REACH_UPGRADE_1,
+            ITEM_REACH_UPGRADE_2,
+            ITEM_REACH_UPGRADE_3
     };
 
     public static final int RANDOMIZER_BAG_GUI = 0;
@@ -72,6 +85,8 @@ public class EffortlessBuilding
         EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 1, Side.SERVER);
         EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 1, Side.CLIENT);
 
+        EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 2, Side.SERVER);
+
         proxy.preInit(event);
     }
 
@@ -82,6 +97,7 @@ public class EffortlessBuilding
     {
         ConfigManager.sync(MODID, Config.Type.INSTANCE);
         NetworkRegistry.INSTANCE.registerGuiHandler(EffortlessBuilding.instance, new RandomizerBagGuiHandler());
+
         proxy.init(event);
     }
 
@@ -95,6 +111,7 @@ public class EffortlessBuilding
     @EventHandler
     public void serverStarting(FMLServerStartingEvent event)
     {
+        event.registerServerCommand(new CommandReach());
         proxy.serverStarting(event);
     }
 

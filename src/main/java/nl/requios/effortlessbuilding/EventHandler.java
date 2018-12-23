@@ -72,7 +72,7 @@ public class EventHandler
 
     @SubscribeEvent
     public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
-        BuildModifiers.onBlockPlaced(event);
+        //BuildModifiers.onBlockPlaced(event);
     }
 
     @SubscribeEvent

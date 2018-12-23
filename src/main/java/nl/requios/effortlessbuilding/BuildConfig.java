@@ -13,7 +13,11 @@ public class BuildConfig {
 
     public static class Reach {
         @Comment({"Reach: how far away the player can place blocks using mirror/array etc.",
-                 "Maximum reach in creative"})
+                 "Enable the crafting of reach upgrades to increase reach.",
+                 "If disabled, reach is set to level 3 for survival players."})
+        public boolean enableReachUpgrades = true;
+
+        @Comment("Maximum reach in creative")
         public int maxReachCreative = 200;
 
         @Comment({"Maximum reach in survival without upgrades",
@@ -32,6 +36,9 @@ public class BuildConfig {
     }
 
     public static class SurvivalBalancers {
+        @Comment({"Allows a survival player to break blocks that are far away, in addition to placing blocks.",
+                 "Note: this allows insta-breaking of blocks in survival."})
+        public boolean breakFar = false;
 
         @Comment({"Increases the time to mine a block when breaking multiple at once.",
                  "Mining time depends on how many blocks, what type of blocks, and the percentage below.",

@@ -9,13 +9,13 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
+import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 
 import java.util.*;
@@ -43,6 +43,13 @@ public class BuildModifiers {
         //Get under tall grass and other replaceable blocks
         if (buildSettings.doQuickReplace() && replaceable) {
             startPos = startPos.down();
+        }
+
+        //Check if player reach does not exceed startpos
+        int maxReach = ReachHelper.getMaxReach(player);
+        if (player.getPosition().distanceSq(startPos) > maxReach * maxReach) {
+            EffortlessBuilding.log(player, "Placement exceeds your reach.");
+            return;
         }
 
         //Format hitvec to 0.x
@@ -81,6 +88,15 @@ public class BuildModifiers {
             event.setCanceled(true);
         }
 
+    }
+
+    //Use a network message to break blocks in the distance using clientside mouse input
+    public static void onBlockBrokenMessage(EntityPlayer player, BlockBrokenMessage message) {
+        BlockPos blockPos = message.getBlockPos();
+        if (ReachHelper.canBreakFar(player) && message.isBlockHit()) {
+            BlockEvent.BreakEvent event = new BlockEvent.BreakEvent(player.world, blockPos, player.world.getBlockState(blockPos), player);
+            onBlockBroken(event);
+        }
     }
 
     public static void onBlockBroken(BlockEvent.BreakEvent event) {

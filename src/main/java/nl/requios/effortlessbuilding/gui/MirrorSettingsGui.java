@@ -9,6 +9,7 @@ import net.minecraftforge.fml.client.config.GuiCheckBox;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.Mirror;
+import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -72,7 +73,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         textMirrorRadius.setNumber(50);
         //TODO change to diameter (remove /2)
         textMirrorRadius.setTooltip(Arrays.asList("How far the mirror reaches in any direction.",
-                TextFormatting.GRAY + "Max: " + TextFormatting.GOLD + BuildSettingsManager.getMaxReach(mc.player) / 2,
+                TextFormatting.GRAY + "Max: " + TextFormatting.GOLD + ReachHelper.getMaxReach(mc.player) / 2,
                 TextFormatting.GRAY + "Upgradeable in survival with reach upgrades."));
         mirrorNumberFieldList.add(textMirrorRadius);
 
