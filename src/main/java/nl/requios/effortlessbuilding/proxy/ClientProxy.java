@@ -52,6 +52,7 @@ public class ClientProxy implements IProxy {
     public static KeyBinding[] keyBindings;
     public static RayTraceResult previousLookAt;
     public static RayTraceResult currentLookAt;
+    private static int breakCooldown = 0;
 
     @Override
     public void preInit(FMLPreInitializationEvent event) {
@@ -127,6 +128,16 @@ public class ClientProxy implements IProxy {
                 RayTraceResult lookingAt = getLookingAt(player);
                 if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
                     EffortlessBuilding.packetHandler.sendToServer(new BlockPlacedMessage(lookingAt));
+
+                    //play sound if further than normal
+                    if ((lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
+                        BlockPos blockPos = lookingAt.getBlockPos();
+                        IBlockState state = player.world.getBlockState(blockPos);
+                        SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
+                        player.world.playSound(player, blockPos, soundtype.getPlaceSound(), SoundCategory.BLOCKS,
+                                (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+                        player.swingArm(EnumHand.MAIN_HAND);
+                    }
                 }
             }
         }
@@ -136,18 +147,26 @@ public class ClientProxy implements IProxy {
 
             //Break block in distance in creative (or survival if enabled in config)
             if (ReachHelper.canBreakFar(player)) {
-                RayTraceResult lookingAt = getLookingAt(player);
-                if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
-                    EffortlessBuilding.packetHandler.sendToServer(new BlockBrokenMessage(lookingAt));
+                if (breakCooldown <= 0) {
+                    breakCooldown = 6;
+                    RayTraceResult lookingAt = getLookingAt(player);
+                    if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
+                        EffortlessBuilding.packetHandler.sendToServer(new BlockBrokenMessage(lookingAt));
 
-                    //play sound
-                    BlockPos blockPos = lookingAt.getBlockPos();
-                    IBlockState state = player.world.getBlockState(blockPos);
-                    SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
-                    player.world.playSound(player, blockPos, soundtype.getBreakSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
-                    player.swingArm(EnumHand.MAIN_HAND);
+                        //play sound
+                        BlockPos blockPos = lookingAt.getBlockPos();
+                        IBlockState state = player.world.getBlockState(blockPos);
+                        SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
+                        player.world.playSound(player, blockPos, soundtype.getBreakSound(), SoundCategory.BLOCKS,
+                                (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+                        player.swingArm(EnumHand.MAIN_HAND);
+                    }
+                } else {
+                    breakCooldown--;
                 }
             }
+        } else {
+            breakCooldown = 0;
         }
         event.setResult(Event.Result.ALLOW);
     }

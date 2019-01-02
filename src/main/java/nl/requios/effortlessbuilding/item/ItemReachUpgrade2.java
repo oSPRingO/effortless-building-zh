@@ -28,6 +28,12 @@ public class ItemReachUpgrade2 extends Item {
 
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+        if (player.isCreative()) {
+            if (world.isRemote) EffortlessBuilding.log(player, "Reach upgrades are not necessary in creative.");
+            if (world.isRemote) EffortlessBuilding.log(player, "Still want increased reach? Use the config.");
+            return new ActionResult<>(EnumActionResult.PASS, player.getHeldItem(hand));
+        }
+
         BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(player);
         int currentLevel = buildSettings.getReachUpgrade();
         if (currentLevel == 1) {

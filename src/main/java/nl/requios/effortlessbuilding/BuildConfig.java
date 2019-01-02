@@ -17,7 +17,8 @@ public class BuildConfig {
                  "If disabled, reach is set to level 3 for survival players."})
         public boolean enableReachUpgrades = true;
 
-        @Comment("Maximum reach in creative")
+        @Comment({"Maximum reach in creative",
+                 "Keep in mind that chunks need to be loaded to be able to place blocks inside."})
         public int maxReachCreative = 200;
 
         @Comment({"Maximum reach in survival without upgrades",
