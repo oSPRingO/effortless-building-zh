@@ -3,12 +3,10 @@ package nl.requios.effortlessbuilding;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
-import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
-import net.minecraftforge.common.crafting.CraftingHelper;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -19,7 +17,7 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
-import nl.requios.effortlessbuilding.capability.*;
+import nl.requios.effortlessbuilding.capability.BuildModifierCapabilityManager;
 import nl.requios.effortlessbuilding.command.CommandReach;
 import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
@@ -27,8 +25,8 @@ import nl.requios.effortlessbuilding.item.ItemReachUpgrade1;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade2;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade3;
 import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
-import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
+import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import nl.requios.effortlessbuilding.proxy.IProxy;
 import org.apache.logging.log4j.Logger;
 
@@ -38,7 +36,7 @@ public class EffortlessBuilding
 {
     public static final String MODID = "effortlessbuilding";
     public static final String NAME = "Effortless Building";
-    public static final String VERSION = "0.5";
+    public static final String VERSION = "0.6";
 
     @Mod.Instance(EffortlessBuilding.MODID)
     public static EffortlessBuilding instance;

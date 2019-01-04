@@ -1,6 +1,9 @@
 package nl.requios.effortlessbuilding;
 
-import net.minecraft.block.*;
+import net.minecraft.block.BlockDirectional;
+import net.minecraft.block.BlockDispenser;
+import net.minecraft.block.BlockSlab;
+import net.minecraft.block.BlockStairs;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
@@ -8,12 +11,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
-import net.minecraft.world.World;
-import net.minecraftforge.common.util.BlockSnapshot;
-import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.items.IItemHandler;
-import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 import java.util.ArrayList;
@@ -175,7 +173,7 @@ public class Mirror {
     public static boolean isEnabled(MirrorSettings m, BlockPos startPos) {
         if (m == null || !m.enabled || (!m.mirrorX && !m.mirrorY && !m.mirrorZ)) return false;
 
-        //if within mirror distance, mirror
+        //within mirror distance
         if (startPos.getX() + 0.5 < m.position.x - m.radius || startPos.getX() + 0.5 > m.position.x + m.radius ||
             startPos.getY() + 0.5 < m.position.y - m.radius || startPos.getY() + 0.5 > m.position.y + m.radius ||
             startPos.getZ() + 0.5 < m.position.z - m.radius || startPos.getZ() + 0.5 > m.position.z + m.radius)

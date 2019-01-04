@@ -3,9 +3,6 @@ package nl.requios.effortlessbuilding.gui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.text.TextFormatting;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
 
 import java.io.IOException;
 import java.text.DecimalFormat;

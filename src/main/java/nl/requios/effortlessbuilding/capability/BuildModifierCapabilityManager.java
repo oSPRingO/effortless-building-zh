@@ -14,6 +14,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import nl.requios.effortlessbuilding.Array;
 import nl.requios.effortlessbuilding.BuildSettingsManager.BuildSettings;
 import nl.requios.effortlessbuilding.Mirror;
+import nl.requios.effortlessbuilding.RadialMirror;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -75,6 +76,17 @@ public class BuildModifierCapabilityManager {
             compound.setInteger("reachUpgrade", buildSettings.getReachUpgrade());
 
             //compound.setBoolean("quickReplace", buildSettings.doQuickReplace()); dont save quickreplace
+
+            //RADIAL MIRROR
+            RadialMirror.RadialMirrorSettings r = buildSettings.getRadialMirrorSettings();
+            compound.setBoolean("radialMirrorEnabled", r.enabled);
+            compound.setDouble("radialMirrorPosX", r.position.x);
+            compound.setDouble("radialMirrorPosY", r.position.y);
+            compound.setDouble("radialMirrorPosZ", r.position.z);
+            compound.setInteger("radialMirrorSlices", r.slices);
+            compound.setBoolean("radialMirrorAlternate", r.alternate);
+            compound.setInteger("radialMirrorRadius", r.radius);
+
             return compound;
         }
 
@@ -103,7 +115,18 @@ public class BuildModifierCapabilityManager {
 
             //boolean quickReplace = compound.getBoolean("quickReplace"); //dont load quickreplace
 
-            BuildSettings buildSettings = new BuildSettings(mirrorSettings, arraySettings, false, reachUpgrade);
+            //RADIAL MIRROR
+            boolean radialMirrorEnabled = compound.getBoolean("radialMirrorEnabled");
+            Vec3d radialMirrorPosition = new Vec3d(compound.getDouble("radialMirrorPosX"), compound.getDouble("radialMirrorPosY"), compound.getDouble("radialMirrorPosZ"));
+            int radialMirrorSlices = compound.getInteger("radialMirrorSlices");
+            boolean radialMirrorAlternate = compound.getBoolean("radialMirrorAlternate");
+            int radialMirrorRadius = compound.getInteger("radialMirrorRadius");
+            boolean radialMirrorDrawLines = compound.getBoolean("radialMirrorDrawLines");
+            boolean radialMirrorDrawPlanes = compound.getBoolean("radialMirrorDrawPlanes");
+            RadialMirror.RadialMirrorSettings radialMirrorSettings = new RadialMirror.RadialMirrorSettings(radialMirrorEnabled, radialMirrorPosition,
+                    radialMirrorSlices, radialMirrorAlternate, radialMirrorRadius, radialMirrorDrawLines, radialMirrorDrawPlanes);
+
+            BuildSettings buildSettings = new BuildSettings(mirrorSettings, arraySettings, radialMirrorSettings, false, reachUpgrade);
             instance.setBuildModifierData(buildSettings);
         }
     }

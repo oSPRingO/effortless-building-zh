@@ -162,7 +162,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
             buttonMirrorX.y = yy;
             buttonMirrorY.y = yy;
             buttonMirrorZ.y = yy;
-            fontRenderer.drawString("Reach", left + 176 + offset, yy + 2, 0xFFFFFF, true);
+            fontRenderer.drawString("Radius", left + 176 + offset, yy + 2, 0xFFFFFF, true);
             textMirrorRadius.y = yy - 3;
 
             yy = y + 72;
@@ -266,7 +266,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         try {
             mirrorPos = new Vec3d(textMirrorPosX.getNumber(), textMirrorPosY.getNumber(), textMirrorPosZ.getNumber());
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuilding.log(mc.player, "Mirror position not valid.");
+            EffortlessBuilding.log(mc.player, "Mirror position not a valid number.");
         }
 
         boolean mirrorX = buttonMirrorX.isChecked();
@@ -277,7 +277,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         try {
             mirrorRadius = (int) textMirrorRadius.getNumber();
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuilding.log(mc.player, "Mirror radius not valid.");
+            EffortlessBuilding.log(mc.player, "Mirror radius not a valid number.");
         }
 
         return new Mirror.MirrorSettings(mirrorEnabled, mirrorPos, mirrorX, mirrorY, mirrorZ, mirrorRadius, drawLines, drawPlanes);

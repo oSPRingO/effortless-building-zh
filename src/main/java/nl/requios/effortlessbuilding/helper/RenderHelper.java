@@ -1,6 +1,5 @@
 package nl.requios.effortlessbuilding.helper;
 
-import com.google.common.collect.Maps;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -11,14 +10,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemTool;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -27,7 +22,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.*;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
-import nl.requios.effortlessbuilding.item.ItemReachUpgrade1;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
@@ -36,7 +30,6 @@ import org.lwjgl.util.Color;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Mod.EventBusSubscriber(Side.CLIENT)
 public class RenderHelper implements IWorldEventListener {
@@ -44,6 +37,7 @@ public class RenderHelper implements IWorldEventListener {
     private static final Color colorX = new Color(255, 72, 52);
     private static final Color colorY = new Color(67, 204, 51);
     private static final Color colorZ = new Color(52, 247, 255);
+    private static final Color colorRadial = new Color(52, 247, 255);
     private static final int lineAlpha = 200;
     private static final int planeAlpha = 75;
     private static final Vec3d epsilon = new Vec3d(0.001, 0.001, 0.001); //prevents z-fighting
@@ -130,8 +124,8 @@ public class RenderHelper implements IWorldEventListener {
 
         begin(event.getPartialTicks());
 
-        //Mirror lines and areas
         beginLines();
+        //Mirror lines and areas
         Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
         if (m != null && m.enabled && (m.mirrorX || m.mirrorY || m.mirrorZ))
         {
@@ -143,7 +137,7 @@ public class RenderHelper implements IWorldEventListener {
                 Vec3d posA = new Vec3d(pos.x, pos.y - radius, pos.z - radius);
                 Vec3d posB = new Vec3d(pos.x, pos.y + radius, pos.z + radius);
 
-                drawMirrorPlane(posA, posB, colorX, m.drawLines, m.drawPlanes);
+                drawMirrorPlane(posA, posB, colorX, m.drawLines, m.drawPlanes, true);
             }
             if (m.mirrorY)
             {
@@ -157,7 +151,7 @@ public class RenderHelper implements IWorldEventListener {
                 Vec3d posA = new Vec3d(pos.x - radius, pos.y - radius, pos.z);
                 Vec3d posB = new Vec3d(pos.x + radius, pos.y + radius, pos.z);
 
-                drawMirrorPlane(posA, posB, colorZ, m.drawLines, m.drawPlanes);
+                drawMirrorPlane(posA, posB, colorZ, m.drawLines, m.drawPlanes, true);
             }
 
             //Draw axis coordinated colors if two or more axes are enabled
@@ -165,6 +159,26 @@ public class RenderHelper implements IWorldEventListener {
             if (m.drawLines && ((m.mirrorX && m.mirrorY) || (m.mirrorX && m.mirrorZ) || (m.mirrorY && m.mirrorZ)))
             {
                 drawMirrorLines(m);
+            }
+        }
+
+        //Radial mirror lines and areas
+        RadialMirror.RadialMirrorSettings r = buildSettings.getRadialMirrorSettings();
+        if (r != null && r.enabled)
+        {
+            Vec3d pos = r.position.add(epsilon);
+            int radius = r.radius;
+
+            float angle = 2f * ((float) Math.PI) / r.slices;
+            Vec3d relStartVec = new Vec3d(radius, 0, 0);
+
+            for (int i = 0; i < r.slices; i++) {
+                Vec3d relNewVec = relStartVec.rotateYaw(angle * i);
+                Vec3d newVec = pos.add(relNewVec);
+
+                Vec3d posA = new Vec3d(pos.x, pos.y - radius, pos.z);
+                Vec3d posB = new Vec3d(newVec.x, pos.y + radius, newVec.z);
+                drawMirrorPlane(posA, posB, colorRadial, r.drawLines, r.drawPlanes, false);
             }
         }
         endLines();
@@ -256,7 +270,7 @@ public class RenderHelper implements IWorldEventListener {
 
     //----Mirror----
 
-    public static void drawMirrorPlane(Vec3d posA, Vec3d posB, Color c, boolean drawLines, boolean drawPlanes) {
+    public static void drawMirrorPlane(Vec3d posA, Vec3d posB, Color c, boolean drawLines, boolean drawPlanes, boolean drawVerticalLines) {
 
         GL11.glColor4d(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha);
         Tessellator tessellator = Tessellator.getInstance();
@@ -279,8 +293,10 @@ public class RenderHelper implements IWorldEventListener {
 
             bufferBuilder.pos(posA.x, middle.y, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
             bufferBuilder.pos(posB.x, middle.y, posB.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
-            bufferBuilder.pos(middle.x, posA.y, middle.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
-            bufferBuilder.pos(middle.x, posB.y, middle.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
+            if (drawVerticalLines) {
+                bufferBuilder.pos(middle.x, posA.y, middle.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
+                bufferBuilder.pos(middle.x, posB.y, middle.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
+            }
 
             tessellator.draw();
         }

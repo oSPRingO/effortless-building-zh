@@ -2,10 +2,7 @@ package nl.requios.effortlessbuilding.gui;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
-import nl.requios.effortlessbuilding.Array;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
-import nl.requios.effortlessbuilding.Mirror;
+import nl.requios.effortlessbuilding.*;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
@@ -18,6 +15,7 @@ public class SettingsGui extends GuiScreen {
 
     private MirrorSettingsGui mirrorSettingsGui;
     private ArraySettingsGui arraySettingsGui;
+    private RadialMirrorSettingsGui radialMirrorSettingsGui;
 
     @Override
     //Create buttons and labels and add them to buttonList/labelList
@@ -31,6 +29,9 @@ public class SettingsGui extends GuiScreen {
 
         arraySettingsGui = new ArraySettingsGui(scrollPane);
         scrollPane.listEntries.add(arraySettingsGui);
+
+        radialMirrorSettingsGui = new RadialMirrorSettingsGui(scrollPane);
+        scrollPane.listEntries.add(radialMirrorSettingsGui);
 
         id = scrollPane.initGui(id, buttonList);
 
@@ -110,11 +111,13 @@ public class SettingsGui extends GuiScreen {
         //save everything
         Mirror.MirrorSettings m = mirrorSettingsGui.getMirrorSettings();
         Array.ArraySettings a = arraySettingsGui.getArraySettings();
+        RadialMirror.RadialMirrorSettings r = radialMirrorSettingsGui.getRadialMirrorSettings();
 
         BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(mc.player);
         if (buildSettings == null) buildSettings = new BuildSettingsManager.BuildSettings();
         buildSettings.setMirrorSettings(m);
         buildSettings.setArraySettings(a);
+        buildSettings.setRadialMirrorSettings(r);
 
         //Sanitize
         String error = BuildSettingsManager.sanitize(buildSettings, mc.player);

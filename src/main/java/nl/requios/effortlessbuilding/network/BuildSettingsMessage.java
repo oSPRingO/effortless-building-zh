@@ -8,11 +8,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import nl.requios.effortlessbuilding.Array;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
+import nl.requios.effortlessbuilding.*;
 import nl.requios.effortlessbuilding.BuildSettingsManager.BuildSettings;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
-import nl.requios.effortlessbuilding.Mirror;
 
 public class BuildSettingsMessage implements IMessage {
 
@@ -51,6 +48,18 @@ public class BuildSettingsMessage implements IMessage {
         buf.writeBoolean(buildSettings.doQuickReplace());
 
         buf.writeInt(buildSettings.getReachUpgrade());
+
+        //RADIAL MIRROR
+        RadialMirror.RadialMirrorSettings r = buildSettings.getRadialMirrorSettings();
+        buf.writeBoolean(r.enabled);
+        buf.writeDouble(r.position.x);
+        buf.writeDouble(r.position.y);
+        buf.writeDouble(r.position.z);
+        buf.writeInt(r.slices);
+        buf.writeBoolean(r.alternate);
+        buf.writeInt(r.radius);
+        buf.writeBoolean(r.drawLines);
+        buf.writeBoolean(r.drawPlanes);
     }
 
     @Override
@@ -76,7 +85,18 @@ public class BuildSettingsMessage implements IMessage {
 
         int reachUpgrade = buf.readInt();
 
-        buildSettings = new BuildSettings(m, a, quickReplace, reachUpgrade);
+        //RADIAL MIRROR
+        boolean radialMirrorEnabled = buf.readBoolean();
+        Vec3d radialMirrorPosition = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+        int radialMirrorSlices = buf.readInt();
+        boolean radialMirrorAlternate = buf.readBoolean();
+        int radialMirrorRadius = buf.readInt();
+        boolean radialMirrorDrawLines = buf.readBoolean();
+        boolean radialMirrorDrawPlanes = buf.readBoolean();
+        RadialMirror.RadialMirrorSettings r = new RadialMirror.RadialMirrorSettings(radialMirrorEnabled, radialMirrorPosition, radialMirrorSlices,
+                radialMirrorAlternate, radialMirrorRadius, radialMirrorDrawLines, radialMirrorDrawPlanes);
+
+        buildSettings = new BuildSettings(m, a, r, quickReplace, reachUpgrade);
     }
 
     // The params of the IMessageHandler are <REQ, REPLY>

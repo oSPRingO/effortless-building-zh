@@ -168,14 +168,14 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         try {
             arrayOffset = new BlockPos(textArrayOffsetX.getNumber(), textArrayOffsetY.getNumber(), textArrayOffsetZ.getNumber());
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuilding.log(mc.player, "Array offset not valid.");
+            EffortlessBuilding.log(mc.player, "Array offset not a valid number.");
         }
 
         int arrayCount = 5;
         try {
             arrayCount = (int) textArrayCount.getNumber();
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuilding.log(mc.player, "Array count not valid.");
+            EffortlessBuilding.log(mc.player, "Array count not a valid number.");
         }
 
         return new Array.ArraySettings(arrayEnabled, arrayOffset, arrayCount);

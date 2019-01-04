@@ -18,7 +18,8 @@ import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BuildModifiers {
 
@@ -125,9 +126,11 @@ public class BuildModifiers {
         List<BlockPos> arrayCoordinates = Array.findCoordinates(player, startPos);
         coordinates.addAll(arrayCoordinates);
         coordinates.addAll(Mirror.findCoordinates(player, startPos));
-        //get array for each coordinate
+        coordinates.addAll(RadialMirror.findCoordinates(player, startPos));
+        //get mirror for each array coordinate
         for (BlockPos coordinate : arrayCoordinates) {
             coordinates.addAll(Mirror.findCoordinates(player, coordinate));
+            coordinates.addAll(RadialMirror.findCoordinates(player, coordinate));
         }
 
         return coordinates;
@@ -160,12 +163,14 @@ public class BuildModifiers {
         List<IBlockState> arrayBlockStates = Array.findBlockStates(player, startPos, blockState, itemStack, itemStacks);
         blockStates.addAll(arrayBlockStates);
         blockStates.addAll(Mirror.findBlockStates(player, startPos, blockState, itemStack, itemStacks));
-        //add array for each mirror coordinate
+        blockStates.addAll(RadialMirror.findBlockStates(player, startPos, blockState, itemStack, itemStacks));
+        //add mirror for each array coordinate
         List<BlockPos> arrayCoordinates = Array.findCoordinates(player, startPos);
         for (int i = 0; i < arrayCoordinates.size(); i++) {
             BlockPos coordinate = arrayCoordinates.get(i);
             IBlockState blockState1 = arrayBlockStates.get(i);
             blockStates.addAll(Mirror.findBlockStates(player, coordinate, blockState1, itemStack, itemStacks));
+            blockStates.addAll(RadialMirror.findBlockStates(player, coordinate, blockState1, itemStack, itemStacks));
         }
 
         //Adjust blockstates for torches and ladders etc to place on a valid side
@@ -183,6 +188,7 @@ public class BuildModifiers {
     public static boolean isEnabled(BuildSettingsManager.BuildSettings buildSettings, BlockPos startPos) {
         return Mirror.isEnabled(buildSettings.getMirrorSettings(), startPos) ||
                Array.isEnabled(buildSettings.getArraySettings()) ||
+               RadialMirror.isEnabled(buildSettings.getRadialMirrorSettings(), startPos) ||
                buildSettings.doQuickReplace();
     }
 
