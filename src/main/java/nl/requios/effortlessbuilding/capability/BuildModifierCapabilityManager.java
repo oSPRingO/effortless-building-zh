@@ -54,6 +54,7 @@ public class BuildModifierCapabilityManager {
 
             //MIRROR
             Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
+            if (m == null) m = new Mirror.MirrorSettings();
             compound.setBoolean("mirrorEnabled", m.enabled);
             compound.setDouble("mirrorPosX", m.position.x);
             compound.setDouble("mirrorPosY", m.position.y);
@@ -67,6 +68,7 @@ public class BuildModifierCapabilityManager {
 
             //ARRAY
             Array.ArraySettings a = buildSettings.getArraySettings();
+            if (a == null) a = new Array.ArraySettings();
             compound.setBoolean("arrayEnabled", a.enabled);
             compound.setInteger("arrayOffsetX", a.offset.getX());
             compound.setInteger("arrayOffsetY", a.offset.getY());
@@ -79,6 +81,7 @@ public class BuildModifierCapabilityManager {
 
             //RADIAL MIRROR
             RadialMirror.RadialMirrorSettings r = buildSettings.getRadialMirrorSettings();
+            if (r == null) r = new RadialMirror.RadialMirrorSettings();
             compound.setBoolean("radialMirrorEnabled", r.enabled);
             compound.setDouble("radialMirrorPosX", r.position.x);
             compound.setDouble("radialMirrorPosY", r.position.y);

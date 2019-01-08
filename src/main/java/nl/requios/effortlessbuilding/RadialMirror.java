@@ -5,7 +5,10 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.items.IItemHandler;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
@@ -48,19 +51,25 @@ public class RadialMirror {
         RadialMirrorSettings r = BuildSettingsManager.getBuildSettings(player).getRadialMirrorSettings();
         if (!isEnabled(r, startPos)) return coordinates;
 
-        //get angle
-        float angle = 2f * ((float) Math.PI) / r.slices;
+        //get angle between slices
+        double sliceAngle = 2 * Math.PI / r.slices;
 
         Vec3d startVec = new Vec3d(startPos.getX() + 0.5f, startPos.getY() + 0.5f, startPos.getZ() + 0.5f);
         Vec3d relStartVec = startVec.subtract(r.position);
 
+        double startAngleToCenter = MathHelper.atan2(relStartVec.x, relStartVec.z);
+        if (startAngleToCenter < 0) startAngleToCenter += Math.PI;
+        double startAngleInSlice = startAngleToCenter % sliceAngle;
+
         for (int i = 1; i < r.slices; i++) {
-            float curAngle = angle * i;
-            if (r.alternate) {
-                //TODO alternate
-                // get angle in slice
+            double curAngle = sliceAngle * i;
+
+            //alternate mirroring of slices
+            if (r.alternate && i%2 == 1) {
+                curAngle = curAngle - startAngleInSlice + (sliceAngle - startAngleInSlice);
             }
-            Vec3d relNewVec = relStartVec.rotateYaw(curAngle);
+
+            Vec3d relNewVec = relStartVec.rotateYaw((float) curAngle);
             Vec3d newVec = r.position.add(relNewVec);
             coordinates.add(new BlockPos(newVec));
         }
@@ -76,11 +85,24 @@ public class RadialMirror {
         if (!isEnabled(r, startPos)) return blockStates;
 
 
-        //get angle
-        float angle = 2f * ((float) Math.PI) / r.slices;
+        //get angle between slices
+        double sliceAngle = 2 * Math.PI / r.slices;
 
         Vec3d startVec = new Vec3d(startPos.getX() + 0.5f, startPos.getY() + 0.5f, startPos.getZ() + 0.5f);
         Vec3d relStartVec = startVec.subtract(r.position);
+
+        double startAngleToCenter = MathHelper.atan2(relStartVec.x, relStartVec.z);
+        if (startAngleToCenter < 0) startAngleToCenter += Math.PI;
+        double startAngleInSlice = startAngleToCenter % sliceAngle;
+
+        //Rotate the original blockstate
+        if (startAngleToCenter < -0.75 * Math.PI || startAngleToCenter > 0.75 * Math.PI) {
+            blockState = blockState.withRotation(Rotation.CLOCKWISE_180);
+        } else if (startAngleToCenter < -0.25 * Math.PI) {
+            blockState = blockState.withRotation(Rotation.CLOCKWISE_90);
+        } else if (startAngleToCenter > 0.25 * Math.PI) {
+            blockState = blockState.withRotation(Rotation.COUNTERCLOCKWISE_90);
+        }
 
         //Randomizer bag synergy
         IItemHandler bagInventory = null;
@@ -88,19 +110,50 @@ public class RadialMirror {
             bagInventory = ItemRandomizerBag.getBagInventory(itemStack);
         }
 
+        IBlockState newBlockState;
         for (int i = 1; i < r.slices; i++) {
-            Vec3d relNewVec = relStartVec.rotateYaw(angle * i);
-            Vec3d newVec = startVec.add(relNewVec);
+            newBlockState = blockState;
+            double curAngle = sliceAngle * i;
+
+            //alternate mirroring of slices
+            if (r.alternate && i%2 == 1) {
+                curAngle = curAngle - startAngleInSlice + (sliceAngle - startAngleInSlice);
+            }
+
+            Vec3d relNewVec = relStartVec.rotateYaw((float) curAngle);
+            Vec3d newVec = r.position.add(relNewVec);
 
             //Randomizer bag synergy
             if (bagInventory != null) {
                 itemStack = ItemRandomizerBag.pickRandomStack(bagInventory);
-                blockState = BuildModifiers.getBlockStateFromItem(itemStack, player, startPos, EnumFacing.UP, new Vec3d(0, 0, 0), EnumHand.MAIN_HAND);
+                newBlockState = BuildModifiers.getBlockStateFromItem(itemStack, player, startPos, EnumFacing.UP, new Vec3d(0, 0, 0), EnumHand.MAIN_HAND);
             }
 
-            //TODO rotate
+            //rotate
+            double angleToCenter = MathHelper.atan2(relNewVec.x, relNewVec.z); //between -PI and PI
 
-            blockStates.add(blockState);
+            if (angleToCenter < -0.75 * Math.PI || angleToCenter > 0.75 * Math.PI) {
+                newBlockState = newBlockState.withRotation(Rotation.CLOCKWISE_180);
+                if (r.alternate && i%2 == 1) {
+                    newBlockState = newBlockState.withMirror(Mirror.FRONT_BACK);
+                }
+            } else if (angleToCenter < -0.25 * Math.PI) {
+                newBlockState = newBlockState.withRotation(Rotation.CLOCKWISE_90);
+                if (r.alternate && i%2 == 1) {
+                    newBlockState = newBlockState.withMirror(Mirror.LEFT_RIGHT);
+                }
+            } else if (angleToCenter > 0.25 * Math.PI) {
+                newBlockState = newBlockState.withRotation(Rotation.COUNTERCLOCKWISE_90);
+                if (r.alternate && i%2 == 1) {
+                    newBlockState = newBlockState.withMirror(Mirror.LEFT_RIGHT);
+                }
+            } else {
+                if (r.alternate && i%2 == 1) {
+                    newBlockState = newBlockState.withMirror(Mirror.FRONT_BACK);
+                }
+            }
+
+            blockStates.add(newBlockState);
             itemStacks.add(itemStack);
         }
 
@@ -110,10 +163,8 @@ public class RadialMirror {
     public static boolean isEnabled(RadialMirrorSettings r, BlockPos startPos) {
         if (r == null || !r.enabled) return false;
 
-        //within mirror distance
-        if (startPos.getX() + 0.5 < r.position.x - r.radius || startPos.getX() + 0.5 > r.position.x + r.radius ||
-            startPos.getY() + 0.5 < r.position.y - r.radius || startPos.getY() + 0.5 > r.position.y + r.radius ||
-            startPos.getZ() + 0.5 < r.position.z - r.radius || startPos.getZ() + 0.5 > r.position.z + r.radius)
+        if (new Vec3d(startPos.getX() + 0.5, startPos.getY() + 0.5, startPos.getZ() + 0.5).subtract(r.position).lengthSquared() >
+            r.radius * r.radius)
             return false;
 
         return true;

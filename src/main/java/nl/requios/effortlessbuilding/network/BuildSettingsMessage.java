@@ -26,24 +26,30 @@ public class BuildSettingsMessage implements IMessage {
     public void toBytes(ByteBuf buf) {
         //MIRROR
         Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
-        buf.writeBoolean(m.enabled);
-        buf.writeDouble(m.position.x);
-        buf.writeDouble(m.position.y);
-        buf.writeDouble(m.position.z);
-        buf.writeBoolean(m.mirrorX);
-        buf.writeBoolean(m.mirrorY);
-        buf.writeBoolean(m.mirrorZ);
-        buf.writeInt(m.radius);
-        buf.writeBoolean(m.drawLines);
-        buf.writeBoolean(m.drawPlanes);
+        buf.writeBoolean(m != null);
+        if (m != null) {
+            buf.writeBoolean(m.enabled);
+            buf.writeDouble(m.position.x);
+            buf.writeDouble(m.position.y);
+            buf.writeDouble(m.position.z);
+            buf.writeBoolean(m.mirrorX);
+            buf.writeBoolean(m.mirrorY);
+            buf.writeBoolean(m.mirrorZ);
+            buf.writeInt(m.radius);
+            buf.writeBoolean(m.drawLines);
+            buf.writeBoolean(m.drawPlanes);
+        }
 
         //ARRAY
         Array.ArraySettings a = buildSettings.getArraySettings();
-        buf.writeBoolean(a.enabled);
-        buf.writeInt(a.offset.getX());
-        buf.writeInt(a.offset.getY());
-        buf.writeInt(a.offset.getZ());
-        buf.writeInt(a.count);
+        buf.writeBoolean(a != null);
+        if (a != null) {
+            buf.writeBoolean(a.enabled);
+            buf.writeInt(a.offset.getX());
+            buf.writeInt(a.offset.getY());
+            buf.writeInt(a.offset.getZ());
+            buf.writeInt(a.count);
+        }
 
         buf.writeBoolean(buildSettings.doQuickReplace());
 
@@ -51,50 +57,63 @@ public class BuildSettingsMessage implements IMessage {
 
         //RADIAL MIRROR
         RadialMirror.RadialMirrorSettings r = buildSettings.getRadialMirrorSettings();
-        buf.writeBoolean(r.enabled);
-        buf.writeDouble(r.position.x);
-        buf.writeDouble(r.position.y);
-        buf.writeDouble(r.position.z);
-        buf.writeInt(r.slices);
-        buf.writeBoolean(r.alternate);
-        buf.writeInt(r.radius);
-        buf.writeBoolean(r.drawLines);
-        buf.writeBoolean(r.drawPlanes);
+        buf.writeBoolean(r != null);
+        if (r != null) {
+            buf.writeBoolean(r.enabled);
+            buf.writeDouble(r.position.x);
+            buf.writeDouble(r.position.y);
+            buf.writeDouble(r.position.z);
+            buf.writeInt(r.slices);
+            buf.writeBoolean(r.alternate);
+            buf.writeInt(r.radius);
+            buf.writeBoolean(r.drawLines);
+            buf.writeBoolean(r.drawPlanes);
+        }
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         //MIRROR
-        boolean mirrorEnabled = buf.readBoolean();
-        Vec3d mirrorPosition = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
-        boolean mirrorX = buf.readBoolean();
-        boolean mirrorY = buf.readBoolean();
-        boolean mirrorZ = buf.readBoolean();
-        int mirrorRadius = buf.readInt();
-        boolean mirrorDrawLines = buf.readBoolean();
-        boolean mirrorDrawPlanes = buf.readBoolean();
-        Mirror.MirrorSettings m = new Mirror.MirrorSettings(mirrorEnabled, mirrorPosition, mirrorX, mirrorY, mirrorZ, mirrorRadius, mirrorDrawLines, mirrorDrawPlanes);
+        Mirror.MirrorSettings m = new Mirror.MirrorSettings();
+        if (buf.readBoolean()) {
+            boolean mirrorEnabled = buf.readBoolean();
+            Vec3d mirrorPosition = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+            boolean mirrorX = buf.readBoolean();
+            boolean mirrorY = buf.readBoolean();
+            boolean mirrorZ = buf.readBoolean();
+            int mirrorRadius = buf.readInt();
+            boolean mirrorDrawLines = buf.readBoolean();
+            boolean mirrorDrawPlanes = buf.readBoolean();
+            m = new Mirror.MirrorSettings(mirrorEnabled, mirrorPosition, mirrorX, mirrorY, mirrorZ, mirrorRadius,
+                            mirrorDrawLines, mirrorDrawPlanes);
+        }
 
         //ARRAY
-        boolean arrayEnabled = buf.readBoolean();
-        BlockPos arrayOffset = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
-        int arrayCount = buf.readInt();
-        Array.ArraySettings a = new Array.ArraySettings(arrayEnabled, arrayOffset, arrayCount);
+        Array.ArraySettings a = new Array.ArraySettings();
+        if (buf.readBoolean()) {
+            boolean arrayEnabled = buf.readBoolean();
+            BlockPos arrayOffset = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
+            int arrayCount = buf.readInt();
+            a = new Array.ArraySettings(arrayEnabled, arrayOffset, arrayCount);
+        }
 
         boolean quickReplace = buf.readBoolean();
 
         int reachUpgrade = buf.readInt();
 
         //RADIAL MIRROR
-        boolean radialMirrorEnabled = buf.readBoolean();
-        Vec3d radialMirrorPosition = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
-        int radialMirrorSlices = buf.readInt();
-        boolean radialMirrorAlternate = buf.readBoolean();
-        int radialMirrorRadius = buf.readInt();
-        boolean radialMirrorDrawLines = buf.readBoolean();
-        boolean radialMirrorDrawPlanes = buf.readBoolean();
-        RadialMirror.RadialMirrorSettings r = new RadialMirror.RadialMirrorSettings(radialMirrorEnabled, radialMirrorPosition, radialMirrorSlices,
-                radialMirrorAlternate, radialMirrorRadius, radialMirrorDrawLines, radialMirrorDrawPlanes);
+        RadialMirror.RadialMirrorSettings r = new RadialMirror.RadialMirrorSettings();
+        if (buf.readBoolean()) {
+            boolean radialMirrorEnabled = buf.readBoolean();
+            Vec3d radialMirrorPosition = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+            int radialMirrorSlices = buf.readInt();
+            boolean radialMirrorAlternate = buf.readBoolean();
+            int radialMirrorRadius = buf.readInt();
+            boolean radialMirrorDrawLines = buf.readBoolean();
+            boolean radialMirrorDrawPlanes = buf.readBoolean();
+            r = new RadialMirror.RadialMirrorSettings(radialMirrorEnabled, radialMirrorPosition, radialMirrorSlices,
+                            radialMirrorAlternate, radialMirrorRadius, radialMirrorDrawLines, radialMirrorDrawPlanes);
+        }
 
         buildSettings = new BuildSettings(m, a, r, quickReplace, reachUpgrade);
     }
@@ -107,19 +126,18 @@ public class BuildSettingsMessage implements IMessage {
         public IMessage onMessage(BuildSettingsMessage message, MessageContext ctx) {
             //EffortlessBuilding.log("message received on " + ctx.side + " side");
 
-            // This is the player the packet was sent to the server from
-            EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
             // The value that was sent
             BuildSettings buildSettings = message.buildSettings;
-
-            // Sanitize
-            BuildSettingsManager.sanitize(buildSettings, player);
 
             // Execute the action on the main server thread by adding it as a scheduled task
             IThreadListener threadListener = EffortlessBuilding.proxy.getThreadListenerFromContext(ctx);
             threadListener.addScheduledTask(() -> {
-                EntityPlayer p = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
-                BuildSettingsManager.setBuildSettings(p, buildSettings);
+                EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+
+                // Sanitize
+                BuildSettingsManager.sanitize(buildSettings, player);
+
+                BuildSettingsManager.setBuildSettings(player, buildSettings);
             });
             // No response packet
             return null;
