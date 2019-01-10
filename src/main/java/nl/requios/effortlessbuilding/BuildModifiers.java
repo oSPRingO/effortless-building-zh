@@ -85,7 +85,7 @@ public class BuildModifiers {
         BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(event.getPlayer());
         //Only use own place event if anything is enabled
         if (isEnabled(buildSettings, event.getPos())) {
-            EffortlessBuilding.packetHandler.sendTo(new BlockPlacedMessage(), (EntityPlayerMP) event.getPlayer());
+            //EffortlessBuilding.packetHandler.sendTo(new BlockPlacedMessage(), (EntityPlayerMP) event.getPlayer());
             event.setCanceled(true);
         }
 

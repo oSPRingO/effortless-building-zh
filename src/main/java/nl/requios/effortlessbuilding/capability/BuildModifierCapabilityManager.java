@@ -89,6 +89,8 @@ public class BuildModifierCapabilityManager {
             compound.setInteger("radialMirrorSlices", r.slices);
             compound.setBoolean("radialMirrorAlternate", r.alternate);
             compound.setInteger("radialMirrorRadius", r.radius);
+            compound.setBoolean("radialMirrorDrawLines", r.drawLines);
+            compound.setBoolean("radialMirrorDrawPlanes", r.drawPlanes);
 
             return compound;
         }

@@ -171,6 +171,7 @@ public class RenderHelper implements IWorldEventListener {
 
             float angle = 2f * ((float) Math.PI) / r.slices;
             Vec3d relStartVec = new Vec3d(radius, 0, 0);
+            if (r.slices%4 == 2) relStartVec = relStartVec.rotateYaw(angle / 2f);
 
             for (int i = 0; i < r.slices; i++) {
                 Vec3d relNewVec = relStartVec.rotateYaw(angle * i);
