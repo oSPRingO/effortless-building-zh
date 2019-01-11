@@ -88,6 +88,7 @@ public class EventHandler
         //EffortlessBuilding.log(player, String.valueOf(event.getNewSpeed()));
 
         float originalBlockHardness = event.getState().getBlockHardness(world, pos);
+        if (originalBlockHardness < 0) return; //Dont break bedrock
         float totalBlockHardness = 0;
         //get coordinates
         List<BlockPos> coordinates = BuildModifiers.findCoordinates(player, pos);

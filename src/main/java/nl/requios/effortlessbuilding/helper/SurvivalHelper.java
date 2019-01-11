@@ -123,6 +123,12 @@ public class SurvivalHelper {
     {
         IBlockState state = world.getBlockState(pos);
         state = state.getBlock().getActualState(state, world, pos);
+
+        //Dont break bedrock
+        if (state.getBlockHardness((World) world, pos) < 0) {
+            return false;
+        }
+
         if (state.getMaterial().isToolNotRequired())
         {
             return true;

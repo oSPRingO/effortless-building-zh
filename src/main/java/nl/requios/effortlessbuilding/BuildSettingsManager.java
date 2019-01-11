@@ -104,6 +104,7 @@ public class BuildSettingsManager {
         public BuildSettings() {
             mirrorSettings = new Mirror.MirrorSettings();
             arraySettings = new Array.ArraySettings();
+            radialMirrorSettings = new RadialMirror.RadialMirrorSettings();
         }
 
         public BuildSettings(Mirror.MirrorSettings mirrorSettings, Array.ArraySettings arraySettings,
@@ -116,26 +117,32 @@ public class BuildSettingsManager {
         }
 
         public Mirror.MirrorSettings getMirrorSettings() {
-            return mirrorSettings;
+            if (this.mirrorSettings == null) this.mirrorSettings = new Mirror.MirrorSettings();
+            return this.mirrorSettings;
         }
 
         public void setMirrorSettings(Mirror.MirrorSettings mirrorSettings) {
+            if (mirrorSettings == null) return;
             this.mirrorSettings = mirrorSettings;
         }
 
         public Array.ArraySettings getArraySettings() {
-            return arraySettings;
+            if (this.arraySettings == null) this.arraySettings = new Array.ArraySettings();
+            return this.arraySettings;
         }
 
         public void setArraySettings(Array.ArraySettings arraySettings) {
+            if (arraySettings == null) return;
             this.arraySettings = arraySettings;
         }
 
         public RadialMirror.RadialMirrorSettings getRadialMirrorSettings() {
-            return radialMirrorSettings;
+            if (this.radialMirrorSettings == null) this.radialMirrorSettings = new RadialMirror.RadialMirrorSettings();
+            return this.radialMirrorSettings;
         }
 
         public void setRadialMirrorSettings(RadialMirror.RadialMirrorSettings radialMirrorSettings) {
+            if (radialMirrorSettings == null) return;
             this.radialMirrorSettings = radialMirrorSettings;
         }
 

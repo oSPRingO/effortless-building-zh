@@ -101,18 +101,27 @@ public class BuildModifiers {
     }
 
     public static void onBlockBroken(BlockEvent.BreakEvent event) {
-        if (event.getWorld().isRemote) return;
+        World world = event.getWorld();
+        BlockPos pos = event.getPos();
+
+        if (world.isRemote) return;
 
         BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(event.getPlayer());
         //Only use own break event if anything is enabled
-        if (isEnabled(buildSettings, event.getPos())) {
+        if (isEnabled(buildSettings, pos)) {
             //get coordinates
-            List<BlockPos> coordinates = findCoordinates(event.getPlayer(), event.getPos());
+            List<BlockPos> coordinates = findCoordinates(event.getPlayer(), pos);
+
+            //If the player is going to instabreak grass or a plant, only break other instabreaking things
+            boolean onlyInstaBreaking = world.getBlockState(pos).getBlockHardness(
+                    world, pos) == 0f;
 
             //break all those blocks
             for (BlockPos coordinate : coordinates) {
-                if (event.getWorld().isBlockLoaded(coordinate, false)) {
-                    SurvivalHelper.breakBlock(event.getWorld(), event.getPlayer(), coordinate);
+                if (world.isBlockLoaded(coordinate, false)) {
+                    if (!onlyInstaBreaking || world.getBlockState(coordinate).getBlockHardness(world, coordinate) == 0f) {
+                        SurvivalHelper.breakBlock(world, event.getPlayer(), coordinate);
+                    }
                 }
             }
         }
