@@ -1,4 +1,4 @@
-package nl.requios.effortlessbuilding.gui;
+package nl.requios.effortlessbuilding.gui.elements;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
@@ -12,8 +12,8 @@ import java.util.List;
 
 public class GuiNumberField extends Gui {
 
-    int x, y, width, height;
-    int buttonWidth = 10;
+    public int x, y, width, height;
+    public int buttonWidth = 10;
 
     protected GuiTextField textField;
     protected GuiButton minusButton, plusButton;
@@ -106,7 +106,7 @@ public class GuiNumberField extends Gui {
 
     }
 
-    protected void actionPerformed(GuiButton button) {
+    public void actionPerformed(GuiButton button) {
         float valueChanged = 1f;
         if (GuiScreen.isCtrlKeyDown()) valueChanged = 5f;
         if (GuiScreen.isShiftKeyDown()) valueChanged = 10f;
@@ -123,7 +123,7 @@ public class GuiNumberField extends Gui {
         textField.updateCursorCounter();
     }
 
-    protected void keyTyped(char typedChar, int keyCode) throws IOException {
+    public void keyTyped(char typedChar, int keyCode) throws IOException {
         if (!textField.isFocused()) return;
 //        if (Character.isDigit(typedChar) || typedChar == '.' || typedChar == '-' || keyCode == Keyboard.KEY_BACK
 //            || keyCode == Keyboard.KEY_DELETE || keyCode == Keyboard.KEY_LEFT || keyCode == Keyboard.KEY_RIGHT

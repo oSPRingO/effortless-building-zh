@@ -4,21 +4,30 @@ import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.texture.TextureUtil;
+import net.minecraft.client.resources.IResource;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.IThreadListener;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.client.event.ModelRegistryEvent;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.model.ModelLoader;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
@@ -36,7 +45,9 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
+import nl.requios.effortlessbuilding.gui.RadialMenu;
 import nl.requios.effortlessbuilding.gui.SettingsGui;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.RenderHelper;
@@ -45,6 +56,11 @@ import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.util.HashMap;
 
 @Mod.EventBusSubscriber(Side.CLIENT)
 public class ClientProxy implements IProxy {
@@ -53,6 +69,8 @@ public class ClientProxy implements IProxy {
     public static RayTraceResult currentLookAt;
     private static int breakCooldown = 0;
 
+    private static final HashMap<BuildModes.BuildModeEnum, RadialMenu.SpriteIconPositioning> buildModeIcons = new HashMap<>();
+
     @Override
     public void preInit(FMLPreInitializationEvent event) {
     }
@@ -60,12 +78,13 @@ public class ClientProxy implements IProxy {
     @Override
     public void init(FMLInitializationEvent event) {
         // register key bindings
-        keyBindings = new KeyBinding[3];
+        keyBindings = new KeyBinding[4];
 
         // instantiate the key bindings
         keyBindings[0] = new KeyBinding("key.effortlessbuilding.hud.desc", Keyboard.KEY_ADD, "key.effortlessbuilding.category");
         keyBindings[1] = new KeyBinding("key.effortlessbuilding.replace.desc", Keyboard.KEY_SUBTRACT, "key.effortlessbuilding.category");
         keyBindings[2] = new KeyBinding("key.effortlessbuilding.creative.desc", Keyboard.KEY_F4, "key.effortlessbuilding.category");
+        keyBindings[3] = new KeyBinding("key.effortlessbuilding.mode.desc", Keyboard.KEY_LMENU, "key.effortlessbuilding.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {
@@ -112,9 +131,78 @@ public class ClientProxy implements IProxy {
     }
 
     @SubscribeEvent
+    public static void onTextureStitch(final TextureStitchEvent.Pre event) {
+        //register icon textures
+        final TextureMap map = event.getMap();
+
+        for ( final BuildModes.BuildModeEnum mode : BuildModes.BuildModeEnum.values() )
+        {
+            loadIcon( map, mode );
+        }
+    }
+
+    private static void loadIcon(final TextureMap map, final BuildModes.BuildModeEnum mode) {
+        final RadialMenu.SpriteIconPositioning sip = new RadialMenu.SpriteIconPositioning();
+
+        final ResourceLocation sprite = new ResourceLocation( "effortlessbuilding", "icons/" + mode.name().toLowerCase() );
+        final ResourceLocation png = new ResourceLocation( "effortlessbuilding", "textures/icons/" + mode.name().toLowerCase() + ".png" );
+
+        sip.sprite = map.registerSprite( sprite );
+
+        try
+        {
+            final IResource iresource = Minecraft.getMinecraft().getResourceManager().getResource( png );
+            final BufferedImage bi = TextureUtil.readBufferedImage( iresource.getInputStream() );
+
+            int bottom = 0;
+            int right = 0;
+            sip.left = bi.getWidth();
+            sip.top = bi.getHeight();
+
+            for ( int x = 0; x < bi.getWidth(); x++ )
+            {
+                for ( int y = 0; y < bi.getHeight(); y++ )
+                {
+                    final int color = bi.getRGB( x, y );
+                    final int a = color >> 24 & 0xff;
+                    if ( a > 0 )
+                    {
+                        sip.left = Math.min( sip.left, x );
+                        right = Math.max( right, x );
+
+                        sip.top = Math.min( sip.top, y );
+                        bottom = Math.max( bottom, y );
+                    }
+                }
+            }
+
+            sip.height = bottom - sip.top + 1;
+            sip.width = right - sip.left + 1;
+
+            sip.left /= bi.getWidth();
+            sip.width /= bi.getWidth();
+            sip.top /= bi.getHeight();
+            sip.height /= bi.getHeight();
+        } catch (final IOException e) {
+            sip.height = 1;
+            sip.width = 1;
+            sip.left = 0;
+            sip.top = 0;
+        }
+
+        buildModeIcons.put( mode, sip );
+    }
+
+    public static RadialMenu.SpriteIconPositioning getBuildModeIcon(BuildModes.BuildModeEnum mode) {
+        return buildModeIcons.get(mode);
+    }
+
+    @SubscribeEvent
     public static void onMouseInput(InputEvent.MouseInputEvent event) {
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayerSP player = mc.player;
+
+        if (Minecraft.getMinecraft().currentScreen != null) return;
 
         if (!BuildModifiers.isEnabled(BuildSettingsManager.getBuildSettings(player), player.getPosition())) return;
 
@@ -206,6 +294,7 @@ public class ClientProxy implements IProxy {
                 player.sendChatMessage("/gamemode 1");
             }
         }
+
     }
 
     @SubscribeEvent
@@ -234,6 +323,82 @@ public class ClientProxy implements IProxy {
             }
         }
     }
+
+    @SubscribeEvent
+    public static void onRenderGameOverlay(final RenderGameOverlayEvent.Post event ) {
+        //final ChiselToolType tool = getHeldToolType( lastHand );
+        final RenderGameOverlayEvent.ElementType type = event.getType();
+        //TODO check if chisel tool in hand (and has menu)
+        if (type == RenderGameOverlayEvent.ElementType.ALL)
+        {
+            final boolean wasVisible = RadialMenu.instance.isVisible();
+
+            if ( keyBindings[3].isKeyDown() )
+            {
+                RadialMenu.instance.actionUsed = false;
+                RadialMenu.instance.raiseVisibility();
+            }
+            else
+            {
+                if ( !RadialMenu.instance.actionUsed )
+                {
+                    if ( RadialMenu.instance.switchTo != null )
+                    {
+                        ClientProxy.playRadialMenuSound();
+                        BuildModes.setBuildMode(Minecraft.getMinecraft().player, RadialMenu.instance.switchTo);
+                    }
+
+                    //TODO change buildmode settings
+
+                    ClientProxy.playRadialMenuSound();
+                }
+
+                RadialMenu.instance.actionUsed = true;
+                RadialMenu.instance.decreaseVisibility();
+            }
+
+            if ( RadialMenu.instance.isVisible() )
+            {
+                final ScaledResolution res = event.getResolution();
+                RadialMenu.instance.configure( res.getScaledWidth(), res.getScaledHeight() );
+
+                if ( wasVisible == false )
+                {
+                    RadialMenu.instance.mc.inGameHasFocus = false;
+                    RadialMenu.instance.mc.mouseHelper.ungrabMouseCursor();
+                }
+
+                if ( RadialMenu.instance.mc.inGameHasFocus )
+                {
+                    KeyBinding.unPressAllKeys();
+                }
+
+                final int k1 = Mouse.getX() * res.getScaledWidth() / RadialMenu.instance.mc.displayWidth;
+                final int l1 = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / RadialMenu.instance.mc.displayHeight - 1;
+
+                net.minecraftforge.client.ForgeHooksClient.drawScreen( RadialMenu.instance, k1, l1, event.getPartialTicks() );
+            }
+            else
+            {
+                if ( wasVisible )
+                {
+                    RadialMenu.instance.mc.setIngameFocus();
+                }
+            }
+        }
+    }
+
+    public static void playRadialMenuSound()
+    {
+        final float volume = 0.1f;
+        if ( volume >= 0.0001f )
+        {
+            final PositionedSoundRecord psr = new PositionedSoundRecord( SoundEvents.UI_BUTTON_CLICK, SoundCategory.MASTER,
+                    volume, 1.0f, Minecraft.getMinecraft().player.getPosition() );
+            Minecraft.getMinecraft().getSoundHandler().playSound(psr);
+        }
+    }
+
 
     public static RayTraceResult getLookingAt(EntityPlayer player) {
 //        World world = player.world;

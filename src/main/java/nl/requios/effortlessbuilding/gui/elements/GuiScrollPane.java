@@ -1,4 +1,4 @@
-package nl.requios.effortlessbuilding.gui;
+package nl.requios.effortlessbuilding.gui.elements;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;

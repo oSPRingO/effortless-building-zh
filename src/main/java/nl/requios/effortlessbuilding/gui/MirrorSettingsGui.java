@@ -9,6 +9,10 @@ import net.minecraftforge.fml.client.config.GuiCheckBox;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
+import nl.requios.effortlessbuilding.gui.elements.GuiCollapsibleScrollEntry;
+import nl.requios.effortlessbuilding.gui.elements.GuiIconButton;
+import nl.requios.effortlessbuilding.gui.elements.GuiNumberField;
+import nl.requios.effortlessbuilding.gui.elements.GuiScrollPane;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.io.IOException;
