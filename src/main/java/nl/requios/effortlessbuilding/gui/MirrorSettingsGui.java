@@ -8,7 +8,7 @@ import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
-import nl.requios.effortlessbuilding.Mirror;
+import nl.requios.effortlessbuilding.buildmodifier.Mirror;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.io.IOException;

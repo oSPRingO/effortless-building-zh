@@ -18,6 +18,7 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.capability.BuildModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 

@@ -5,9 +5,9 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
-import nl.requios.effortlessbuilding.Array;
 import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmodifier.Array;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.io.IOException;

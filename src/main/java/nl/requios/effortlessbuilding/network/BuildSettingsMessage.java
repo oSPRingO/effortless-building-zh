@@ -8,8 +8,12 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import nl.requios.effortlessbuilding.*;
+import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.BuildSettingsManager.BuildSettings;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmodifier.Array;
+import nl.requios.effortlessbuilding.buildmodifier.Mirror;
+import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 
 public class BuildSettingsMessage implements IMessage {
 

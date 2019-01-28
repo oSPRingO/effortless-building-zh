@@ -50,7 +50,7 @@ public class BuildConfig {
                  "A percentage between 0% and 100%, where 0% is the same as disabling it,",
                  "and 100% takes as much time as breaking each block individually.",
                  "The block in front of you always counts as 100%."})
-        @RangeInt(min = 0, max = 100)
+        @RangeInt(min = 0, max = 200)
         public int miningTimePercentage = 50;
     }
 

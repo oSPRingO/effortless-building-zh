@@ -40,7 +40,7 @@ public class ItemReachUpgrade1 extends Item {
         if (currentLevel == 0) {
             buildSettings.setReachUpgrade(1);
 
-            if (world.isRemote) EffortlessBuilding.log(player, "Upgraded reach to level " + ReachHelper.getMaxReach(player));
+            if (world.isRemote) EffortlessBuilding.log(player, "Upgraded reach to " + ReachHelper.getMaxReach(player));
             player.setHeldItem(hand, ItemStack.EMPTY);
 
             SoundEvent soundEvent = new SoundEvent(new ResourceLocation("entity.player.levelup"));

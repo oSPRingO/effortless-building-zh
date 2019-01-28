@@ -1,4 +1,4 @@
-package nl.requios.effortlessbuilding;
+package nl.requios.effortlessbuilding.buildmodifier;
 
 import net.minecraft.block.BlockDirectional;
 import net.minecraft.block.BlockDispenser;
@@ -12,6 +12,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.items.IItemHandler;
+import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 import java.util.ArrayList;
@@ -23,7 +24,7 @@ public class Mirror {
         public boolean enabled = false;
         public Vec3d position = new Vec3d(0.5, 64.5, 0.5);
         public boolean mirrorX = true, mirrorY = false, mirrorZ = false;
-        public int radius = 20;
+        public int radius = 10;
         public boolean drawLines = true, drawPlanes = true;
 
         public MirrorSettings() {
@@ -114,7 +115,8 @@ public class Mirror {
         //Randomizer bag synergy
         if (bagInventory != null) {
             itemStack = ItemRandomizerBag.pickRandomStack(bagInventory);
-            oldBlockState = BuildModifiers.getBlockStateFromItem(itemStack, player, oldBlockPos, EnumFacing.UP, new Vec3d(0, 0, 0), hand);
+            oldBlockState = BuildModifiers
+                    .getBlockStateFromItem(itemStack, player, oldBlockPos, EnumFacing.UP, new Vec3d(0, 0, 0), hand);
         }
 
         //Find blockstate

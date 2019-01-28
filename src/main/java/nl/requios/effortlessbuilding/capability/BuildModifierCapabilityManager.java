@@ -11,10 +11,10 @@ import net.minecraftforge.common.capabilities.ICapabilitySerializable;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import nl.requios.effortlessbuilding.Array;
 import nl.requios.effortlessbuilding.BuildSettingsManager.BuildSettings;
-import nl.requios.effortlessbuilding.Mirror;
-import nl.requios.effortlessbuilding.RadialMirror;
+import nl.requios.effortlessbuilding.buildmodifier.Array;
+import nl.requios.effortlessbuilding.buildmodifier.Mirror;
+import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;

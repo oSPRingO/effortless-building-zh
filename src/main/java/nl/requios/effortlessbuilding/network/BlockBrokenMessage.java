@@ -9,8 +9,8 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
-import nl.requios.effortlessbuilding.BuildModifiers;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 
 public class BlockBrokenMessage implements IMessage {
 

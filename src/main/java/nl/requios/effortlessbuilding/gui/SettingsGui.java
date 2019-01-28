@@ -2,7 +2,11 @@ package nl.requios.effortlessbuilding.gui;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
-import nl.requios.effortlessbuilding.*;
+import nl.requios.effortlessbuilding.BuildSettingsManager;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmodifier.Array;
+import nl.requios.effortlessbuilding.buildmodifier.Mirror;
+import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
