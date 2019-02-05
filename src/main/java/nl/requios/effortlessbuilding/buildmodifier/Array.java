@@ -9,7 +9,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraftforge.items.IItemHandler;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 import java.util.ArrayList;
@@ -46,7 +45,7 @@ public class Array {
         List<BlockPos> coordinates = new ArrayList<>();
 
         //find arraysettings for the player
-        ArraySettings a = BuildSettingsManager.getBuildSettings(player).getArraySettings();
+        ArraySettings a = ModifierSettingsManager.getModifierSettings(player).getArraySettings();
         if (!isEnabled(a)) return coordinates;
 
         BlockPos pos = startPos;
@@ -64,7 +63,7 @@ public class Array {
         List<IBlockState> blockStates = new ArrayList<>();
 
         //find arraysettings for the player that placed the block
-        ArraySettings a = BuildSettingsManager.getBuildSettings(player).getArraySettings();
+        ArraySettings a = ModifierSettingsManager.getModifierSettings(player).getArraySettings();
         if (!isEnabled(a)) return blockStates;
 
         BlockPos pos = startPos;

@@ -21,8 +21,8 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 import javax.annotation.Nonnull;
@@ -216,7 +216,7 @@ public class SurvivalHelper {
         }
 
         //Check quickreplace
-        if (placer instanceof EntityPlayer && BuildSettingsManager.getBuildSettings(((EntityPlayer) placer)).doQuickReplace()) {
+        if (placer instanceof EntityPlayer && ModifierSettingsManager.getModifierSettings(((EntityPlayer) placer)).doQuickReplace()) {
             return true;
         }
 

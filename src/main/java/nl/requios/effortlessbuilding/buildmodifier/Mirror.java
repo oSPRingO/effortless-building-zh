@@ -12,7 +12,6 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.items.IItemHandler;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 import java.util.ArrayList;
@@ -50,7 +49,7 @@ public class Mirror {
         List<BlockPos> coordinates = new ArrayList<>();
 
         //find mirrorsettings for the player
-        MirrorSettings m = BuildSettingsManager.getBuildSettings(player).getMirrorSettings();
+        MirrorSettings m = ModifierSettingsManager.getModifierSettings(player).getMirrorSettings();
         if (!isEnabled(m, startPos)) return coordinates;
 
         if (m.mirrorX) coordinateMirrorX(m, startPos, coordinates);
@@ -90,7 +89,7 @@ public class Mirror {
         List<IBlockState> blockStates = new ArrayList<>();
 
         //find mirrorsettings for the player
-        MirrorSettings m = BuildSettingsManager.getBuildSettings(player).getMirrorSettings();
+        MirrorSettings m = ModifierSettingsManager.getModifierSettings(player).getMirrorSettings();
         if (!isEnabled(m, startPos)) return blockStates;
 
         //Randomizer bag synergy

@@ -1,54 +1,52 @@
-package nl.requios.effortlessbuilding;
+package nl.requios.effortlessbuilding.buildmodifier;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-import nl.requios.effortlessbuilding.buildmodifier.Array;
-import nl.requios.effortlessbuilding.buildmodifier.Mirror;
-import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
-import nl.requios.effortlessbuilding.capability.BuildModifierCapabilityManager;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
-import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
+import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
 
 @Mod.EventBusSubscriber
-public class BuildSettingsManager {
+public class ModifierSettingsManager {
 
-    //Retrieves the buildsettings of a player through the buildModifierCapability capability
+    //Retrieves the buildsettings of a player through the modifierCapability capability
     //Never returns null
-    public static BuildSettings getBuildSettings(EntityPlayer player){
-        if (player.hasCapability(BuildModifierCapabilityManager.buildModifierCapability, null)) {
-            BuildModifierCapabilityManager.IBuildModifierCapability capability = player.getCapability(
-                    BuildModifierCapabilityManager.buildModifierCapability, null);
-            if (capability.getBuildModifierData() == null) {
-                capability.setBuildModifierData(new BuildSettings());
+    public static ModifierSettings getModifierSettings(EntityPlayer player){
+        if (player.hasCapability(ModifierCapabilityManager.modifierCapability, null)) {
+            ModifierCapabilityManager.IModifierCapability capability = player.getCapability(
+                    ModifierCapabilityManager.modifierCapability, null);
+            if (capability.getModifierData() == null) {
+                capability.setModifierData(new ModifierSettings());
             }
-            return capability.getBuildModifierData();
+            return capability.getModifierData();
         }
-        throw new IllegalArgumentException("Player does not have buildModifierCapability capability");
+        throw new IllegalArgumentException("Player does not have modifierCapability capability");
     }
 
-    public static void setBuildSettings(EntityPlayer player, BuildSettings buildSettings) {
+    public static void setModifierSettings(EntityPlayer player, ModifierSettings modifierSettings) {
         if (player == null) {
             EffortlessBuilding.log("Cannot set buildsettings, player is null");
             return;
         }
-        if (player.hasCapability(BuildModifierCapabilityManager.buildModifierCapability, null)) {
-            BuildModifierCapabilityManager.IBuildModifierCapability capability = player.getCapability(
-                    BuildModifierCapabilityManager.buildModifierCapability, null);
-            capability.setBuildModifierData(buildSettings);
+        if (player.hasCapability(ModifierCapabilityManager.modifierCapability, null)) {
+            ModifierCapabilityManager.IModifierCapability capability = player.getCapability(
+                    ModifierCapabilityManager.modifierCapability, null);
+            capability.setModifierData(modifierSettings);
         } else {
             EffortlessBuilding.log(player, "Saving buildsettings failed.");
         }
     }
 
-    public static String sanitize(BuildSettings buildSettings, EntityPlayer player) {
+    public static String sanitize(ModifierSettings modifierSettings, EntityPlayer player) {
         int maxReach = ReachHelper.getMaxReach(player);
         String error = "";
 
         //Mirror settings
-        Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
+        Mirror.MirrorSettings m = modifierSettings.getMirrorSettings();
         if (m.radius < 1) {
             m.radius = 1;
             error += "Mirror size has to be at least 1. This has been corrected. ";
@@ -59,7 +57,7 @@ public class BuildSettingsManager {
         }
 
         //Array settings
-        Array.ArraySettings a = buildSettings.getArraySettings();
+        Array.ArraySettings a = modifierSettings.getArraySettings();
         if (a.count < 0) {
             a.count = 0;
             error += "Array count may not be negative. It has been reset to 0.";
@@ -71,7 +69,7 @@ public class BuildSettingsManager {
         }
 
         //Radial mirror settings
-        RadialMirror.RadialMirrorSettings r = buildSettings.getRadialMirrorSettings();
+        RadialMirror.RadialMirrorSettings r = modifierSettings.getRadialMirrorSettings();
         if (r.slices < 2) {
             r.slices = 2;
             error += "Radial mirror needs to have at least 2 slices. Slices has been set to 2.";
@@ -87,31 +85,31 @@ public class BuildSettingsManager {
         }
 
         //Other
-        if (buildSettings.reachUpgrade < 0) {
-            buildSettings.reachUpgrade = 0;
+        if (modifierSettings.reachUpgrade < 0) {
+            modifierSettings.reachUpgrade = 0;
         }
-        if (buildSettings.reachUpgrade > 3) {
-            buildSettings.reachUpgrade = 3;
+        if (modifierSettings.reachUpgrade > 3) {
+            modifierSettings.reachUpgrade = 3;
         }
 
         return error;
     }
 
-    public static class BuildSettings {
+    public static class ModifierSettings {
         private Mirror.MirrorSettings mirrorSettings;
         private Array.ArraySettings arraySettings;
         private RadialMirror.RadialMirrorSettings radialMirrorSettings;
         private boolean quickReplace = false;
         private int reachUpgrade = 0;
 
-        public BuildSettings() {
+        public ModifierSettings() {
             mirrorSettings = new Mirror.MirrorSettings();
             arraySettings = new Array.ArraySettings();
             radialMirrorSettings = new RadialMirror.RadialMirrorSettings();
         }
 
-        public BuildSettings(Mirror.MirrorSettings mirrorSettings, Array.ArraySettings arraySettings,
-                             RadialMirror.RadialMirrorSettings radialMirrorSettings, boolean quickReplace, int reachUpgrade) {
+        public ModifierSettings(Mirror.MirrorSettings mirrorSettings, Array.ArraySettings arraySettings,
+                                RadialMirror.RadialMirrorSettings radialMirrorSettings, boolean quickReplace, int reachUpgrade) {
             this.mirrorSettings = mirrorSettings;
             this.arraySettings = arraySettings;
             this.radialMirrorSettings = radialMirrorSettings;
@@ -179,14 +177,14 @@ public class BuildSettingsManager {
     }
 
     private static void handleNewPlayer(EntityPlayer player){
-        if (getBuildSettings(player) == null) {
-            setBuildSettings(player, new BuildSettings());
+        if (getModifierSettings(player) == null) {
+            setModifierSettings(player, new ModifierSettings());
         }
 
         //Only on server
         if (!player.world.isRemote) {
             //Send to client
-            BuildSettingsMessage msg = new BuildSettingsMessage(getBuildSettings(player));
+            ModifierSettingsMessage msg = new ModifierSettingsMessage(getModifierSettings(player));
             EffortlessBuilding.packetHandler.sendTo(msg, (EntityPlayerMP) player);
         }
     }

@@ -2,7 +2,7 @@ package nl.requios.effortlessbuilding.helper;
 
 import net.minecraft.entity.player.EntityPlayer;
 import nl.requios.effortlessbuilding.BuildConfig;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 
 public class ReachHelper {
     public static int getMaxReach(EntityPlayer player) {
@@ -11,7 +11,7 @@ public class ReachHelper {
         if (!BuildConfig.reach.enableReachUpgrades) return BuildConfig.reach.maxReachLevel3;
 
         //Check buildsettings for reachUpgrade
-        int reachUpgrade = BuildSettingsManager.getBuildSettings(player).getReachUpgrade();
+        int reachUpgrade = ModifierSettingsManager.getModifierSettings(player).getReachUpgrade();
         switch (reachUpgrade) {
             case 0: return BuildConfig.reach.maxReachLevel0;
             case 1: return BuildConfig.reach.maxReachLevel1;
@@ -19,6 +19,15 @@ public class ReachHelper {
             case 3: return BuildConfig.reach.maxReachLevel3;
         }
         return BuildConfig.reach.maxReachLevel0;
+    }
+
+    public static int getPlacementReach(EntityPlayer player) {
+        return getMaxReach(player) / 4;
+    }
+
+    public static int getMaxBlocksPlacedAtOnce(EntityPlayer player) {
+        if (player.isCreative()) return 1000000;
+        return getMaxReach(player) / 2;
     }
 
     public static boolean canBreakFar(EntityPlayer player) {

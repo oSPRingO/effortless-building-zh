@@ -1,4 +1,4 @@
-package nl.requios.effortlessbuilding.gui;
+package nl.requios.effortlessbuilding.gui.buildmodifier;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -6,9 +6,9 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.gui.elements.GuiCollapsibleScrollEntry;
 import nl.requios.effortlessbuilding.gui.elements.GuiIconButton;
 import nl.requios.effortlessbuilding.gui.elements.GuiNumberField;
@@ -98,9 +98,9 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonDrawPlanes.setTooltip("Show area");
         mirrorIconButtonList.add(buttonDrawPlanes);
 
-        BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(mc.player);
-        if (buildSettings != null) {
-            Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
+        if (modifierSettings != null) {
+            Mirror.MirrorSettings m = modifierSettings.getMirrorSettings();
             buttonMirrorEnabled.setIsChecked(m.enabled);
             textMirrorPosX.setNumber(m.position.x);
             textMirrorPosY.setNumber(m.position.y);

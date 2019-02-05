@@ -10,6 +10,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
@@ -85,7 +86,7 @@ public class BlockPlacedMessage implements IMessage {
             } else {
                 //Received serverside
                 EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {
-                    BuildModifiers.onBlockPlacedMessage(ctx.getServerHandler().player, message);
+                    BuildModes.onBlockPlacedMessage(ctx.getServerHandler().player, message);
                 });
                 // No response packet
                 return null;

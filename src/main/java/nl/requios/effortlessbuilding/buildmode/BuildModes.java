@@ -1,7 +1,20 @@
 package nl.requios.effortlessbuilding.buildmode;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+import net.minecraftforge.event.world.BlockEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmodifier.*;
+import nl.requios.effortlessbuilding.helper.ReachHelper;
+import nl.requios.effortlessbuilding.helper.SurvivalHelper;
+import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
+import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class BuildModes {
 
@@ -10,7 +23,12 @@ public class BuildModes {
         NormalPlus ("Normal+", new NormalPlus()),
         Line ("Line", new Line()),
         Wall ("Wall", new Wall()),
-        Floor ("Floor", new Floor())
+        Floor ("Floor", new Floor()),
+        Normal2 ("Normal", new Normal()),
+        NormalPlus2 ("Normal+", new NormalPlus()),
+        Line2 ("Line", new Line()),
+        Wall2 ("Wall", new Wall()),
+        Floor2 ("Floor", new Floor())
         ;
 //        DiagonalLine,
 //        DiagonalWall,
@@ -18,28 +36,99 @@ public class BuildModes {
 //        Cube;
 
         public String name;
-        public final BuildMode instance;
+        public final IBuildMode instance;
 
-        BuildModeEnum(String name, BuildMode instance) {
+        BuildModeEnum(String name, IBuildMode instance) {
             this.name = name;
             this.instance = instance;
         }
     }
 
-    protected static BuildModeEnum buildMode = BuildModeEnum.Normal;
+    //Uses a network message to get the previous raytraceresult from the player
+    //The server could keep track of all raytraceresults but this might lag with many players
+    //Raytraceresult is needed for sideHit and hitVec
+    public static void onBlockPlacedMessage(EntityPlayer player, BlockPlacedMessage message) {
 
-    public static BuildModeEnum getBuildMode() {
-        return buildMode;
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+        ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+        BuildModeEnum buildMode = modeSettings.getBuildMode();
+        int maxReach = ReachHelper.getMaxReach(player);
+
+        BlockPos startPos = null;
+
+        if (message.isBlockHit() && message.getBlockPos() != null) {
+            startPos = message.getBlockPos();
+
+            //Offset in direction of sidehit if not quickreplace and not replaceable
+            boolean replaceable = player.world.getBlockState(startPos).getBlock().isReplaceable(player.world, startPos);
+            if (!modifierSettings.doQuickReplace() && !replaceable) {
+                startPos = startPos.offset(message.getSideHit());
+            }
+
+            //Get under tall grass and other replaceable blocks
+            if (modifierSettings.doQuickReplace() && replaceable) {
+                startPos = startPos.down();
+            }
+
+            //Check if player reach does not exceed startpos
+            if (player.getPosition().distanceSq(startPos) > maxReach * maxReach) {
+                EffortlessBuilding.log(player, "Placement exceeds your reach.");
+                return;
+            }
+        }
+        //Even when no starting block is found, call buildmode instance
+        //We might want to place things in the air
+        List<BlockPos> posList = buildMode.instance.onRightClick(player, startPos, message.getSideHit(), message.getHitVec());
+
+        //Limit number of blocks you can place
+        int limit = ReachHelper.getMaxBlocksPlacedAtOnce(player);
+        if (posList.size() > limit) {
+            posList = posList.subList(0, limit);
+        }
+
+        EnumFacing sideHit = buildMode.instance.getSideHit(player);
+        if (sideHit == null) sideHit = message.getSideHit();
+
+        Vec3d hitVec = buildMode.instance.getHitVec(player);
+        if (hitVec == null) hitVec = message.getHitVec();
+
+        BuildModifiers.onBlockPlaced(player, posList, sideHit, hitVec);
+
     }
 
-    public static void setBuildMode(EntityPlayer player, BuildModeEnum buildMode) {
-        if (player.world.isRemote) {
-            //TODO send to server
-            BuildModes.buildMode = buildMode;
-            EffortlessBuilding.log(player, BuildModes.buildMode.name, true);
-        } else {
-            //TODO cancel previous mode's action
-            BuildModes.buildMode = buildMode;
+
+    //Use a network message to break blocks in the distance using clientside mouse input
+    public static void onBlockBrokenMessage(EntityPlayer player, BlockBrokenMessage message) {
+        BlockPos blockPos = message.getBlockPos();
+        if (ReachHelper.canBreakFar(player) && message.isBlockHit()) {
+            BlockEvent.BreakEvent event = new BlockEvent.BreakEvent(player.world, blockPos, player.world.getBlockState(blockPos), player);
+            onBlockBroken(event);
         }
+    }
+
+    public static void onBlockBroken(BlockEvent.BreakEvent event) {
+        World world = event.getWorld();
+        BlockPos pos = event.getPos();
+
+        if (world.isRemote) return;
+
+        //get coordinates
+        List<BlockPos> coordinates = findCoordinates(event.getPlayer(), pos);
+
+        //let buildmodifiers break blocks
+        BuildModifiers.onBlockBroken(event.getPlayer(), coordinates);
+    }
+
+    public static List<BlockPos> findCoordinates(EntityPlayer player, BlockPos startPos) {
+        List<BlockPos> coordinates = new ArrayList<>();
+
+        ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+        coordinates.addAll(modeSettings.getBuildMode().instance.findCoordinates(player, startPos));
+
+        return coordinates;
+    }
+
+    public static void initializeMode(EntityPlayer player) {
+        ModeSettingsManager.getModeSettings(player).getBuildMode().instance.initialize(player);
     }
 }

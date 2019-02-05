@@ -1,13 +1,13 @@
-package nl.requios.effortlessbuilding.gui;
+package nl.requios.effortlessbuilding.gui.buildmodifier;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Array;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.gui.elements.GuiCollapsibleScrollEntry;
 import nl.requios.effortlessbuilding.gui.elements.GuiNumberField;
 import nl.requios.effortlessbuilding.gui.elements.GuiScrollPane;
@@ -58,9 +58,9 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         textArrayCount.setTooltip("How many copies should be made.");
         arrayNumberFieldList.add(textArrayCount);
 
-        BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(mc.player);
-        if (buildSettings != null) {
-            Array.ArraySettings a = buildSettings.getArraySettings();
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
+        if (modifierSettings != null) {
+            Array.ArraySettings a = modifierSettings.getArraySettings();
             buttonArrayEnabled.setIsChecked(a.enabled);
             textArrayOffsetX.setNumber(a.offset.getX());
             textArrayOffsetY.setNumber(a.offset.getY());

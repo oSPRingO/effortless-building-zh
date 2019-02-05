@@ -9,8 +9,8 @@ import net.minecraft.util.*;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import nl.requios.effortlessbuilding.BuildConfig;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import javax.annotation.Nullable;
@@ -34,10 +34,10 @@ public class ItemReachUpgrade2 extends Item {
             return new ActionResult<>(EnumActionResult.PASS, player.getHeldItem(hand));
         }
 
-        BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(player);
-        int currentLevel = buildSettings.getReachUpgrade();
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+        int currentLevel = modifierSettings.getReachUpgrade();
         if (currentLevel == 1) {
-            buildSettings.setReachUpgrade(2);
+            modifierSettings.setReachUpgrade(2);
             if (world.isRemote) EffortlessBuilding.log(player, "Upgraded reach to " + ReachHelper.getMaxReach(player));
             player.setHeldItem(hand, ItemStack.EMPTY);
 

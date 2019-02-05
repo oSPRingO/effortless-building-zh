@@ -10,6 +10,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 
 public class BlockBrokenMessage implements IMessage {
@@ -80,7 +81,7 @@ public class BlockBrokenMessage implements IMessage {
             if (ctx.side == Side.SERVER) {
                 //Received serverside
                 EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {
-                    BuildModifiers.onBlockBrokenMessage(ctx.getServerHandler().player, message);
+                    BuildModes.onBlockBrokenMessage(ctx.getServerHandler().player, message);
                 });
             }
             // No response packet

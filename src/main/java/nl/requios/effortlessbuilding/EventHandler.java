@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
@@ -18,9 +19,13 @@ import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import nl.requios.effortlessbuilding.buildmode.BuildModes;
+import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
-import nl.requios.effortlessbuilding.capability.BuildModifierCapabilityManager;
+import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
+import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
+import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 
 import java.util.List;
 
@@ -48,7 +53,8 @@ public class EventHandler
     @SubscribeEvent
     public static void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof EntityPlayer) {
-            event.addCapability(new ResourceLocation(EffortlessBuilding.MODID, "BuildModifier"), new BuildModifierCapabilityManager.Provider());
+            event.addCapability(new ResourceLocation(EffortlessBuilding.MODID, "BuildModifier"), new ModifierCapabilityManager.Provider());
+            event.addCapability(new ResourceLocation(EffortlessBuilding.MODID, "BuildMode"), new ModeCapabilityManager.Provider());
         }
     }
 
@@ -67,14 +73,27 @@ public class EventHandler
 //    }
 
     @SubscribeEvent
+    //Only called serverside
     public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
-        //Still call it to cancel event
-        BuildModifiers.onBlockPlaced(event);
+        //Cancel event if necessary
+        BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(event.getPlayer()).getBuildMode();
+        if (buildMode != BuildModes.BuildModeEnum.Normal) {
+            event.setCanceled(true);
+        } else {
+            //Send message to client, which sends message back with raytrace info
+            EffortlessBuilding.packetHandler.sendTo(new BlockPlacedMessage(), (EntityPlayerMP) event.getPlayer());
+        }
     }
 
     @SubscribeEvent
     public static void onBlockBroken(BlockEvent.BreakEvent event) {
-        BuildModifiers.onBlockBroken(event);
+        //Cancel event if necessary
+        BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(event.getPlayer()).getBuildMode();
+        if (buildMode != BuildModes.BuildModeEnum.Normal) {
+            event.setCanceled(true);
+        } else {
+            BuildModes.onBlockBroken(event);
+        }
     }
 
     @SubscribeEvent

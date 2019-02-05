@@ -1,10 +1,9 @@
-package nl.requios.effortlessbuilding.gui;
+package nl.requios.effortlessbuilding.gui.buildmode;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.lwjgl.opengl.GL11;
 

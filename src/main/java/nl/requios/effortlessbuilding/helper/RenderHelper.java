@@ -3,6 +3,7 @@ package nl.requios.effortlessbuilding.helper;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -24,9 +25,13 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.BuildConfig;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmode.BuildModes;
+import nl.requios.effortlessbuilding.buildmode.IBuildMode;
+import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
@@ -127,13 +132,14 @@ public class RenderHelper implements IWorldEventListener {
     @SubscribeEvent
     public static void onRender(RenderWorldLastEvent event) {
         EntityPlayer player = Minecraft.getMinecraft().player;
-        BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(player);
+        ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
 
         begin(event.getPartialTicks());
 
         beginLines();
         //Mirror lines and areas
-        Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
+        Mirror.MirrorSettings m = modifierSettings.getMirrorSettings();
         if (m != null && m.enabled && (m.mirrorX || m.mirrorY || m.mirrorZ))
         {
             Vec3d pos = m.position.add(epsilon);
@@ -170,7 +176,7 @@ public class RenderHelper implements IWorldEventListener {
         }
 
         //Radial mirror lines and areas
-        RadialMirror.RadialMirrorSettings r = buildSettings.getRadialMirrorSettings();
+        RadialMirror.RadialMirrorSettings r = modifierSettings.getRadialMirrorSettings();
         if (r != null && r.enabled)
         {
             Vec3d pos = r.position.add(epsilon);
@@ -193,30 +199,59 @@ public class RenderHelper implements IWorldEventListener {
 
         //Render block previews
         RayTraceResult lookingAt = ClientProxy.getLookingAt(player);
+        if (modeSettings.getBuildMode() == BuildModes.BuildModeEnum.Normal) lookingAt = Minecraft.getMinecraft().objectMouseOver;
+
+        ItemStack mainhand = player.getHeldItemMainhand();
+        boolean toolInHand = !(!mainhand.isEmpty() && (mainhand.getItem() instanceof ItemBlock || mainhand.getItem() instanceof ItemRandomizerBag));
+
+        BlockPos startPos = null;
+        EnumFacing sideHit = null;
+        Vec3d hitVec = null;
+
         //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
-        if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK)
-        {
-            beginBlockPreviews();
-            BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-            BlockPos startPos = lookingAt.getBlockPos();
+        if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
+            startPos = lookingAt.getBlockPos();
 
             //Check if tool (or none) in hand
-            ItemStack mainhand = player.getHeldItemMainhand();
-            boolean toolInHand = !(!mainhand.isEmpty() && (mainhand.getItem() instanceof ItemBlock || mainhand.getItem() instanceof ItemRandomizerBag));
-            boolean replaceable =
-                    player.world.getBlockState(startPos).getBlock().isReplaceable(player.world, startPos);
-            if (!buildSettings.doQuickReplace() && !toolInHand && !replaceable) {
+            boolean replaceable = player.world.getBlockState(startPos).getBlock().isReplaceable(player.world, startPos);
+            if (!modifierSettings.doQuickReplace() && !toolInHand && !replaceable) {
                 startPos = startPos.offset(lookingAt.sideHit);
             }
 
             //Get under tall grass and other replaceable blocks
-            if (buildSettings.doQuickReplace() && !toolInHand && replaceable) {
+            if (modifierSettings.doQuickReplace() && !toolInHand && replaceable) {
                 startPos = startPos.down();
             }
 
-            if (BuildModifiers.isEnabled(buildSettings, startPos) || BuildConfig.visuals.alwaysShowBlockPreview) {
+            sideHit = lookingAt.sideHit;
+            hitVec = lookingAt.hitVec;
+        }
+
+        //Dont render if in normal mode and modifiers are disabled
+        //Unless alwaysShowBlockPreview is true in config
+        if (modeSettings.getBuildMode() != BuildModes.BuildModeEnum.Normal ||
+            (startPos != null && BuildModifiers.isEnabled(modifierSettings, startPos)) ||
+            BuildConfig.visuals.alwaysShowBlockPreview) {
+
+            beginBlockPreviews();
+
+            IBuildMode buildModeInstance = modeSettings.getBuildMode().instance;
+            if (buildModeInstance.getSideHit(player) != null) sideHit = buildModeInstance.getSideHit(player);
+            if (buildModeInstance.getHitVec(player) != null) hitVec = buildModeInstance.getHitVec(player);
+
+            if (sideHit != null) {
+                BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+
                 //get coordinates
-                List<BlockPos> newCoordinates = BuildModifiers.findCoordinates(player, startPos);
+                List<BlockPos> startCoordinates = BuildModes.findCoordinates(player, startPos);
+
+                //Limit number of blocks you can place
+                int limit = ReachHelper.getMaxBlocksPlacedAtOnce(player);
+                if (startCoordinates.size() > limit) {
+                    startCoordinates = startCoordinates.subList(0, limit);
+                }
+
+                List<BlockPos> newCoordinates = BuildModifiers.findCoordinates(player, startCoordinates);
 
                 //check if they are different from previous
                 if (!BuildModifiers.compareCoordinates(previousCoordinates, newCoordinates)) {
@@ -225,11 +260,10 @@ public class RenderHelper implements IWorldEventListener {
                     ItemRandomizerBag.renewRandomness();
                 }
 
-                Vec3d hitVec = lookingAt.hitVec;
                 hitVec = new Vec3d(Math.abs(hitVec.x - ((int) hitVec.x)), Math.abs(hitVec.y - ((int) hitVec.y)),
                         Math.abs(hitVec.z - ((int) hitVec.z)));
                 List<ItemStack> itemStacks = new ArrayList<>();
-                List<IBlockState> blockStates = BuildModifiers.findBlockStates(player, startPos, hitVec, lookingAt.sideHit, itemStacks);
+                List<IBlockState> blockStates = BuildModifiers.findBlockStates(player, startCoordinates, hitVec, lookingAt.sideHit, itemStacks);
 
                 //check if valid blockstates
                 if (blockStates.size() != 0 && newCoordinates.size() == blockStates.size()) {
@@ -425,8 +459,8 @@ public class RenderHelper implements IWorldEventListener {
     public void sendBlockBreakProgress(int breakerId, BlockPos pos, int progress) {
         Minecraft mc = Minecraft.getMinecraft();
 
-        BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(mc.player);
-        if (!BuildModifiers.isEnabled(buildSettings, pos)) return;
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
+        if (!BuildModifiers.isEnabled(modifierSettings, pos)) return;
 
         List<BlockPos> coordinates = BuildModifiers.findCoordinates(mc.player, pos);
         for (int i = 1; i < coordinates.size(); i++) {

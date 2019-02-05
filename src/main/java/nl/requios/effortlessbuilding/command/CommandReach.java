@@ -7,9 +7,9 @@ import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
-import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
+import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
 
 public class CommandReach extends CommandBase {
     @Override
@@ -31,13 +31,14 @@ public class CommandReach extends CommandBase {
         if (sender instanceof EntityPlayerMP) {
             EntityPlayerMP player = (EntityPlayerMP) sender;
             //Set reach level to args[0]
-            BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(player);
-            buildSettings.setReachUpgrade(Integer.valueOf(args[0]));
-            BuildSettingsManager.setBuildSettings(player, buildSettings);
+            ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+            modifierSettings.setReachUpgrade(Integer.valueOf(args[0]));
+            ModifierSettingsManager.setModifierSettings(player, modifierSettings);
             //Send to client
-            EffortlessBuilding.packetHandler.sendTo(new BuildSettingsMessage(buildSettings), player);
+            EffortlessBuilding.packetHandler.sendTo(new ModifierSettingsMessage(modifierSettings), player);
 
-            sender.sendMessage(new TextComponentString("Reach level of " + sender.getName() + " set to " + buildSettings.getReachUpgrade()));
+            sender.sendMessage(new TextComponentString("Reach level of " + sender.getName() + " set to " + modifierSettings
+                    .getReachUpgrade()));
         }
     }
 }

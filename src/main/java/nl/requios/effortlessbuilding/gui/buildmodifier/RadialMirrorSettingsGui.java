@@ -1,4 +1,4 @@
-package nl.requios.effortlessbuilding.gui;
+package nl.requios.effortlessbuilding.gui.buildmodifier;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -6,8 +6,8 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 import nl.requios.effortlessbuilding.gui.elements.GuiCollapsibleScrollEntry;
 import nl.requios.effortlessbuilding.gui.elements.GuiIconButton;
@@ -98,9 +98,9 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonRadialMirrorAlternate = new GuiCheckBox(id++, left + 140, y, " Alternate", false);
         radialMirrorButtonList.add(buttonRadialMirrorAlternate);
 
-        BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(mc.player);
-        if (buildSettings != null) {
-            RadialMirror.RadialMirrorSettings r = buildSettings.getRadialMirrorSettings();
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
+        if (modifierSettings != null) {
+            RadialMirror.RadialMirrorSettings r = modifierSettings.getRadialMirrorSettings();
             buttonRadialMirrorEnabled.setIsChecked(r.enabled);
             textRadialMirrorPosX.setNumber(r.position.x);
             textRadialMirrorPosY.setNumber(r.position.y);

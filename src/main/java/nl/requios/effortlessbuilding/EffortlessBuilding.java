@@ -17,7 +17,8 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
-import nl.requios.effortlessbuilding.capability.BuildModifierCapabilityManager;
+import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
+import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.command.CommandReach;
 import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
@@ -26,7 +27,8 @@ import nl.requios.effortlessbuilding.item.ItemReachUpgrade2;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade3;
 import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
-import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
+import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
+import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
 import nl.requios.effortlessbuilding.proxy.IProxy;
 import org.apache.logging.log4j.Logger;
 
@@ -74,16 +76,19 @@ public class EffortlessBuilding
     {
         logger = event.getModLog();
 
-        CapabilityManager.INSTANCE.register(
-                BuildModifierCapabilityManager.IBuildModifierCapability.class, new BuildModifierCapabilityManager.Storage(), BuildModifierCapabilityManager.BuildModifierCapability.class);
+        CapabilityManager.INSTANCE.register(ModifierCapabilityManager.IModifierCapability.class, new ModifierCapabilityManager.Storage(), ModifierCapabilityManager.ModifierCapability.class);
+        CapabilityManager.INSTANCE.register(ModeCapabilityManager.IModeCapability.class, new ModeCapabilityManager.Storage(), ModeCapabilityManager.ModeCapability.class);
 
-        EffortlessBuilding.packetHandler.registerMessage(BuildSettingsMessage.MessageHandler.class, BuildSettingsMessage.class, 0, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(BuildSettingsMessage.MessageHandler.class, BuildSettingsMessage.class, 0, Side.CLIENT);
+        EffortlessBuilding.packetHandler.registerMessage(ModifierSettingsMessage.MessageHandler.class, ModifierSettingsMessage.class, 0, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(ModifierSettingsMessage.MessageHandler.class, ModifierSettingsMessage.class, 0, Side.CLIENT);
 
-        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 1, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 1, Side.CLIENT);
+        EffortlessBuilding.packetHandler.registerMessage(ModeSettingsMessage.MessageHandler.class, ModeSettingsMessage.class, 1, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(ModeSettingsMessage.MessageHandler.class, ModeSettingsMessage.class, 1, Side.CLIENT);
 
-        EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 2, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 2, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 2, Side.CLIENT);
+
+        EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 3, Side.SERVER);
 
         proxy.preInit(event);
     }

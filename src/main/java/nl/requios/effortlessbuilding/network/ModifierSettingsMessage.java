@@ -8,28 +8,29 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
-import nl.requios.effortlessbuilding.BuildSettingsManager.BuildSettings;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Array;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 
-public class BuildSettingsMessage implements IMessage {
+import static nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.*;
 
-    private BuildSettings buildSettings;
+public class ModifierSettingsMessage implements IMessage {
 
-    public BuildSettingsMessage() {
+    private ModifierSettings modifierSettings;
+
+    public ModifierSettingsMessage() {
     }
 
-    public BuildSettingsMessage(BuildSettings buildSettings) {
-        this.buildSettings = buildSettings;
+    public ModifierSettingsMessage(ModifierSettings modifierSettings) {
+        this.modifierSettings = modifierSettings;
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
         //MIRROR
-        Mirror.MirrorSettings m = buildSettings.getMirrorSettings();
+        Mirror.MirrorSettings m = modifierSettings.getMirrorSettings();
         buf.writeBoolean(m != null);
         if (m != null) {
             buf.writeBoolean(m.enabled);
@@ -45,7 +46,7 @@ public class BuildSettingsMessage implements IMessage {
         }
 
         //ARRAY
-        Array.ArraySettings a = buildSettings.getArraySettings();
+        Array.ArraySettings a = modifierSettings.getArraySettings();
         buf.writeBoolean(a != null);
         if (a != null) {
             buf.writeBoolean(a.enabled);
@@ -55,12 +56,12 @@ public class BuildSettingsMessage implements IMessage {
             buf.writeInt(a.count);
         }
 
-        buf.writeBoolean(buildSettings.doQuickReplace());
+        buf.writeBoolean(modifierSettings.doQuickReplace());
 
-        buf.writeInt(buildSettings.getReachUpgrade());
+        buf.writeInt(modifierSettings.getReachUpgrade());
 
         //RADIAL MIRROR
-        RadialMirror.RadialMirrorSettings r = buildSettings.getRadialMirrorSettings();
+        RadialMirror.RadialMirrorSettings r = modifierSettings.getRadialMirrorSettings();
         buf.writeBoolean(r != null);
         if (r != null) {
             buf.writeBoolean(r.enabled);
@@ -119,19 +120,19 @@ public class BuildSettingsMessage implements IMessage {
                             radialMirrorAlternate, radialMirrorRadius, radialMirrorDrawLines, radialMirrorDrawPlanes);
         }
 
-        buildSettings = new BuildSettings(m, a, r, quickReplace, reachUpgrade);
+        modifierSettings = new ModifierSettings(m, a, r, quickReplace, reachUpgrade);
     }
 
     // The params of the IMessageHandler are <REQ, REPLY>
-    public static class MessageHandler implements IMessageHandler<BuildSettingsMessage, IMessage> {
+    public static class MessageHandler implements IMessageHandler<ModifierSettingsMessage, IMessage> {
         // Do note that the default constructor is required, but implicitly defined in this case
 
         @Override
-        public IMessage onMessage(BuildSettingsMessage message, MessageContext ctx) {
+        public IMessage onMessage(ModifierSettingsMessage message, MessageContext ctx) {
             //EffortlessBuilding.log("message received on " + ctx.side + " side");
 
             // The value that was sent
-            BuildSettings buildSettings = message.buildSettings;
+            ModifierSettings modifierSettings = message.modifierSettings;
 
             // Execute the action on the main server thread by adding it as a scheduled task
             IThreadListener threadListener = EffortlessBuilding.proxy.getThreadListenerFromContext(ctx);
@@ -139,9 +140,9 @@ public class BuildSettingsMessage implements IMessage {
                 EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 // Sanitize
-                BuildSettingsManager.sanitize(buildSettings, player);
+                ModifierSettingsManager.sanitize(modifierSettings, player);
 
-                BuildSettingsManager.setBuildSettings(player, buildSettings);
+                ModifierSettingsManager.setModifierSettings(player, modifierSettings);
             });
             // No response packet
             return null;

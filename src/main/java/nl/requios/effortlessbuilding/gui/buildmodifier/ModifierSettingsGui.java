@@ -1,19 +1,19 @@
-package nl.requios.effortlessbuilding.gui;
+package nl.requios.effortlessbuilding.gui.buildmodifier;
 
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Array;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 import nl.requios.effortlessbuilding.gui.elements.GuiScrollPane;
-import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
+import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
 import java.io.IOException;
 
-public class SettingsGui extends GuiScreen {
+public class ModifierSettingsGui extends GuiScreen {
 
     private GuiScrollPane scrollPane;
     private GuiButton buttonClose;
@@ -118,20 +118,20 @@ public class SettingsGui extends GuiScreen {
         Array.ArraySettings a = arraySettingsGui.getArraySettings();
         RadialMirror.RadialMirrorSettings r = radialMirrorSettingsGui.getRadialMirrorSettings();
 
-        BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(mc.player);
-        if (buildSettings == null) buildSettings = new BuildSettingsManager.BuildSettings();
-        buildSettings.setMirrorSettings(m);
-        buildSettings.setArraySettings(a);
-        buildSettings.setRadialMirrorSettings(r);
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
+        if (modifierSettings == null) modifierSettings = new ModifierSettingsManager.ModifierSettings();
+        modifierSettings.setMirrorSettings(m);
+        modifierSettings.setArraySettings(a);
+        modifierSettings.setRadialMirrorSettings(r);
 
         //Sanitize
-        String error = BuildSettingsManager.sanitize(buildSettings, mc.player);
+        String error = ModifierSettingsManager.sanitize(modifierSettings, mc.player);
         if (!error.isEmpty()) EffortlessBuilding.log(mc.player, error);
 
-        BuildSettingsManager.setBuildSettings(mc.player, buildSettings);
+        ModifierSettingsManager.setModifierSettings(mc.player, modifierSettings);
 
         //Send to server
-        EffortlessBuilding.packetHandler.sendToServer(new BuildSettingsMessage(buildSettings));
+        EffortlessBuilding.packetHandler.sendToServer(new ModifierSettingsMessage(modifierSettings));
     }
 
 }

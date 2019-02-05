@@ -43,18 +43,19 @@ import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
-import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
-import nl.requios.effortlessbuilding.gui.RadialMenu;
-import nl.requios.effortlessbuilding.gui.SettingsGui;
+import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
+import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
+import nl.requios.effortlessbuilding.gui.buildmodifier.ModifierSettingsGui;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.RenderHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
-import nl.requios.effortlessbuilding.network.BuildSettingsMessage;
+import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
+import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
@@ -202,9 +203,11 @@ public class ClientProxy implements IProxy {
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayerSP player = mc.player;
 
-        if (Minecraft.getMinecraft().currentScreen != null) return;
-
-        if (!BuildModifiers.isEnabled(BuildSettingsManager.getBuildSettings(player), player.getPosition())) return;
+        if (Minecraft.getMinecraft().currentScreen != null ||
+            ModeSettingsManager.getModeSettings(player).getBuildMode() == BuildModes.BuildModeEnum.Normal ||
+            RadialMenu.instance.isVisible()) {
+            return;
+        }
 
         if (mc.gameSettings.keyBindUseItem.isPressed()) {
             //KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
@@ -212,20 +215,21 @@ public class ClientProxy implements IProxy {
             ItemStack currentItemStack = player.getHeldItem(EnumHand.MAIN_HAND);
             if (currentItemStack.getItem() instanceof ItemBlock ||
                 (currentItemStack.getItem() instanceof ItemRandomizerBag && !player.isSneaking())) {
+
                 //find position in distance
                 RayTraceResult lookingAt = getLookingAt(player);
-                if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
-                    EffortlessBuilding.packetHandler.sendToServer(new BlockPlacedMessage(lookingAt));
+                EffortlessBuilding.packetHandler.sendToServer(new BlockPlacedMessage(lookingAt));
 
-                    //play sound if further than normal
-                    if ((lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
-                        BlockPos blockPos = lookingAt.getBlockPos();
-                        IBlockState state = player.world.getBlockState(blockPos);
-                        SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
-                        player.world.playSound(player, blockPos, soundtype.getPlaceSound(), SoundCategory.BLOCKS,
-                                (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
-                        player.swingArm(EnumHand.MAIN_HAND);
-                    }
+                //play sound if further than normal
+                if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK &&
+                    (lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
+
+                    BlockPos blockPos = lookingAt.getBlockPos();
+                    IBlockState state = player.world.getBlockState(blockPos);
+                    SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
+                    player.world.playSound(player, blockPos, soundtype.getPlaceSound(), SoundCategory.BLOCKS,
+                            (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+                    player.swingArm(EnumHand.MAIN_HAND);
                 }
             }
         }
@@ -271,7 +275,7 @@ public class ClientProxy implements IProxy {
                 EffortlessBuilding.log(player, "Effortless Building is disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
             } else {
                 if (Minecraft.getMinecraft().currentScreen == null) {
-                    Minecraft.getMinecraft().displayGuiScreen(new SettingsGui());
+                    Minecraft.getMinecraft().displayGuiScreen(new ModifierSettingsGui());
                 } else {
                     player.closeScreen();
                 }
@@ -280,10 +284,11 @@ public class ClientProxy implements IProxy {
 
         //QuickReplace toggle
         if (keyBindings[1].isPressed()) {
-            BuildSettingsManager.BuildSettings buildSettings = BuildSettingsManager.getBuildSettings(player);
-            buildSettings.setQuickReplace(!buildSettings.doQuickReplace());
-            EffortlessBuilding.log(player, "Set "+ TextFormatting.GOLD + "Quick Replace " + TextFormatting.RESET + (buildSettings.doQuickReplace() ? "on" : "off"));
-            EffortlessBuilding.packetHandler.sendToServer(new BuildSettingsMessage(buildSettings));
+            ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+            modifierSettings.setQuickReplace(!modifierSettings.doQuickReplace());
+            EffortlessBuilding.log(player, "Set "+ TextFormatting.GOLD + "Quick Replace " + TextFormatting.RESET + (
+                    modifierSettings.doQuickReplace() ? "on" : "off"));
+            EffortlessBuilding.packetHandler.sendToServer(new ModifierSettingsMessage(modifierSettings));
         }
 
         //Creative/survival mode toggle
@@ -326,9 +331,11 @@ public class ClientProxy implements IProxy {
 
     @SubscribeEvent
     public static void onRenderGameOverlay(final RenderGameOverlayEvent.Post event ) {
+        EntityPlayerSP player = Minecraft.getMinecraft().player;
+
         //final ChiselToolType tool = getHeldToolType( lastHand );
         final RenderGameOverlayEvent.ElementType type = event.getType();
-        //TODO check if chisel tool in hand (and has menu)
+        //TODO check if chisel and bits tool in hand (and has menu)
         if (type == RenderGameOverlayEvent.ElementType.ALL)
         {
             final boolean wasVisible = RadialMenu.instance.isVisible();
@@ -342,10 +349,16 @@ public class ClientProxy implements IProxy {
             {
                 if ( !RadialMenu.instance.actionUsed )
                 {
+                    ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+
                     if ( RadialMenu.instance.switchTo != null )
                     {
                         ClientProxy.playRadialMenuSound();
-                        BuildModes.setBuildMode(Minecraft.getMinecraft().player, RadialMenu.instance.switchTo);
+                        modeSettings.setBuildMode(RadialMenu.instance.switchTo);
+                        ModeSettingsManager.setModeSettings(player, modeSettings);
+                        EffortlessBuilding.packetHandler.sendToServer(new ModeSettingsMessage(modeSettings));
+
+                        EffortlessBuilding.log(player, modeSettings.getBuildMode().name, true);
                     }
 
                     //TODO change buildmode settings
@@ -404,7 +417,7 @@ public class ClientProxy implements IProxy {
 //        World world = player.world;
 
         //base distance off of player ability (config)
-        float raytraceRange = ReachHelper.getMaxReach(player) / 4f;
+        float raytraceRange = ReachHelper.getPlacementReach(player);
 
 //        Vec3d look = player.getLookVec();
 //        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);

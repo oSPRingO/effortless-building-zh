@@ -11,7 +11,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.items.IItemHandler;
-import nl.requios.effortlessbuilding.BuildSettingsManager;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 import java.util.ArrayList;
@@ -49,7 +48,7 @@ public class RadialMirror {
         List<BlockPos> coordinates = new ArrayList<>();
 
         //find radial mirror settings for the player
-        RadialMirrorSettings r = BuildSettingsManager.getBuildSettings(player).getRadialMirrorSettings();
+        RadialMirrorSettings r = ModifierSettingsManager.getModifierSettings(player).getRadialMirrorSettings();
         if (!isEnabled(r, startPos)) return coordinates;
 
         //get angle between slices
@@ -83,7 +82,7 @@ public class RadialMirror {
         List<BlockPos> coordinates = new ArrayList<>(); //to keep track of duplicates
 
         //find radial mirror settings for the player that placed the block
-        RadialMirrorSettings r = BuildSettingsManager.getBuildSettings(player).getRadialMirrorSettings();
+        RadialMirrorSettings r = ModifierSettingsManager.getModifierSettings(player).getRadialMirrorSettings();
         if (!isEnabled(r, startPos)) return blockStates;
 
 
