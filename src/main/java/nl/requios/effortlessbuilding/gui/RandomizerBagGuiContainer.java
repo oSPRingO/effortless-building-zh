@@ -12,7 +12,7 @@ import nl.requios.effortlessbuilding.EffortlessBuilding;
 @SideOnly(Side.CLIENT)
 public class RandomizerBagGuiContainer extends GuiContainer {
     private static final ResourceLocation guiTextures =
-            new ResourceLocation(EffortlessBuilding.MODID + ":textures/gui/container/randomizerbag.png");
+            new ResourceLocation(EffortlessBuilding.MODID, "textures/gui/container/randomizerbag.png");
     private final InventoryPlayer inventoryPlayer;
     private final IItemHandler inventoryBag;
 

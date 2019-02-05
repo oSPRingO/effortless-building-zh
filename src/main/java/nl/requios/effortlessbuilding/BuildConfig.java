@@ -57,5 +57,8 @@ public class BuildConfig {
     public static class Visuals {
         @Comment({"Show a block preview if you have a block in hand on build mode Normal"})
         public boolean alwaysShowBlockPreview = false;
+
+        @Comment({"Use fancy shaders while placing blocks"})
+        public boolean useShaders = true;
     }
 }

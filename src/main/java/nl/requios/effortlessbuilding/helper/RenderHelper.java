@@ -1,17 +1,21 @@
 package nl.requios.effortlessbuilding.helper;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockDirt;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -35,13 +39,18 @@ import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
+import org.lwjgl.opengl.ARBMultitexture;
+import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.util.Color;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Mod.EventBusSubscriber(Side.CLIENT)
 public class RenderHelper implements IWorldEventListener {
@@ -55,6 +64,8 @@ public class RenderHelper implements IWorldEventListener {
     private static final Vec3d epsilon = new Vec3d(0.001, 0.001, 0.001); //prevents z-fighting
 
     private static List<BlockPos> previousCoordinates;
+
+    private static final int secondaryTextureUnit = 7;
 
     private static void begin(float partialTicks) {
         EntityPlayer player = Minecraft.getMinecraft().player;
@@ -89,14 +100,17 @@ public class RenderHelper implements IWorldEventListener {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
+        Minecraft.getMinecraft().renderEngine.bindTexture(new ResourceLocation(EffortlessBuilding.MODID, "textures/shader_color.png"));
+        Minecraft.getMinecraft().renderEngine.bindTexture(new ResourceLocation(EffortlessBuilding.MODID, "textures/shader_mask.png"));
+
         Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GL11.GL_CONSTANT_ALPHA, GL11.GL_ONE_MINUS_CONSTANT_ALPHA);
+        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL14.glBlendColor(1F, 1F, 1F, 0.8f);
     }
 
     private static void endBlockPreviews() {
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        ShaderHelper.releaseShader();
         GlStateManager.disableBlend();
         GL11.glPopAttrib();
     }
@@ -241,6 +255,9 @@ public class RenderHelper implements IWorldEventListener {
 
             if (sideHit != null) {
                 BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+                float percentile = ClientProxy.ticksInGame / 100f % 1f;
+                //TODO test
+                percentile = 1f;
 
                 //get coordinates
                 List<BlockPos> startCoordinates = BuildModes.findCoordinates(player, startPos);
@@ -252,6 +269,13 @@ public class RenderHelper implements IWorldEventListener {
                 }
 
                 List<BlockPos> newCoordinates = BuildModifiers.findCoordinates(player, startCoordinates);
+
+                Collections.sort(newCoordinates, (lhs, rhs) -> {
+                    // -1 - less than, 1 - greater than, 0 - equal
+                    double lhsDistanceToPlayer = new Vec3d(lhs).subtract(player.getPositionEyes(1f)).lengthSquared();
+                    double rhsDistanceToPlayer = new Vec3d(rhs).subtract(player.getPositionEyes(1f)).lengthSquared();
+                    return (int) Math.signum(lhsDistanceToPlayer - rhsDistanceToPlayer);
+                });
 
                 //check if they are different from previous
                 if (!BuildModifiers.compareCoordinates(previousCoordinates, newCoordinates)) {
@@ -275,6 +299,8 @@ public class RenderHelper implements IWorldEventListener {
                         if (!itemstack.isEmpty() && SurvivalHelper.canPlayerEdit(player, player.world, blockPos, itemstack) &&
                             SurvivalHelper.mayPlace(player.world, Block.getBlockFromItem(itemstack.getItem()), blockState, blockPos, true, EnumFacing.UP, player) &&
                             SurvivalHelper.canReplace(player.world, player, blockPos)) {
+
+                            ShaderHelper.useShader(ShaderHelper.psiBar, generateCallback(percentile, new Vec3d(blockPos), i == 0 || i == newCoordinates.size() - 1));
                             renderBlockPreview(dispatcher, blockPos, blockState);
                         }
                     }
@@ -393,6 +419,40 @@ public class RenderHelper implements IWorldEventListener {
         bufferBuilder.pos(pos.x, pos.y, pos.z + m.radius).color(colorZ.getRed(), colorZ.getGreen(), colorZ.getBlue(), lineAlpha).endVertex();
 
         tessellator.draw();
+    }
+
+    private static Consumer<Integer> generateCallback(final float percentile, final Vec3d blockpos, final boolean highlight) {
+        Minecraft mc = Minecraft.getMinecraft();
+        return (Integer shader) -> {
+            int percentileUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "percentile");
+            int highlightUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "highlight");
+            int blockposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "blockpos");
+            int imageUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "image");
+            int maskUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "mask");
+
+            //image
+            OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE/*new ResourceLocation(EffortlessBuilding.MODID, "textures/shader_color.png")*/).getGlTextureId());
+            ARBShaderObjects.glUniform1iARB(imageUniform, 0);
+
+            OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + secondaryTextureUnit);
+
+            GlStateManager.enableTexture2D();
+            GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+
+            //mask
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D,
+                    mc.renderEngine.getTexture(new ResourceLocation(EffortlessBuilding.MODID, "textures/shader_mask.png")).getGlTextureId());
+            ARBShaderObjects.glUniform1iARB(maskUniform, secondaryTextureUnit);
+
+            //blockpos
+            ARBShaderObjects.glUniform3fARB(blockposUniform, (float) blockpos.x, (float) blockpos.y, (float) blockpos.z);
+
+            //percentile
+            ARBShaderObjects.glUniform1fARB(percentileUniform, percentile);
+            //highlight
+            ARBShaderObjects.glUniform1iARB(highlightUniform, highlight ? 1 : 0);
+        };
     }
 
     //IWORLDEVENTLISTENER IMPLEMENTATION

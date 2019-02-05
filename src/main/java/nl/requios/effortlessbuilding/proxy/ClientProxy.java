@@ -6,6 +6,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.PositionedSoundRecord;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.texture.TextureMap;
@@ -51,6 +52,7 @@ import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
 import nl.requios.effortlessbuilding.gui.buildmodifier.ModifierSettingsGui;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.RenderHelper;
+import nl.requios.effortlessbuilding.helper.ShaderHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
@@ -70,10 +72,13 @@ public class ClientProxy implements IProxy {
     public static RayTraceResult currentLookAt;
     private static int breakCooldown = 0;
 
+    public static int ticksInGame = 0;
+
     private static final HashMap<BuildModes.BuildModeEnum, RadialMenu.SpriteIconPositioning> buildModeIcons = new HashMap<>();
 
     @Override
     public void preInit(FMLPreInitializationEvent event) {
+        ShaderHelper.init();
     }
 
     @Override
@@ -142,6 +147,10 @@ public class ClientProxy implements IProxy {
         }
     }
 
+    /**
+     * From Chisels and Bits by AlgorithmX2
+     * https://github.com/AlgorithmX2/Chisels-and-Bits/blob/1.12/src/main/java/mod/chiselsandbits/core/ClientSide.java
+     */
     private static void loadIcon(final TextureMap map, final BuildModes.BuildModeEnum mode) {
         final RadialMenu.SpriteIconPositioning sip = new RadialMenu.SpriteIconPositioning();
 
@@ -284,6 +293,11 @@ public class ClientProxy implements IProxy {
 
         //QuickReplace toggle
         if (keyBindings[1].isPressed()) {
+            //TODO testing
+            EffortlessBuilding.log(player, "ShaderHelper init");
+            ShaderHelper.init();
+
+
             ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
             modifierSettings.setQuickReplace(!modifierSettings.doQuickReplace());
             EffortlessBuilding.log(player, "Set "+ TextFormatting.GOLD + "Quick Replace " + TextFormatting.RESET + (
@@ -304,29 +318,35 @@ public class ClientProxy implements IProxy {
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.START) return;
+        if (event.phase == TickEvent.Phase.START) {
+            RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
+            //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
+            if (objectMouseOver == null) return;
 
-        RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
-        //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
-        if (objectMouseOver == null) return;
-
-        if (currentLookAt == null) {
-            currentLookAt = objectMouseOver;
-            previousLookAt = objectMouseOver;
-            return;
-        }
-
-        if (objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK) {
-            if (currentLookAt.typeOfHit != RayTraceResult.Type.BLOCK) {
+            if (currentLookAt == null) {
                 currentLookAt = objectMouseOver;
                 previousLookAt = objectMouseOver;
-            } else {
-                if (currentLookAt.getBlockPos() != objectMouseOver.getBlockPos()){
-                    previousLookAt = currentLookAt;
+                return;
+            }
+
+            if (objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK) {
+                if (currentLookAt.typeOfHit != RayTraceResult.Type.BLOCK) {
                     currentLookAt = objectMouseOver;
+                    previousLookAt = objectMouseOver;
+                } else {
+                    if (currentLookAt.getBlockPos() != objectMouseOver.getBlockPos()) {
+                        previousLookAt = currentLookAt;
+                        currentLookAt = objectMouseOver;
+                    }
                 }
             }
+        } else if (event.phase == TickEvent.Phase.END){
+            GuiScreen gui = Minecraft.getMinecraft().currentScreen;
+            if(gui == null || !gui.doesGuiPauseGame()) {
+                ticksInGame++;
+            }
         }
+
     }
 
     @SubscribeEvent
