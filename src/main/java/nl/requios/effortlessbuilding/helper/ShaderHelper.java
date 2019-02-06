@@ -12,19 +12,21 @@
  */
 package nl.requios.effortlessbuilding.helper;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GLAllocation;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.apache.logging.log4j.Level;
-import org.lwjgl.opengl.ARBFragmentShader;
-import org.lwjgl.opengl.ARBShaderObjects;
-import org.lwjgl.opengl.ARBVertexShader;
-import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.*;
+import org.lwjgl.util.vector.Matrix4f;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
@@ -39,15 +41,18 @@ public final class ShaderHelper {
     private static final String VERT_EXTENSION = ".vert";
     private static final String FRAG_EXTENSION = ".frag";
 
+//    public static final FloatBuffer projection = GLAllocation.createDirectFloatBuffer(16);
+//    public static final FloatBuffer modelview = GLAllocation.createDirectFloatBuffer(16﻿);
+
     public static int rawColor;
-    public static int psiBar;
+    public static int dissolve;
 
     public static void init() {
         if(!doUseShaders())
             return;
 
         rawColor = createProgram("/assets/effortlessbuilding/shaders/raw_color", FRAG);
-        psiBar = createProgram("/assets/effortlessbuilding/shaders/dissolve", FRAG);
+        dissolve = createProgram("/assets/effortlessbuilding/shaders/dissolve", FRAG);
     }
 
     public static void useShader(int shader, Consumer<Integer> callback) {
@@ -59,6 +64,17 @@ public final class ShaderHelper {
         if(shader != 0) {
             int time = ARBShaderObjects.glGetUniformLocationARB(shader, "time");
             ARBShaderObjects.glUniform1iARB(time, ClientProxy.ticksInGame);
+
+//            GlStateManager.getFloat(GL11.GL_PROJECTION_MATRIX, projection);
+//            GlStateManager.getFloat(GL11.GL_MODELVIEW_MATRIX, modelview);
+
+//            int inverse_view_proj = ARBShaderObjects.glGetUniformLocationARB(shader, "inverse_view_proj");
+            int screen_width = ARBShaderObjects.glGetUniformLocationARB(shader, "screen_width");
+            int screen_height = ARBShaderObjects.glGetUniformLocationARB(shader, "screen_height");
+
+//            ARBShaderObjects.glUniformMatrix4ARB(inverse_view_proj, true, modelview);
+            ARBShaderObjects.glUniform1fARB(screen_width, Minecraft.getMinecraft().displayWidth);
+            ARBShaderObjects.glUniform1fARB(screen_height, Minecraft.getMinecraft().displayHeight);
 
             if(callback != null)
                 callback.accept(shader);

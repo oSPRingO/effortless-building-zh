@@ -1,12 +1,24 @@
 #version 120
 
+uniform mat4 gl_ProjectionMatrix;
+uniform mat4 gl_ModelViewMatrix;
+
+//uniform mat4 inverse_view_proj;
+uniform float screen_width;
+uniform float screen_height;
+
 uniform int time; // Passed in, see ShaderHelper.java
 
 uniform float percentile; // Passed in via Callback
 uniform int highlight;
 uniform vec3 blockpos;
+uniform vec3 firstpos;
+uniform vec3 secondpos;
 uniform sampler2D image;
 uniform sampler2D mask;
+
+varying vec4 position;
+
 //	Simplex 3D Noise
 //	by Ian McEwan, Ashima Arts
 //
@@ -82,7 +94,26 @@ float snoise(vec3 v){
                                 dot(p2,x2), dot(p3,x3) ) );
 }
 
+vec3 getWorldPosition() {
+    // Convert screen coordinates to normalized device coordinates (NDC)
+    vec4 ndc = vec4(
+        (gl_FragCoord.x / screen_width - 0.5) * 2.0,
+        (gl_FragCoord.y / screen_height - 0.5) * 2.0,
+        (gl_FragCoord.z - 0.5) * 2.0,
+        1.0);
+
+    // Convert NDC throuch inverse clip coordinates to view coordinates
+    vec4 clip = transpose(gl_ModelViewMatrix) * ndc;
+    vec3 vertex = (clip / clip.w).xyz;
+    return vertex;
+}
+
 void main() {
+
+    vec3 worldpos = getWorldPosition();
+
+    float noise = worldpos.x / 300.0;//snoise(worldpos);
+
     vec2 texcoord = vec2(gl_TexCoord[0]);
     vec4 color = texture2D(image, texcoord);
 
@@ -90,44 +121,34 @@ void main() {
     vec2 maskcoord = texcoord + vec2(relBlockPos.x + relBlockPos.y, relBlockPos.z + relBlockPos.y);
     vec4 maskColor = texture2D(mask, maskcoord);
     float maskgs = maskColor.r;
-    //maskgs = snoise(blockpos / 32.0 + );
+    maskgs = noise;
 
     float r = color.r * gl_Color.r;
     float g = color.g * gl_Color.g;
     float b = color.b * gl_Color.b;
     float a = color.a; // Ignore gl_Color.a as we don't want to make use of that for the dissolve effect
 
-    r -= 0.1;
-    g += 0.0;
-    b += 0.1;
+    r = noise;
+    g = noise;
+    b = noise;
 
-    float pulse = (sin(time / 5.0) + 1.0) / 2.0;
-    pulse = 1.0;//pulse / 2.0 + 0.5;
-    vec4 pulseColor = texture2D(mask, maskcoord + time / 400.0);
-    vec4 pulseColor2 = texture2D(mask, vec2(maskcoord.x - time / 400.0, maskcoord.y - time / 400.0));
-    float pulseGreyScale = pulseColor.r + pulseColor2.r / 2.0;
-
-    r -= r * pulseColor.r * pulse * 0.2;
-    g += (1.0 - g) * pulseColor.r * pulse * 0.2;
-    b += (1.0 - b) * pulseColor.r * pulse * 0.8;
-
-    r -= r * pulseColor2.r * pulse * 0.4;
-    g += (1.0 - g) * pulseColor2.r * pulse * 0.2;
-    b += (1.0 - b) * pulseColor2.r * pulse;
-
-//    float exr1 = sin(texcoord.x * 2 + texcoord.y * 10 + time * 0.035);
-//    float exr2 = sin(texcoord.x * 20 + texcoord.y * 2 + time * 0.15);
-//    float exr3 = sin(texcoord.x * 1 + texcoord.y * 90 + time * 0.75);
-
-//    float w1 = (cos(time * 0.1) + 1) * 0.5;
-//    float w2 = (sin(time * 0.08) + 1) * 0.5;
-//    float w3 = (cos(time * 0.001) + 1) * 0.5;
-
-//    float w = w1 + w2 + w3;
-//    float exr = (exr1 * w1 + exr2 * w2 + exr3 * w3) / w * 0.1;
-
-//    r += exr;
-//    g -= exr;
+//    r -= 0.1;
+//    g += 0.0;
+//    b += 0.1;
+//
+//    float pulse = (sin(time / 5.0) + 1.0) / 2.0;
+//    pulse = 1.0;//pulse / 2.0 + 0.5;
+//    vec4 pulseColor = texture2D(mask, maskcoord + time / 700.0);
+//    vec4 pulseColor2 = texture2D(mask, vec2(maskcoord.x + time / 600.0, maskcoord.y - time / 600.0));
+//    float pulseGreyScale = pulseColor.r + pulseColor2.r / 2.0;
+//
+//    r -= r * pulseColor.r * pulse * 0.2;
+//    g += (1.0 - g) * pulseColor.r * pulse * 0.2;
+//    b += (1.0 - b) * pulseColor.r * pulse * 0.8;
+//
+//    r -= r * pulseColor2.r * pulse * 0.4;
+//    g += (1.0 - g) * pulseColor2.r * pulse * 0.2;
+//    b += (1.0 - b) * pulseColor2.r * pulse;
         
     if(highlight == 1) {
         r += 0.0;

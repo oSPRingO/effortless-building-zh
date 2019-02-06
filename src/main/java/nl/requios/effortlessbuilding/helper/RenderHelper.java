@@ -1,17 +1,13 @@
 package nl.requios.effortlessbuilding.helper;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockDirt;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
@@ -48,7 +44,6 @@ import org.lwjgl.util.Color;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -307,7 +302,9 @@ public class RenderHelper implements IWorldEventListener {
                             SurvivalHelper.mayPlace(player.world, Block.getBlockFromItem(itemstack.getItem()), blockState, blockPos, true, EnumFacing.UP, player) &&
                             SurvivalHelper.canReplace(player.world, player, blockPos)) {
 
-                            ShaderHelper.useShader(ShaderHelper.psiBar, generateCallback(percentile, new Vec3d(blockPos), /*blockPos == firstPos ||*/ blockPos == secondPos));
+                            ShaderHelper.useShader(ShaderHelper.dissolve, generateShaderCallback(percentile,
+                                    new Vec3d(blockPos), new Vec3d(firstPos), new Vec3d(secondPos),
+                                    /*blockPos == firstPos ||*/ blockPos == secondPos));
                             renderBlockPreview(dispatcher, blockPos, blockState);
                         }
                     }
@@ -428,12 +425,14 @@ public class RenderHelper implements IWorldEventListener {
         tessellator.draw();
     }
 
-    private static Consumer<Integer> generateCallback(final float percentile, final Vec3d blockpos, final boolean highlight) {
+    private static Consumer<Integer> generateShaderCallback(final float percentile, final Vec3d blockpos, final Vec3d firstpos, final Vec3d secondpos, final boolean highlight) {
         Minecraft mc = Minecraft.getMinecraft();
         return (Integer shader) -> {
             int percentileUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "percentile");
             int highlightUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "highlight");
             int blockposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "blockpos");
+            int firstposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "firstpos");
+            int secondposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "secondpos");
             int imageUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "image");
             int maskUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "mask");
 
@@ -454,6 +453,8 @@ public class RenderHelper implements IWorldEventListener {
 
             //blockpos
             ARBShaderObjects.glUniform3fARB(blockposUniform, (float) blockpos.x, (float) blockpos.y, (float) blockpos.z);
+            ARBShaderObjects.glUniform3fARB(firstposUniform, (float) firstpos.x, (float) firstpos.y, (float) firstpos.z);
+            ARBShaderObjects.glUniform3fARB(secondposUniform, (float) secondpos.x, (float) secondpos.y, (float) secondpos.z);
 
             //percentile
             ARBShaderObjects.glUniform1fARB(percentileUniform, percentile);
