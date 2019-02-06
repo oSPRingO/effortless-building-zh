@@ -250,7 +250,7 @@ public class RenderHelper implements IWorldEventListener {
 
             if (sideHit != null) {
                 BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-                float percentile = ClientProxy.ticksInGame / 100f % 1f;
+                float percentile = ClientProxy.ticksInGame / 50f % 1f;
                 //TODO test
                 percentile = 1f;
 
@@ -438,7 +438,7 @@ public class RenderHelper implements IWorldEventListener {
 
             //image
             OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE/*new ResourceLocation(EffortlessBuilding.MODID, "textures/shader_color.png")*/).getGlTextureId());
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
             ARBShaderObjects.glUniform1iARB(imageUniform, 0);
 
             OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + secondaryTextureUnit);
