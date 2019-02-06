@@ -66,7 +66,7 @@ public class BlockBrokenMessage implements IMessage {
     public void fromBytes(ByteBuf buf) {
         blockHit = buf.readBoolean();
         blockPos = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
-        sideHit = EnumFacing.getFront(buf.readInt());
+        sideHit = EnumFacing.byIndex(buf.readInt());
         hitVec = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
     }
 

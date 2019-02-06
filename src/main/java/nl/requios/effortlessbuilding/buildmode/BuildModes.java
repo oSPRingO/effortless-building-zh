@@ -108,15 +108,18 @@ public class BuildModes {
 
     public static void onBlockBroken(BlockEvent.BreakEvent event) {
         World world = event.getWorld();
+        EntityPlayer player = event.getPlayer();
         BlockPos pos = event.getPos();
 
         if (world.isRemote) return;
 
         //get coordinates
-        List<BlockPos> coordinates = findCoordinates(event.getPlayer(), pos);
+        ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+        BuildModeEnum buildMode = modeSettings.getBuildMode();
+        List<BlockPos> coordinates = buildMode.instance.onRightClick(player, pos, EnumFacing.UP, Vec3d.ZERO);
 
         //let buildmodifiers break blocks
-        BuildModifiers.onBlockBroken(event.getPlayer(), coordinates);
+        BuildModifiers.onBlockBroken(player, coordinates);
     }
 
     public static List<BlockPos> findCoordinates(EntityPlayer player, BlockPos startPos) {

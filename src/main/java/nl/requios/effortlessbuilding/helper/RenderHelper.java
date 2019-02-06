@@ -262,6 +262,13 @@ public class RenderHelper implements IWorldEventListener {
                 //get coordinates
                 List<BlockPos> startCoordinates = BuildModes.findCoordinates(player, startPos);
 
+                BlockPos firstPos = BlockPos.ORIGIN, secondPos = BlockPos.ORIGIN;
+                //remember first and last pos for highlighting
+                if (!startCoordinates.isEmpty()) {
+                    firstPos = startCoordinates.get(0);
+                    secondPos = startCoordinates.get(startCoordinates.size() - 1);
+                }
+
                 //Limit number of blocks you can place
                 int limit = ReachHelper.getMaxBlocksPlacedAtOnce(player);
                 if (startCoordinates.size() > limit) {
@@ -300,7 +307,7 @@ public class RenderHelper implements IWorldEventListener {
                             SurvivalHelper.mayPlace(player.world, Block.getBlockFromItem(itemstack.getItem()), blockState, blockPos, true, EnumFacing.UP, player) &&
                             SurvivalHelper.canReplace(player.world, player, blockPos)) {
 
-                            ShaderHelper.useShader(ShaderHelper.psiBar, generateCallback(percentile, new Vec3d(blockPos), i == 0 || i == newCoordinates.size() - 1));
+                            ShaderHelper.useShader(ShaderHelper.psiBar, generateCallback(percentile, new Vec3d(blockPos), /*blockPos == firstPos ||*/ blockPos == secondPos));
                             renderBlockPreview(dispatcher, blockPos, blockState);
                         }
                     }

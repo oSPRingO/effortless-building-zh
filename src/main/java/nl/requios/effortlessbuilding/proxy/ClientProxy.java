@@ -26,6 +26,7 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
@@ -54,10 +55,7 @@ import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.RenderHelper;
 import nl.requios.effortlessbuilding.helper.ShaderHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
-import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
-import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
-import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
-import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
+import nl.requios.effortlessbuilding.network.*;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
@@ -84,13 +82,14 @@ public class ClientProxy implements IProxy {
     @Override
     public void init(FMLInitializationEvent event) {
         // register key bindings
-        keyBindings = new KeyBinding[4];
+        keyBindings = new KeyBinding[5];
 
         // instantiate the key bindings
         keyBindings[0] = new KeyBinding("key.effortlessbuilding.hud.desc", Keyboard.KEY_ADD, "key.effortlessbuilding.category");
         keyBindings[1] = new KeyBinding("key.effortlessbuilding.replace.desc", Keyboard.KEY_SUBTRACT, "key.effortlessbuilding.category");
         keyBindings[2] = new KeyBinding("key.effortlessbuilding.creative.desc", Keyboard.KEY_F4, "key.effortlessbuilding.category");
         keyBindings[3] = new KeyBinding("key.effortlessbuilding.mode.desc", Keyboard.KEY_LMENU, "key.effortlessbuilding.category");
+        keyBindings[4] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {
@@ -266,6 +265,9 @@ public class ClientProxy implements IProxy {
                     breakCooldown--;
                 }
             }
+
+            //EffortlessBuilding.packetHandler.sendToServer(new CancelModeMessage());
+
         } else {
             breakCooldown = 0;
         }
@@ -293,9 +295,6 @@ public class ClientProxy implements IProxy {
 
         //QuickReplace toggle
         if (keyBindings[1].isPressed()) {
-            //TODO testing
-            EffortlessBuilding.log(player, "ShaderHelper init");
-            ShaderHelper.init();
 
 
             ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
@@ -312,6 +311,12 @@ public class ClientProxy implements IProxy {
             } else {
                 player.sendChatMessage("/gamemode 1");
             }
+        }
+
+        if (keyBindings[4].isPressed()) {
+            //TODO remove
+            ShaderHelper.init();
+            EffortlessBuilding.log(player, "Reloaded shaders");
         }
 
     }
@@ -347,6 +352,14 @@ public class ClientProxy implements IProxy {
             }
         }
 
+    }
+
+    @SubscribeEvent
+    public static void onGuiOpen(GuiOpenEvent event) {
+        EntityPlayer player = Minecraft.getMinecraft().player;
+        if (player != null) {
+            BuildModes.initializeMode(player);
+        }
     }
 
     @SubscribeEvent

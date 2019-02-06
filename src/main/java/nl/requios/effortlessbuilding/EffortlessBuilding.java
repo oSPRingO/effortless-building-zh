@@ -25,10 +25,7 @@ import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade1;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade2;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade3;
-import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
-import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
-import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
-import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
+import nl.requios.effortlessbuilding.network.*;
 import nl.requios.effortlessbuilding.proxy.IProxy;
 import org.apache.logging.log4j.Logger;
 
@@ -89,6 +86,8 @@ public class EffortlessBuilding
         EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 2, Side.CLIENT);
 
         EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 3, Side.SERVER);
+
+        EffortlessBuilding.packetHandler.registerMessage(CancelModeMessage.MessageHandler.class, CancelModeMessage.class, 4, Side.SERVER);
 
         proxy.preInit(event);
     }

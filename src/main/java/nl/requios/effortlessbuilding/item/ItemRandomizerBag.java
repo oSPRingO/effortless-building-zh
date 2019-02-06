@@ -36,7 +36,7 @@ public class ItemRandomizerBag extends Item {
 
     public ItemRandomizerBag() {
         this.setRegistryName(EffortlessBuilding.MODID, "randomizer_bag");
-        this.setUnlocalizedName(this.getRegistryName().toString());
+        this.setTranslationKey(this.getRegistryName().toString());
 
         this.maxStackSize = 1;
         this.setCreativeTab(CreativeTabs.TOOLS);
@@ -181,8 +181,8 @@ public class ItemRandomizerBag extends Item {
     }
 
     @Override
-    public String getUnlocalizedName() {
-        return super.getUnlocalizedName();
+    public String getTranslationKey() {
+        return super.getTranslationKey();
     }
 
     public static void resetRandomness() {

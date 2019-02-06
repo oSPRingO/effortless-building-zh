@@ -97,12 +97,23 @@ void main() {
     float b = color.b * gl_Color.b;
     float a = color.a; // Ignore gl_Color.a as we don't want to make use of that for the dissolve effect
 
-    float pulse = (sin(time / 10.0) + 1.0) / 2.0;
-    vec4 pulseColor = texture2D(mask, maskcoord + time / 1000.0);
-    vec4 pulseColor2 = texture2D(mask, vec2(maskcoord.x - time / 1300.0, maskcoord.y - time / 1300.0));
+    r -= 0.1;
+    g += 0.0;
+    b += 0.1;
+
+    float pulse = (sin(time / 5.0) + 1.0) / 2.0;
+    pulse = 1.0;//pulse / 2.0 + 0.5;
+    vec4 pulseColor = texture2D(mask, maskcoord + time / 400.0);
+    vec4 pulseColor2 = texture2D(mask, vec2(maskcoord.x - time / 400.0, maskcoord.y - time / 400.0));
     float pulseGreyScale = pulseColor.r + pulseColor2.r / 2.0;
-    g += (1.0 - g) * pulseGreyScale * pulse * 0.2;
-    b += (1.0 - b) * pulseGreyScale * pulse;
+
+    r -= r * pulseColor.r * pulse * 0.2;
+    g += (1.0 - g) * pulseColor.r * pulse * 0.2;
+    b += (1.0 - b) * pulseColor.r * pulse * 0.8;
+
+    r -= r * pulseColor2.r * pulse * 0.4;
+    g += (1.0 - g) * pulseColor2.r * pulse * 0.2;
+    b += (1.0 - b) * pulseColor2.r * pulse;
 
 //    float exr1 = sin(texcoord.x * 2 + texcoord.y * 10 + time * 0.035);
 //    float exr2 = sin(texcoord.x * 20 + texcoord.y * 2 + time * 0.15);
@@ -119,9 +130,9 @@ void main() {
 //    g -= exr;
         
     if(highlight == 1) {
-        r -= 0.2;
+        r += 0.0;
+        g += 0.1;
         b -= 0.2;
-        g -= 0.2;
     }
 
     r = max(0, min(1, r));

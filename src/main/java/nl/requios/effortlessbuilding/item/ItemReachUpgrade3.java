@@ -20,7 +20,7 @@ public class ItemReachUpgrade3 extends Item {
 
     public ItemReachUpgrade3() {
         this.setRegistryName(EffortlessBuilding.MODID, "reach_upgrade3");
-        this.setUnlocalizedName(this.getRegistryName().toString());
+        this.setTranslationKey(this.getRegistryName().toString());
 
         this.maxStackSize = 1;
         this.setCreativeTab(CreativeTabs.TOOLS);
@@ -68,7 +68,7 @@ public class ItemReachUpgrade3 extends Item {
     }
 
     @Override
-    public String getUnlocalizedName() {
-        return super.getUnlocalizedName();
+    public String getTranslationKey() {
+        return super.getTranslationKey();
     }
 }
