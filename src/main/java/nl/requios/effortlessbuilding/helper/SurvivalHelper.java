@@ -34,16 +34,17 @@ public class SurvivalHelper {
     //Used for all placing of blocks in this mod.
     //Checks if area is loaded, if player has the right permissions, if existing block can be replaced (drops it if so) and consumes an item from the stack.
     //Based on ItemBlock#onItemUse
-    public static boolean placeBlock(World world, EntityPlayer player, BlockPos pos, IBlockState blockState, ItemStack itemstack, EnumFacing facing, boolean skipCollisionCheck, boolean playSound) {
+    public static boolean placeBlock(World world, EntityPlayer player, BlockPos pos, IBlockState blockState, ItemStack origstack, EnumFacing facing, boolean skipCollisionCheck, boolean playSound) {
         if (!world.isBlockLoaded(pos, true)) return false;
+        ItemStack itemstack = origstack;
 
-        //Randomizer bag synergy
-        //Find itemstack that belongs to the blockstate
-        if (itemstack.getItem() == EffortlessBuilding.ITEM_RANDOMIZER_BAG) {
-            IItemHandler bagInventory = ItemRandomizerBag.getBagInventory(itemstack);
-            itemstack = ItemRandomizerBag.findStack(bagInventory, Item.getItemFromBlock(blockState.getBlock()));
-        }
+        //Randomizer bag, other proxy item synergy
+        //Preliminary compatibility code for other items that hold blocks
+        if(CompatHelper.isItemBlockProxy(itemstack))
+            itemstack = CompatHelper.getItemBlockByState(itemstack, blockState);
 
+        if(!(itemstack.getItem() instanceof ItemBlock))
+            return false;
         Block block = ((ItemBlock) itemstack.getItem()).getBlock();
 
         if (canPlace(world, player, pos, blockState, itemstack, skipCollisionCheck, facing.getOpposite())) {
@@ -70,7 +71,8 @@ public class SurvivalHelper {
             }
 
             if (!player.isCreative() && Block.getBlockFromItem(itemstack.getItem()) == block) {
-                itemstack.shrink(1);
+                //itemstack.shrink(1);
+                CompatHelper.shrinkStack(origstack, itemstack);
             }
 
             return true;

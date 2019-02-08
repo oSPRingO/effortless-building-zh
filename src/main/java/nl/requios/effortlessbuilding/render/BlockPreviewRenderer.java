@@ -23,6 +23,7 @@ import nl.requios.effortlessbuilding.buildmode.IBuildMode;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
+import nl.requios.effortlessbuilding.helper.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
@@ -90,7 +91,7 @@ public class BlockPreviewRenderer {
         if (modeSettings.getBuildMode() == BuildModes.BuildModeEnum.Normal) lookingAt = Minecraft.getMinecraft().objectMouseOver;
 
         ItemStack mainhand = player.getHeldItemMainhand();
-        boolean toolInHand = !(!mainhand.isEmpty() && (mainhand.getItem() instanceof ItemBlock || mainhand.getItem() instanceof ItemRandomizerBag));
+        boolean toolInHand = !(!mainhand.isEmpty() && CompatHelper.isItemBlockProxy(mainhand));
 
         BlockPos startPos = null;
         EnumFacing sideHit = null;
@@ -223,6 +224,8 @@ public class BlockPreviewRenderer {
             BlockPos blockPos = coordinates.get(i);
             IBlockState blockState = blockStates.get(i);
             ItemStack itemstack = itemStacks.get(i);
+            if(CompatHelper.isItemBlockProxy(itemstack))
+                itemstack = CompatHelper.getItemBlockByState(itemstack, blockState);
 
             //Check if can place
             //If check is turned off, check if blockstate is the same (for dissolve effect)

@@ -52,6 +52,7 @@ import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
 import nl.requios.effortlessbuilding.gui.buildmodifier.ModifierSettingsGui;
+import nl.requios.effortlessbuilding.helper.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.render.RenderHandler;
 import nl.requios.effortlessbuilding.render.ShaderHandler;
@@ -167,8 +168,7 @@ public class ClientProxy implements IProxy {
             //KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
 
             ItemStack currentItemStack = player.getHeldItem(EnumHand.MAIN_HAND);
-            if (currentItemStack.getItem() instanceof ItemBlock ||
-                (currentItemStack.getItem() instanceof ItemRandomizerBag && !player.isSneaking())) {
+            if (CompatHelper.isItemBlockProxy(currentItemStack)) {
 
                 //find position in distance
                 RayTraceResult lookingAt = getLookingAt(player);
