@@ -22,9 +22,6 @@ public class CompatHelper {
     @GameRegistry.ObjectHolder("danknull:dank_null")
     public static final Item dankNullItem = null;
 
-    @GameRegistry.ObjectHolder("xreliquary:void_tear")
-    public static final Item voidTearItem = null;
-
     // Check if the item given is a proxy for blocks. For now, we check for the randomizer bag,
     // /dank/null, or plain old blocks.
     public static boolean isItemBlockProxy(ItemStack stack) {
@@ -33,7 +30,7 @@ public class CompatHelper {
             return true;
         if((item instanceof ItemRandomizerBag))
             return true;
-        if((item == dankNullItem) || (item == voidTearItem))
+        if(item == dankNullItem)
             return true;
         return false;
     }
