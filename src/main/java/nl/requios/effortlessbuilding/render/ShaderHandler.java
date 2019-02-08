@@ -10,27 +10,22 @@
  *
  * File Created @ [Apr 9, 2014, 11:20:26 PM (GMT)]
  */
-package nl.requios.effortlessbuilding.helper;
+package nl.requios.effortlessbuilding.render;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GLAllocation;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.apache.logging.log4j.Level;
 import org.lwjgl.opengl.*;
-import org.lwjgl.util.vector.Matrix4f;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
-public final class ShaderHelper {
+public final class ShaderHandler {
 
     private static final int VERT_ST = ARBVertexShader.GL_VERTEX_SHADER_ARB;
     private static final int FRAG_ST = ARBFragmentShader.GL_FRAGMENT_SHADER_ARB;
@@ -149,7 +144,7 @@ public final class ShaderHelper {
 
     private static String readFileAsString(String filename) throws Exception {
         StringBuilder source = new StringBuilder();
-        InputStream in = ShaderHelper.class.getResourceAsStream(filename);
+        InputStream in = ShaderHandler.class.getResourceAsStream(filename);
         Exception exception = null;
         BufferedReader reader;
 

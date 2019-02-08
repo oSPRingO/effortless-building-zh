@@ -2,7 +2,7 @@
 
 uniform int time; // Passed in, see ShaderHelper.java
 
-uniform float percentile; // Passed in via Callback
+uniform float dissolve; // Passed in via Callback
 uniform int highlight;
 uniform vec3 blockpos;
 uniform vec3 firstpos;
@@ -44,28 +44,28 @@ void main() {
     vec4 maskColor = texture2D(mask, maskcoord);
     float maskgs = maskColor.r;
 
-    //color.rgb *= gl_Color.rgb;
+    color.rgb *= gl_Color.rgb;
 
     //desaturate
     color.rgb *= vec3(0.8);
 
     //add blueish hue
-    color.rgb += vec3(-0.2, 0.0, 0.3);
+    color.rgb += vec3(-0.1, 0.0, 0.2);
 
     //add pulsing blue
     float pulse = (sin(time / 5.0) + 1.0) / 2.0;
-    color.rgb += (1.0 - color.rgb) * vec3(-0.5, 0.2, 0.6) * pulse;
+    color.rgb += 0.4 * vec3(-0.5, 0.2, 0.6) * pulse;
 
     //add diagonal highlights
     float diagTime = mod(time / 40.0, 1.4) - 0.2;
     float diag = smoothstep(diagTime - 0.2, diagTime, place) - smoothstep(diagTime, diagTime + 0.2, place);
-    color.rgb += (1.0 - color.rgb) * diag * vec3(0.0, 0.2, 0.4);
+    color.rgb += 0.2 * diag * vec3(0.0, 0.2, 0.4);
 
     float diagTime2 = mod(time / 70.0, 1.4) - 0.2;
     float diag2 = smoothstep(diagTime2 - 0.2, diagTime2, place) - smoothstep(diagTime2, diagTime2 + 0.2, place);
-    color.rgb += (1.0 - color.rgb) * diag2 * vec3(0.0, 0.4, 0.8);
+    color.rgb += 0.2 * diag2 * vec3(0.0, 0.4, 0.8);
 
-    //add shading
+    //add edge shading
 //    vec3 p1;
 //    //if (firstpos.x < secondpos.x)
 //
@@ -77,21 +77,16 @@ void main() {
 //    float distToEdge = min(min(distToEdge1, distToEdge2), distToEdge3);
 //    color.rgb += vec3(0.5 - smoothstep(0, 0.5, distToEdge)) * 0.5;
 
+    //add flat shading
+    if (abs(normal.x) > 0.5)
+        color.rgb -= 0.0;
+    if (abs(normal.y) > 0.5)
+        color.rgb += 0.05;
+    if (abs(normal.z) > 0.5)
+        color.rgb -= 0.05;
 
-//    pulse = 1.0;//pulse / 2.0 + 0.5;
-//    vec4 pulseColor = texture2D(mask, maskcoord + time / 700.0);
-//    vec4 pulseColor2 = texture2D(mask, vec2(maskcoord.x + time / 600.0, maskcoord.y - time / 600.0));
-//    float pulseGreyScale = pulseColor.r + pulseColor2.r / 2.0;
-//
-//    color.r -= color.r * pulseColor.r * pulse * 0.2;
-//    color.g += (1.0 - color.g) * pulseColor.r * pulse * 0.2;
-//    color.b += (1.0 - color.b) * pulseColor.r * pulse * 0.8;
-//
-//    color.r -= color.r * pulseColor2.r * pulse * 0.4;
-//    color.g += (1.0 - color.g) * pulseColor2.r * pulse * 0.2;
-//    color.b += (1.0 - color.b) * pulseColor2.r * pulse;
 
-    if(highlight == 1) {
+    if(highlight == 1 && dissolve == 0.0) {
         color.r += 0.0;
         color.g += 0.1;
         color.b -= 0.2;
@@ -101,7 +96,7 @@ void main() {
     color.g = max(0, min(1, color.g));
     color.b = max(0, min(1, color.b));
 
-    if (maskgs * 0.3 + place * 0.7 <= percentile)
-    	gl_FragColor = color;
-    else gl_FragColor = vec4(texcolor.rgb, 0.0);
+    if (maskgs * 0.3 + place * 0.7 <= dissolve)
+    	gl_FragColor = vec4(texcolor.rgb, 0.0);
+    else gl_FragColor = color;
 }

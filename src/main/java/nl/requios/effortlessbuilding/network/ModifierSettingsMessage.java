@@ -16,6 +16,9 @@ import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 
 import static nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.*;
 
+/**
+ * Shares modifier settings (see ModifierSettingsManager) between server and client
+ */
 public class ModifierSettingsMessage implements IMessage {
 
     private ModifierSettings modifierSettings;

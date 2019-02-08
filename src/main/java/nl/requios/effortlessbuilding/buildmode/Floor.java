@@ -79,7 +79,7 @@ public class Floor implements IBuildMode {
             double yDistSquared = yBound.subtract(start).lengthSquared();
 
 
-            int reach = ReachHelper.getMaxReach(player); //4 times as much as normal placement reach
+            int reach = ReachHelper.getPlacementReach(player) * 4; //4 times as much as normal placement reach
 
             //check if its not behind the player and its not too close and not too far
             boolean yValid = yBound.subtract(start).dotProduct(look) > 0 &&
