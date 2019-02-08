@@ -168,7 +168,7 @@ public class ClientProxy implements IProxy {
             //KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
 
             ItemStack currentItemStack = player.getHeldItem(EnumHand.MAIN_HAND);
-            if (CompatHelper.isItemBlockProxy(currentItemStack)) {
+            if (CompatHelper.isItemBlockProxy(currentItemStack) && !player.isSneaking()) {
 
                 //find position in distance
                 RayTraceResult lookingAt = getLookingAt(player);
