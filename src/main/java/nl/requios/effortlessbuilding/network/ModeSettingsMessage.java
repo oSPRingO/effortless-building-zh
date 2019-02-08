@@ -3,8 +3,6 @@ package nl.requios.effortlessbuilding.network;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.IThreadListener;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
@@ -14,6 +12,9 @@ import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 
 import static nl.requios.effortlessbuilding.buildmode.ModeSettingsManager.*;
 
+/**
+ * Shares mode settings (see ModeSettingsManager) between server and client
+ */
 public class ModeSettingsMessage implements IMessage {
 
     private ModeSettings modeSettings;

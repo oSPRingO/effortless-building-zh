@@ -13,7 +13,12 @@ import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
+import nl.requios.effortlessbuilding.render.BlockPreviewRenderer;
 
+/***
+ * Sends a message to the server indicating that a player wants to place a block.
+ * Received clientside: server has placed blocks and its letting the client know.
+ */
 public class BlockPlacedMessage implements IMessage {
 
     private boolean blockHit;
@@ -81,8 +86,11 @@ public class BlockPlacedMessage implements IMessage {
 
             if (ctx.side == Side.CLIENT){
                 //Received clientside
-                //Send back your info
-                return new BlockPlacedMessage(ClientProxy.previousLookAt);
+                EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {
+                    //Nod RenderHandler to do the dissolve shader effect
+                    BlockPreviewRenderer.onBlocksPlaced();
+                });
+                return null;
             } else {
                 //Received serverside
                 EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {

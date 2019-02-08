@@ -9,6 +9,9 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 
+/**
+ * Sends a message to the server indicating that a buildmode needs to be canceled for a player
+ */
 public class CancelModeMessage implements IMessage {
 
     @Override

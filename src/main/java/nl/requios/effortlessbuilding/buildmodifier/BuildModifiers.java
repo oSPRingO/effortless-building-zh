@@ -2,6 +2,7 @@ package nl.requios.effortlessbuilding.buildmodifier;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemBlock;
@@ -18,6 +19,7 @@ import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
+import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,6 +55,9 @@ public class BuildModifiers {
                 SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, true, false);
             }
         }
+
+        EffortlessBuilding.packetHandler.sendTo(new BlockPlacedMessage(), ((EntityPlayerMP) player));
+
     }
 
     public static void onBlockBroken(EntityPlayer player, List<BlockPos> posList) {
@@ -117,13 +122,13 @@ public class BuildModifiers {
         ItemStack itemBlock = ItemStack.EMPTY;
         if (itemStack.getItem() instanceof ItemBlock) itemBlock = itemStack;
         ItemRandomizerBag.resetRandomness();
-        if (itemStack.getItem() instanceof ItemRandomizerBag) itemBlock = ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(itemStack));
 
         //Add blocks in posList first
         for (BlockPos blockPos : posList) {
+            if (itemStack.getItem() instanceof ItemRandomizerBag) itemBlock = ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(itemStack));
             IBlockState blockState = getBlockStateFromItem(itemBlock, player, blockPos, facing, hitVec, EnumHand.MAIN_HAND);
             blockStates.add(blockState);
-            itemStacks.add(itemStack);
+            itemStacks.add(itemBlock);
         }
 
         for (BlockPos blockPos : posList) {

@@ -78,6 +78,9 @@ public class Wall implements IBuildMode {
             //distance to player
             double xDistSquared = xBound.subtract(start).lengthSquared();
 
+            //angle to look
+            //double xAngle = xBound.subtract(new Vec3d(firstPos)).normalize().dotProduct(look);
+
             //try on z axis
             z = firstPos.getZ();
 
@@ -90,7 +93,10 @@ public class Wall implements IBuildMode {
             //distance to player
             double zDistSquared = zBound.subtract(start).lengthSquared();
 
-            int reach = ReachHelper.getMaxReach(player); //4 times as much as normal placement reach
+            //angle to look
+            //double zAngle = zBound.subtract(new Vec3d(firstPos)).normalize().dotProduct(look);
+
+            int reach = ReachHelper.getPlacementReach(player) * 4; //4 times as much as normal placement reach
             
             //check if its not behind the player and its not too close and not too far
             boolean xValid = xBound.subtract(start).dotProduct(look) > 0 &&
@@ -99,10 +105,13 @@ public class Wall implements IBuildMode {
             boolean zValid = zBound.subtract(start).dotProduct(look) > 0 &&
                              zDistSquared > 4 && zDistSquared < reach * reach;
             
-            //select the one that is closest to the player and is valid
+            //select the one that is closest and is valid
             Vec3d selected = null;
-            if (xValid) selected = xBound;
-            if (zValid && zDistSquared < xDistSquared) selected = zBound;
+            if (xValid)
+                selected = xBound;
+            else if (zValid)
+                selected = zBound;
+            if (zValid && zDistSquared < xDistSquared/*Math.abs(zAngle) < Math.abs(xAngle)*/) selected = zBound;
 
             if (selected == null) return list;
 

@@ -10,3 +10,5 @@ item.effortlessbuilding:reach_upgrade2.name=Reach Upgrade 2
 item.effortlessbuilding:reach_upgrade3.name=Reach Upgrade 3
 
 commands.reach.usage=/reach <level>
+
+effortlessbuilding.subtitle.build_click=Click

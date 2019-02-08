@@ -13,6 +13,9 @@ import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 
+/***
+ * Sends a message to the server indicating that a player wants to break a block
+ */
 public class BlockBrokenMessage implements IMessage {
 
     private boolean blockHit;

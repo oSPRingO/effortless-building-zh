@@ -9,6 +9,7 @@ import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.resources.IResource;
@@ -52,8 +53,8 @@ import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
 import nl.requios.effortlessbuilding.gui.buildmodifier.ModifierSettingsGui;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
-import nl.requios.effortlessbuilding.helper.RenderHelper;
-import nl.requios.effortlessbuilding.helper.ShaderHelper;
+import nl.requios.effortlessbuilding.render.RenderHandler;
+import nl.requios.effortlessbuilding.render.ShaderHandler;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.network.*;
 import org.lwjgl.input.Keyboard;
@@ -72,11 +73,11 @@ public class ClientProxy implements IProxy {
 
     public static int ticksInGame = 0;
 
-    private static final HashMap<BuildModes.BuildModeEnum, RadialMenu.SpriteIconPositioning> buildModeIcons = new HashMap<>();
+    private static final HashMap<BuildModes.BuildModeEnum, TextureAtlasSprite> buildModeIcons = new HashMap<>();
 
     @Override
     public void preInit(FMLPreInitializationEvent event) {
-        ShaderHelper.init();
+        ShaderHandler.init();
     }
 
     @Override
@@ -131,7 +132,7 @@ public class ClientProxy implements IProxy {
     @SubscribeEvent
     public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
         if (event.getEntity() == Minecraft.getMinecraft().player) {
-            event.getWorld().addEventListener(new RenderHelper());
+            event.getWorld().addEventListener(new RenderHandler());
         }
     }
 
@@ -142,67 +143,12 @@ public class ClientProxy implements IProxy {
 
         for ( final BuildModes.BuildModeEnum mode : BuildModes.BuildModeEnum.values() )
         {
-            loadIcon( map, mode );
+            final ResourceLocation sprite = new ResourceLocation("effortlessbuilding", "icons/" + mode.name().toLowerCase());
+            buildModeIcons.put( mode, map.registerSprite(sprite));
         }
     }
 
-    /**
-     * From Chisels and Bits by AlgorithmX2
-     * https://github.com/AlgorithmX2/Chisels-and-Bits/blob/1.12/src/main/java/mod/chiselsandbits/core/ClientSide.java
-     */
-    private static void loadIcon(final TextureMap map, final BuildModes.BuildModeEnum mode) {
-        final RadialMenu.SpriteIconPositioning sip = new RadialMenu.SpriteIconPositioning();
-
-        final ResourceLocation sprite = new ResourceLocation( "effortlessbuilding", "icons/" + mode.name().toLowerCase() );
-        final ResourceLocation png = new ResourceLocation( "effortlessbuilding", "textures/icons/" + mode.name().toLowerCase() + ".png" );
-
-        sip.sprite = map.registerSprite( sprite );
-
-        try
-        {
-            final IResource iresource = Minecraft.getMinecraft().getResourceManager().getResource( png );
-            final BufferedImage bi = TextureUtil.readBufferedImage( iresource.getInputStream() );
-
-            int bottom = 0;
-            int right = 0;
-            sip.left = bi.getWidth();
-            sip.top = bi.getHeight();
-
-            for ( int x = 0; x < bi.getWidth(); x++ )
-            {
-                for ( int y = 0; y < bi.getHeight(); y++ )
-                {
-                    final int color = bi.getRGB( x, y );
-                    final int a = color >> 24 & 0xff;
-                    if ( a > 0 )
-                    {
-                        sip.left = Math.min( sip.left, x );
-                        right = Math.max( right, x );
-
-                        sip.top = Math.min( sip.top, y );
-                        bottom = Math.max( bottom, y );
-                    }
-                }
-            }
-
-            sip.height = bottom - sip.top + 1;
-            sip.width = right - sip.left + 1;
-
-            sip.left /= bi.getWidth();
-            sip.width /= bi.getWidth();
-            sip.top /= bi.getHeight();
-            sip.height /= bi.getHeight();
-        } catch (final IOException e) {
-            sip.height = 1;
-            sip.width = 1;
-            sip.left = 0;
-            sip.top = 0;
-        }
-
-        buildModeIcons.put( mode, sip );
-    }
-
-    public static RadialMenu.SpriteIconPositioning getBuildModeIcon(BuildModes.BuildModeEnum mode) {
+    public static TextureAtlasSprite getBuildModeIcon(BuildModes.BuildModeEnum mode) {
         return buildModeIcons.get(mode);
     }
 
@@ -295,8 +241,6 @@ public class ClientProxy implements IProxy {
 
         //QuickReplace toggle
         if (keyBindings[1].isPressed()) {
-
-
             ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
             modifierSettings.setQuickReplace(!modifierSettings.doQuickReplace());
             EffortlessBuilding.log(player, "Set "+ TextFormatting.GOLD + "Quick Replace " + TextFormatting.RESET + (
@@ -315,8 +259,10 @@ public class ClientProxy implements IProxy {
 
         if (keyBindings[4].isPressed()) {
             //TODO remove
-            ShaderHelper.init();
+            ShaderHandler.init();
             EffortlessBuilding.log(player, "Reloaded shaders");
+            //player.playSound(SoundEvents.UI_BUTTON_CLICK, 1f, 1f);
+            player.playSound(EffortlessBuilding.SOUND_BUILD_CLICK, 1f, 1f);
         }
 
     }

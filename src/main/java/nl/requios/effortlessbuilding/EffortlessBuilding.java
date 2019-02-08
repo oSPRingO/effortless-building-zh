@@ -3,6 +3,8 @@ package nl.requios.effortlessbuilding;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.config.Config;
@@ -55,6 +57,8 @@ public class EffortlessBuilding
     public static final ItemReachUpgrade2 ITEM_REACH_UPGRADE_2 = new ItemReachUpgrade2();
     public static final ItemReachUpgrade3 ITEM_REACH_UPGRADE_3 = new ItemReachUpgrade3();
 
+    public static final SoundEvent SOUND_BUILD_CLICK = createSoundEvent("build_click");
+
     public static final Block[] BLOCKS = {
     };
 
@@ -63,6 +67,10 @@ public class EffortlessBuilding
             ITEM_REACH_UPGRADE_1,
             ITEM_REACH_UPGRADE_2,
             ITEM_REACH_UPGRADE_3
+    };
+
+    public static final SoundEvent[] SOUND_EVENTS = {
+            SOUND_BUILD_CLICK
     };
 
     public static final int RANDOMIZER_BAG_GUI = 0;
@@ -88,6 +96,8 @@ public class EffortlessBuilding
         EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 3, Side.SERVER);
 
         EffortlessBuilding.packetHandler.registerMessage(CancelModeMessage.MessageHandler.class, CancelModeMessage.class, 4, Side.SERVER);
+
+        EffortlessBuilding.packetHandler.registerMessage(RequestLookAtMessage.MessageHandler.class, RequestLookAtMessage.class, 5, Side.CLIENT);
 
         proxy.preInit(event);
     }
@@ -127,5 +137,10 @@ public class EffortlessBuilding
 
     public static void log(EntityPlayer player, String msg, boolean actionBar){
         player.sendStatusMessage(new TextComponentString(msg), actionBar);
+    }
+
+    private static SoundEvent createSoundEvent(String soundName) {
+        final ResourceLocation soundID = new ResourceLocation(EffortlessBuilding.MODID, soundName);
+        return new SoundEvent(soundID).setRegistryName(soundID);
     }
 }

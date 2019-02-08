@@ -24,16 +24,10 @@ public class BuildModes {
         Line ("Line", new Line()),
         Wall ("Wall", new Wall()),
         Floor ("Floor", new Floor()),
-        Normal2 ("Normal", new Normal()),
-        NormalPlus2 ("Normal+", new NormalPlus()),
-        Line2 ("Line", new Line()),
-        Wall2 ("Wall", new Wall()),
-        Floor2 ("Floor", new Floor())
-        ;
-//        DiagonalLine,
-//        DiagonalWall,
-//        SlopedFloor,
-//        Cube;
+        DiagonalLine ("Diagonal Line", new DiagonalLine()),
+        DiagonalWall ("Diagonal Wall", new DiagonalWall()),
+        SlopeFloor ("Slope Floor", new SlopeFloor()),
+        Cube ("Cube", new Cube());
 
         public String name;
         public final IBuildMode instance;

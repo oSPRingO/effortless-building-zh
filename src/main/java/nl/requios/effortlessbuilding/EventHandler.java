@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.config.Config;
@@ -26,6 +27,7 @@ import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
+import nl.requios.effortlessbuilding.network.RequestLookAtMessage;
 
 import java.util.List;
 
@@ -48,6 +50,12 @@ public class EventHandler
         {
             event.getRegistry().register(new ItemBlock(block).setRegistryName(block.getRegistryName()));
         }
+    }
+
+    @SubscribeEvent
+    public static void registerSounds(RegistryEvent.Register<SoundEvent> event) {
+        EffortlessBuilding.log("testing");
+        event.getRegistry().registerAll(EffortlessBuilding.SOUND_EVENTS);
     }
 
     @SubscribeEvent
@@ -81,7 +89,7 @@ public class EventHandler
             event.setCanceled(true);
         } else {
             //Send message to client, which sends message back with raytrace info
-            EffortlessBuilding.packetHandler.sendTo(new BlockPlacedMessage(), (EntityPlayerMP) event.getPlayer());
+            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(), (EntityPlayerMP) event.getPlayer());
         }
     }
 

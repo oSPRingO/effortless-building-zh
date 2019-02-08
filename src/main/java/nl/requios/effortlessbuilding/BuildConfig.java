@@ -60,5 +60,8 @@ public class BuildConfig {
 
         @Comment({"Use fancy shaders while placing blocks"})
         public boolean useShaders = true;
+
+        @Comment({"How long the dissolve effect takes when placing blocks, in ticks."})
+        public int dissolveTime = 60;
     }
 }
