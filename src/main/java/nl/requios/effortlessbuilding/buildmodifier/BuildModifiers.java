@@ -15,6 +15,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.helper.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
@@ -111,21 +112,21 @@ public class BuildModifiers {
 
         //Get itemstack
         ItemStack itemStack = player.getHeldItem(EnumHand.MAIN_HAND);
-        if (itemStack.isEmpty() || !(itemStack.getItem() instanceof ItemBlock || itemStack.getItem() instanceof ItemRandomizerBag)) {
+        if (itemStack.isEmpty() || !CompatHelper.isItemBlockProxy(itemStack)) {
             itemStack = player.getHeldItem(EnumHand.OFF_HAND);
         }
-        if (itemStack.isEmpty() || !(itemStack.getItem() instanceof ItemBlock || itemStack.getItem() instanceof ItemRandomizerBag)) {
+        if (itemStack.isEmpty() || !CompatHelper.isItemBlockProxy(itemStack)) {
             return blockStates;
         }
 
         //Get ItemBlock stack
         ItemStack itemBlock = ItemStack.EMPTY;
         if (itemStack.getItem() instanceof ItemBlock) itemBlock = itemStack;
-        ItemRandomizerBag.resetRandomness();
+        else itemBlock = CompatHelper.getItemBlockFromStack(itemStack);
 
         //Add blocks in posList first
         for (BlockPos blockPos : posList) {
-            if (itemStack.getItem() instanceof ItemRandomizerBag) itemBlock = ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(itemStack));
+            //if (itemStack.getItem() instanceof ItemRandomizerBag) itemBlock = ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(itemStack));
             IBlockState blockState = getBlockStateFromItem(itemBlock, player, blockPos, facing, hitVec, EnumHand.MAIN_HAND);
             blockStates.add(blockState);
             itemStacks.add(itemBlock);
