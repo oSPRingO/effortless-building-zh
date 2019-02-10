@@ -24,12 +24,14 @@ public class CommandReach extends CommandBase {
 
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+        EntityPlayerMP player = (EntityPlayerMP) sender;
         if (args.length != 1) {
+            int reachUpgrade = ModifierSettingsManager.getModifierSettings(player).getReachUpgrade();
+            EffortlessBuilding.log(player, "Current reach: level "+reachUpgrade);
             throw new WrongUsageException("commands.reach.usage");
         }
 
         if (sender instanceof EntityPlayerMP) {
-            EntityPlayerMP player = (EntityPlayerMP) sender;
             //Set reach level to args[0]
             ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
             modifierSettings.setReachUpgrade(Integer.valueOf(args[0]));

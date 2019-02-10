@@ -176,6 +176,12 @@ public class ModifierSettingsManager {
         handleNewPlayer(player);
     }
 
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        EntityPlayer player = event.player;
+        handleNewPlayer(player);
+    }
+
     private static void handleNewPlayer(EntityPlayer player){
         if (getModifierSettings(player) == null) {
             setModifierSettings(player, new ModifierSettings());

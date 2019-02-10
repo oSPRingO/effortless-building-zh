@@ -2,12 +2,17 @@ package nl.requios.effortlessbuilding.render;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.PositionedSoundRecord;
+import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
@@ -16,6 +21,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IWorldEventListener;
 import net.minecraft.world.World;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -24,7 +30,11 @@ import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
+import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
+import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
+import nl.requios.effortlessbuilding.proxy.ClientProxy;
+import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
@@ -52,6 +62,76 @@ public class RenderHandler implements IWorldEventListener {
         BlockPreviewRenderer.render(player, modifierSettings, modeSettings);
 
         end();
+    }
+
+    @SubscribeEvent
+    public static void onRenderGameOverlay(final RenderGameOverlayEvent.Post event ) {
+        EntityPlayerSP player = Minecraft.getMinecraft().player;
+
+        //final ChiselToolType tool = getHeldToolType( lastHand );
+        final RenderGameOverlayEvent.ElementType type = event.getType();
+        //TODO check if chisel and bits tool in hand (and has menu)
+        if (type == RenderGameOverlayEvent.ElementType.ALL) {
+            final boolean wasVisible = RadialMenu.instance.isVisible();
+
+            if (ClientProxy.keyBindings[3].isKeyDown()) {
+                RadialMenu.instance.actionUsed = false;
+                RadialMenu.instance.raiseVisibility();
+            } else {
+                if ( !RadialMenu.instance.actionUsed ) {
+                    ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+
+                    if ( RadialMenu.instance.switchTo != null ) {
+                        playRadialMenuSound();
+                        modeSettings.setBuildMode(RadialMenu.instance.switchTo);
+                        ModeSettingsManager.setModeSettings(player, modeSettings);
+                        EffortlessBuilding.packetHandler.sendToServer(new ModeSettingsMessage(modeSettings));
+
+                        EffortlessBuilding.log(player, modeSettings.getBuildMode().name, true);
+                    }
+
+                    //TODO change buildmode settings
+
+                    playRadialMenuSound();
+                }
+
+                RadialMenu.instance.actionUsed = true;
+                RadialMenu.instance.decreaseVisibility();
+            }
+
+            if (RadialMenu.instance.isVisible()) {
+
+                final ScaledResolution res = event.getResolution();
+                RadialMenu.instance.configure(res.getScaledWidth(), res.getScaledHeight());
+
+                if (!wasVisible) {
+                    RadialMenu.instance.mc.inGameHasFocus = false;
+                    RadialMenu.instance.mc.mouseHelper.ungrabMouseCursor();
+                }
+
+                if (RadialMenu.instance.mc.inGameHasFocus) {
+                    KeyBinding.unPressAllKeys();
+                }
+
+                final int k1 = Mouse.getX() * res.getScaledWidth() / RadialMenu.instance.mc.displayWidth;
+                final int l1 = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / RadialMenu.instance.mc.displayHeight - 1;
+
+                net.minecraftforge.client.ForgeHooksClient.drawScreen(RadialMenu.instance, k1, l1, event.getPartialTicks());
+            } else {
+                if (wasVisible) {
+                    RadialMenu.instance.mc.setIngameFocus();
+                }
+            }
+        }
+    }
+
+    public static void playRadialMenuSound() {
+        final float volume = 0.1f;
+        if (volume >= 0.0001f) {
+            final PositionedSoundRecord psr = new PositionedSoundRecord(SoundEvents.UI_BUTTON_CLICK, SoundCategory.MASTER,
+                    volume, 1.0f, Minecraft.getMinecraft().player.getPosition());
+            Minecraft.getMinecraft().getSoundHandler().playSound(psr);
+        }
     }
 
     private static void begin(float partialTicks) {
@@ -87,10 +167,9 @@ public class RenderHandler implements IWorldEventListener {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
-        Minecraft.getMinecraft().renderEngine.bindTexture(new ResourceLocation(EffortlessBuilding.MODID, "textures/shader_color.png"));
+        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         Minecraft.getMinecraft().renderEngine.bindTexture(new ResourceLocation(EffortlessBuilding.MODID, "textures/shader_mask.png"));
 
-        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL14.glBlendColor(1F, 1F, 1F, 0.8f);

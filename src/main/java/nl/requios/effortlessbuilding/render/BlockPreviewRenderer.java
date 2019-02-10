@@ -2,6 +2,7 @@ package nl.requios.effortlessbuilding.render;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -21,8 +22,10 @@ import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.IBuildMode;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
+import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager.ModeSettings;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.ModifierSettings;
 import nl.requios.effortlessbuilding.helper.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
@@ -68,7 +71,7 @@ public class BlockPreviewRenderer {
 
     private static final int secondaryTextureUnit = 7;
 
-    public static void render(EntityPlayer player, ModifierSettingsManager.ModifierSettings modifierSettings, ModeSettingsManager.ModeSettings modeSettings) {
+    public static void render(EntityPlayer player, ModifierSettings modifierSettings, ModeSettings modeSettings) {
 
         //Render placed blocks with dissolve effect
         for (int i = 0; i < placedDataList.size(); i++) {
@@ -118,9 +121,7 @@ public class BlockPreviewRenderer {
 
         //Dont render if in normal mode and modifiers are disabled
         //Unless alwaysShowBlockPreview is true in config
-        if (modeSettings.getBuildMode() != BuildModes.BuildModeEnum.Normal ||
-            (startPos != null && BuildModifiers.isEnabled(modifierSettings, startPos)) ||
-            BuildConfig.visuals.alwaysShowBlockPreview) {
+        if (doRenderBlockPreviews(modifierSettings, modeSettings, startPos)) {
 
             RenderHandler.beginBlockPreviews();
 
@@ -214,11 +215,19 @@ public class BlockPreviewRenderer {
         }
     }
 
+    public static boolean doRenderBlockPreviews(ModifierSettings modifierSettings, ModeSettings modeSettings, BlockPos startPos) {
+        return modeSettings.getBuildMode() != BuildModes.BuildModeEnum.Normal ||
+                (startPos != null && BuildModifiers.isEnabled(modifierSettings, startPos)) ||
+                BuildConfig.visuals.alwaysShowBlockPreview;
+    }
+
     protected static void renderBlockPreviews(List<BlockPos> coordinates, List<IBlockState> blockStates,
                                               List<ItemStack> itemStacks, float dissolve, BlockPos firstPos,
                                               BlockPos secondPos, boolean checkCanPlace) {
         EntityPlayer player = Minecraft.getMinecraft().player;
         BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+
+        if (coordinates.isEmpty()) return;
 
         for (int i = coordinates.size() - 1; i >= 0; i--) {
             BlockPos blockPos = coordinates.get(i);
@@ -242,9 +251,16 @@ public class BlockPreviewRenderer {
     }
 
     public static void onBlocksPlaced() {
-        //Save current coordinates, blockstates and itemstacks
-        placedDataList.add(new PlacedData(ClientProxy.ticksInGame, previousCoordinates, previousBlockStates,
-                previousItemStacks, previousFirstPos, previousSecondPos));
+        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+        ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+
+        //Check if block previews are enabled
+        if (doRenderBlockPreviews(modifierSettings, modeSettings, previousFirstPos)) {
+            //Save current coordinates, blockstates and itemstacks
+            placedDataList.add(new PlacedData(ClientProxy.ticksInGame, previousCoordinates, previousBlockStates,
+                    previousItemStacks, previousFirstPos, previousSecondPos));
+        }
 
     }
 

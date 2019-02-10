@@ -85,6 +85,12 @@ public class ModeSettingsManager {
         handleNewPlayer(player);
     }
 
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        EntityPlayer player = event.player;
+        handleNewPlayer(player);
+    }
+
     private static void handleNewPlayer(EntityPlayer player){
         if (getModeSettings(player) == null) {
             setModeSettings(player, new ModeSettings());
