@@ -13,6 +13,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
@@ -31,6 +32,7 @@ import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
+import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
@@ -65,13 +67,15 @@ public class RenderHandler implements IWorldEventListener {
     }
 
     @SubscribeEvent
+    //Display Radial Menu
     public static void onRenderGameOverlay(final RenderGameOverlayEvent.Post event ) {
         EntityPlayerSP player = Minecraft.getMinecraft().player;
 
-        //final ChiselToolType tool = getHeldToolType( lastHand );
+        //check if chisel and bits tool in hand (and has menu)
+        final boolean hasChiselInHand = CompatHelper.chiselsAndBitsProxy.isHoldingChiselTool(EnumHand.MAIN_HAND);
+
         final RenderGameOverlayEvent.ElementType type = event.getType();
-        //TODO check if chisel and bits tool in hand (and has menu)
-        if (type == RenderGameOverlayEvent.ElementType.ALL) {
+        if (type == RenderGameOverlayEvent.ElementType.ALL && !hasChiselInHand) {
             final boolean wasVisible = RadialMenu.instance.isVisible();
 
             if (ClientProxy.keyBindings[3].isKeyDown()) {

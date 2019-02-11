@@ -13,6 +13,7 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -72,7 +73,7 @@ public class ItemRandomizerBag extends Item {
             IBlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(world, pos, facing,
                     hitX, hitY, hitZ, toPlace.getMetadata(), player, hand);
 
-            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, false, true);
+            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, new Vec3d(hitX, hitY, hitZ), false, true);
 
             //Synergy
             //Works without calling

@@ -1,19 +1,13 @@
-package nl.requios.effortlessbuilding.helper;
-
-import java.util.ArrayList;
-import java.util.List;
+package nl.requios.effortlessbuilding.compatibility;
 
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 public class CompatHelper {
@@ -21,6 +15,21 @@ public class CompatHelper {
     // and all checks will fail, so it works.
     @GameRegistry.ObjectHolder("danknull:dank_null")
     public static final Item dankNullItem = null;
+
+    public static IChiselsAndBitsProxy chiselsAndBitsProxy;
+
+    public static void preInit() {
+        if (Loader.isModLoaded("chiselsandbits")) {
+            // reflection to avoid hard dependency
+            try {
+                chiselsAndBitsProxy = Class.forName("nl.requios.effortlessbuilding.compatibility.ActiveChiselsAndBitsProxy").asSubclass(ActiveChiselsAndBitsProxy.class).newInstance();
+            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        } else {
+            chiselsAndBitsProxy = new DummyChiselsAndBitsProxy();
+        }
+    }
 
     // Check if the item given is a proxy for blocks. For now, we check for the randomizer bag,
     // /dank/null, or plain old blocks.
@@ -86,4 +95,5 @@ public class CompatHelper {
         }
         return -1;
     }
+
 }

@@ -2,7 +2,6 @@ package nl.requios.effortlessbuilding.buildmodifier;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemBlock;
@@ -10,16 +9,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraftforge.event.world.BlockEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
-import nl.requios.effortlessbuilding.helper.CompatHelper;
-import nl.requios.effortlessbuilding.helper.ReachHelper;
+import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
-import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 
 import java.util.ArrayList;
@@ -53,7 +48,7 @@ public class BuildModifiers {
             if (world.isBlockLoaded(blockPos, true)) {
                 //check itemstack empty
                 if (itemStack.isEmpty()) continue;
-                SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, true, false);
+                SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, true, false);
             }
         }
 

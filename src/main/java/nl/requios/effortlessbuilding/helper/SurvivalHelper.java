@@ -10,20 +10,19 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Enchantments;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
-import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
+import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -34,7 +33,8 @@ public class SurvivalHelper {
     //Used for all placing of blocks in this mod.
     //Checks if area is loaded, if player has the right permissions, if existing block can be replaced (drops it if so) and consumes an item from the stack.
     //Based on ItemBlock#onItemUse
-    public static boolean placeBlock(World world, EntityPlayer player, BlockPos pos, IBlockState blockState, ItemStack origstack, EnumFacing facing, boolean skipCollisionCheck, boolean playSound) {
+    public static boolean placeBlock(World world, EntityPlayer player, BlockPos pos, IBlockState blockState,
+                                     ItemStack origstack, EnumFacing facing, Vec3d hitVec, boolean skipCollisionCheck, boolean playSound) {
         if (!world.isBlockLoaded(pos, true)) return false;
         ItemStack itemstack = origstack;
 
@@ -52,26 +52,28 @@ public class SurvivalHelper {
             //TODO check if can replace
             dropBlock(world, player, pos);
 
-            //From ItemBlock#placeBlockAt
-            if (!world.setBlockState(pos, blockState, 11)) return false;
+            boolean placed = ((ItemBlock) itemstack.getItem()).placeBlockAt(itemstack, player, world, pos, facing, (float) hitVec.x, (float) hitVec.y, (float) hitVec.z, blockState);
+            if (!placed) return false;
 
-            IBlockState state = world.getBlockState(pos);
-            if (state.getBlock() == block)
-            {
-                ((ItemBlock) itemstack.getItem()).setTileEntityNBT(world, player, pos, itemstack);
-                block.onBlockPlacedBy(world, pos, state, player, itemstack);
-
-//                if (player instanceof EntityPlayerMP)
-//                    CriteriaTriggers.PLACED_BLOCK.trigger((EntityPlayerMP)player, pos, itemstack);
-            }
+//            //From ItemBlock#placeBlockAt
+//            if (!world.setBlockState(pos, blockState, 11)) return false;
+//
+            IBlockState afterState = world.getBlockState(pos);
+//            if (afterState.getBlock() == block)
+//            {
+//                ((ItemBlock) itemstack.getItem()).setTileEntityNBT(world, player, pos, itemstack);
+//                block.onBlockPlacedBy(world, pos, afterState, player, itemstack);
+//
+////                if (player instanceof EntityPlayerMP)
+////                    CriteriaTriggers.PLACED_BLOCK.trigger((EntityPlayerMP)player, pos, itemstack);
+//            }
 
             if (playSound) {
-                SoundType soundtype = state.getBlock().getSoundType(state, world, pos, player);
+                SoundType soundtype = afterState.getBlock().getSoundType(afterState, world, pos, player);
                 world.playSound(null, pos, soundtype.getPlaceSound(), SoundCategory.BLOCKS, (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
             }
 
             if (!player.isCreative() && Block.getBlockFromItem(itemstack.getItem()) == block) {
-                //itemstack.shrink(1);
                 CompatHelper.shrinkStack(origstack, itemstack);
             }
 

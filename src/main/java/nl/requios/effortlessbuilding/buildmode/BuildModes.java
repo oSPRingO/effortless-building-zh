@@ -2,12 +2,14 @@ package nl.requios.effortlessbuilding.buildmode;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.*;
+import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
@@ -94,7 +96,10 @@ public class BuildModes {
     //Use a network message to break blocks in the distance using clientside mouse input
     public static void onBlockBrokenMessage(EntityPlayer player, BlockBrokenMessage message) {
         BlockPos blockPos = message.getBlockPos();
-        if (ReachHelper.canBreakFar(player) && message.isBlockHit()) {
+
+        if (ReachHelper.canBreakFar(player) && message.isBlockHit() &&
+            !CompatHelper.chiselsAndBitsProxy.isHoldingChiselTool(EnumHand.MAIN_HAND)) {
+
             BlockEvent.BreakEvent event = new BlockEvent.BreakEvent(player.world, blockPos, player.world.getBlockState(blockPos), player);
             onBlockBroken(event);
         }
