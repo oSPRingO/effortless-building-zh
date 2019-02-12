@@ -194,8 +194,8 @@ public class RenderHandler implements IWorldEventListener {
         GlStateManager.pushMatrix();
         GlStateManager.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
         GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.translate(-0.005f, -0.005f, 0.005f);
-        GlStateManager.scale(1.01f, 1.01f, 1.01f);
+        GlStateManager.translate(-0.01f, -0.01f, 0.01f);
+        GlStateManager.scale(1.02f, 1.02f, 1.02f);
         dispatcher.renderBlockBrightness(blockState, 0.85f);
         GlStateManager.popMatrix();
     }

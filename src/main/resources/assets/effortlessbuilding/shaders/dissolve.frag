@@ -15,7 +15,8 @@ varying vec3 normal;
 
 void main() {
 
-    vec3 worldpos = blockpos + position.xyz;
+    vec3 pixelposition = floor(position.xyz * 8.0) / 8.0;
+    vec3 worldpos = blockpos + pixelposition.xyz;
     vec2 texcoord = vec2(gl_TexCoord[0]);
     vec4 texcolor = texture2D(image, texcoord);
     vec4 color = texcolor;

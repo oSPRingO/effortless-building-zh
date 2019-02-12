@@ -7,6 +7,8 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.*;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
@@ -32,7 +34,7 @@ public class BuildModes {
         Cube ("Cube", new Cube());
 
         public String name;
-        public final IBuildMode instance;
+        public IBuildMode instance;
 
         BuildModeEnum(String name, IBuildMode instance) {
             this.name = name;

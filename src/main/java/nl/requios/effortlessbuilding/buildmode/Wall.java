@@ -5,19 +5,24 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.*;
 
 public class Wall implements IBuildMode {
-    Dictionary<UUID, Integer> rightClickNrTable = new Hashtable<>();
+    //In singleplayer client and server variables are shared
+    //Split everything that needs separate values and may not be called twice in one click
+    Dictionary<UUID, Integer> rightClickClientTable = new Hashtable<>();
+    Dictionary<UUID, Integer> rightClickServerTable = new Hashtable<>();
     Dictionary<UUID, BlockPos> firstPosTable = new Hashtable<>();
     Dictionary<UUID, EnumFacing> sideHitTable = new Hashtable<>();
     Dictionary<UUID, Vec3d> hitVecTable = new Hashtable<>();
 
     @Override
     public void initialize(EntityPlayer player) {
-        rightClickNrTable.put(player.getUniqueID(), 0);
+        rightClickClientTable.put(player.getUniqueID(), 0);
+        rightClickServerTable.put(player.getUniqueID(), 0);
         firstPosTable.put(player.getUniqueID(), BlockPos.ORIGIN);
         sideHitTable.put(player.getUniqueID(), EnumFacing.UP);
         hitVecTable.put(player.getUniqueID(), Vec3d.ZERO);
@@ -27,14 +32,15 @@ public class Wall implements IBuildMode {
     public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec) {
         List<BlockPos> list = new ArrayList<>();
 
-        int rightClickNr = rightClickNrTable.get(player.getUniqueID());
+        Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
+        int rightClickNr = rightClickTable.get(player.getUniqueID());
         rightClickNr++;
-        rightClickNrTable.put(player.getUniqueID(), rightClickNr);
+        rightClickTable.put(player.getUniqueID(), rightClickNr);
 
         if (rightClickNr == 1) {
             //If clicking in air, reset and try again
             if (blockPos == null) {
-                rightClickNrTable.put(player.getUniqueID(), 0);
+                rightClickTable.put(player.getUniqueID(), 0);
                 return list;
             }
 
@@ -47,7 +53,7 @@ public class Wall implements IBuildMode {
             //Second click, place wall
 
             list = findCoordinates(player, blockPos);
-            rightClickNrTable.put(player.getUniqueID(), 0);
+            rightClickTable.put(player.getUniqueID(), 0);
         }
 
         return list;
@@ -56,7 +62,8 @@ public class Wall implements IBuildMode {
     @Override
     public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos) {
         List<BlockPos> list = new ArrayList<>();
-        int rightClickNr = rightClickNrTable.get(player.getUniqueID());
+        Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
+        int rightClickNr = rightClickTable.get(player.getUniqueID());
         BlockPos firstPos = firstPosTable.get(player.getUniqueID());
 
         if (rightClickNr == 0) {
@@ -116,8 +123,8 @@ public class Wall implements IBuildMode {
             if (selected == null) return list;
 
             //check if it doesnt go through blocks
-            RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, false, false);
-            if (rayTraceResult != null && rayTraceResult.typeOfHit != RayTraceResult.Type.BLOCK) {
+            RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
+            if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {
                 //return empty list
                 return list;
             }

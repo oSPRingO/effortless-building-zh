@@ -54,7 +54,6 @@ public class EventHandler
 
     @SubscribeEvent
     public static void registerSounds(RegistryEvent.Register<SoundEvent> event) {
-        EffortlessBuilding.log("testing");
         event.getRegistry().registerAll(EffortlessBuilding.SOUND_EVENTS);
     }
 
@@ -67,7 +66,7 @@ public class EventHandler
     }
 
     @SubscribeEvent
-    public void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event)
+    public static void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event)
     {
         if (event.getModID().equals(EffortlessBuilding.MODID))
         {

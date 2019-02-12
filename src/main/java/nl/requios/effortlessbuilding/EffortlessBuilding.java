@@ -19,6 +19,7 @@ import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
+import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.command.CommandReach;
@@ -101,7 +102,6 @@ public class EffortlessBuilding
         EffortlessBuilding.packetHandler.registerMessage(RequestLookAtMessage.MessageHandler.class, RequestLookAtMessage.class, 5, Side.CLIENT);
 
         proxy.preInit(event);
-        CompatHelper.preInit();
     }
 
     @EventHandler
@@ -120,6 +120,7 @@ public class EffortlessBuilding
     public void postInit(FMLPostInitializationEvent event)
     {
         proxy.postInit(event);
+        CompatHelper.postInit();
     }
 
     @EventHandler

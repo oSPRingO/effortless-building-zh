@@ -16,6 +16,7 @@ import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
+import nl.requios.effortlessbuilding.render.BlockPreviewRenderer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +40,11 @@ public class BuildModifiers {
         //check if valid blockstates
         if (blockStates.size() == 0 || coordinates.size() != blockStates.size()) return;
 
+        if (world.isRemote) {
+            BlockPreviewRenderer.onBlocksPlaced();
+            return;
+        }
+
         //place blocks
         for (int i = 0; i < coordinates.size(); i++) {
             BlockPos blockPos = coordinates.get(i);
@@ -51,8 +57,6 @@ public class BuildModifiers {
                 SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, true, false);
             }
         }
-
-        EffortlessBuilding.packetHandler.sendTo(new BlockPlacedMessage(), ((EntityPlayerMP) player));
 
     }
 

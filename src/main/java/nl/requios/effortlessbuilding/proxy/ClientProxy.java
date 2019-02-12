@@ -161,6 +161,7 @@ public class ClientProxy implements IProxy {
 
                 //find position in distance
                 RayTraceResult lookingAt = getLookingAt(player);
+                BuildModes.onBlockPlacedMessage(player, new BlockPlacedMessage(lookingAt));
                 EffortlessBuilding.packetHandler.sendToServer(new BlockPlacedMessage(lookingAt));
 
                 //play sound if further than normal
@@ -186,6 +187,7 @@ public class ClientProxy implements IProxy {
                     breakCooldown = 6;
                     RayTraceResult lookingAt = getLookingAt(player);
                     if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
+                        BuildModes.onBlockBrokenMessage(player, new BlockBrokenMessage(lookingAt));
                         EffortlessBuilding.packetHandler.sendToServer(new BlockBrokenMessage(lookingAt));
 
                         //play sound
@@ -251,7 +253,7 @@ public class ClientProxy implements IProxy {
             ShaderHandler.init();
             EffortlessBuilding.log(player, "Reloaded shaders");
             //player.playSound(SoundEvents.UI_BUTTON_CLICK, 1f, 1f);
-            player.playSound(EffortlessBuilding.SOUND_BUILD_CLICK, 1f, 1f);
+            //player.playSound(EffortlessBuilding.SOUND_BUILD_CLICK, 1f, 1f);
         }
 
     }

@@ -18,7 +18,7 @@ public class CompatHelper {
 
     public static IChiselsAndBitsProxy chiselsAndBitsProxy;
 
-    public static void preInit() {
+    public static void postInit() {
         if (Loader.isModLoaded("chiselsandbits")) {
             // reflection to avoid hard dependency
             try {
