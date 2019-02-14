@@ -13,6 +13,7 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -36,7 +37,7 @@ public class ItemRandomizerBag extends Item {
 
     public ItemRandomizerBag() {
         this.setRegistryName(EffortlessBuilding.MODID, "randomizer_bag");
-        this.setUnlocalizedName(this.getRegistryName().toString());
+        this.setTranslationKey(this.getRegistryName().toString());
 
         this.maxStackSize = 1;
         this.setCreativeTab(CreativeTabs.TOOLS);
@@ -72,14 +73,8 @@ public class ItemRandomizerBag extends Item {
             IBlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(world, pos, facing,
                     hitX, hitY, hitZ, toPlace.getMetadata(), player, hand);
 
-            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, false, true);
+            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, new Vec3d(hitX, hitY, hitZ), false, true);
 
-            //Synergy
-            //Works without calling
-//            BlockSnapshot blockSnapshot = new BlockSnapshot(player.world, pos, blockState);
-//            BlockEvent.PlaceEvent placeEvent = new BlockEvent.PlaceEvent(blockSnapshot, blockState, player, hand);
-//            Mirror.onBlockPlaced(placeEvent);
-//            Array.onBlockPlaced(placeEvent);
         }
         return EnumActionResult.SUCCESS;
     }
@@ -181,8 +176,8 @@ public class ItemRandomizerBag extends Item {
     }
 
     @Override
-    public String getUnlocalizedName() {
-        return super.getUnlocalizedName();
+    public String getTranslationKey() {
+        return super.getTranslationKey();
     }
 
     public static void resetRandomness() {

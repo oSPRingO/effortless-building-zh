@@ -52,7 +52,7 @@ public class EventHandler
     }
 
     @SubscribeEvent
-    public void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event)
+    public static void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event)
     {
         if (event.getModID().equals(EffortlessBuilding.MODID))
         {

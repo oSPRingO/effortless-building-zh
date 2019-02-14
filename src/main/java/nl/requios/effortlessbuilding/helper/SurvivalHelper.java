@@ -13,10 +13,12 @@ import net.minecraft.init.Enchantments;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.stats.StatList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
@@ -34,7 +36,7 @@ public class SurvivalHelper {
     //Used for all placing of blocks in this mod.
     //Checks if area is loaded, if player has the right permissions, if existing block can be replaced (drops it if so) and consumes an item from the stack.
     //Based on ItemBlock#onItemUse
-    public static boolean placeBlock(World world, EntityPlayer player, BlockPos pos, IBlockState blockState, ItemStack itemstack, EnumFacing facing, boolean skipCollisionCheck, boolean playSound) {
+    public static boolean placeBlock(World world, EntityPlayer player, BlockPos pos, IBlockState blockState, ItemStack itemstack, EnumFacing facing, Vec3d hitVec, boolean skipCollisionCheck, boolean playSound) {
         if (!world.isBlockLoaded(pos, true)) return false;
 
         //Randomizer bag synergy
@@ -55,24 +57,26 @@ public class SurvivalHelper {
 
         if (!itemstack.isEmpty() && canPlayerEdit(player, world, pos, itemstack) &&
             mayPlace(world, block, blockState, pos, skipCollisionCheck, facing.getOpposite(), player) &&
-            canReplace(world, player, pos))
-        {
+            canReplace(world, player, pos)) {
+
             //Drop existing block
-            //TODO check if can replace
             dropBlock(world, player, pos);
 
+            boolean placed = ((ItemBlock) itemstack.getItem()).placeBlockAt(itemstack, player, world, pos, facing, (float) hitVec.x, (float) hitVec.y, (float) hitVec.z, blockState);
+            if (!placed) return false;
+
             //From ItemBlock#placeBlockAt
-            if (!world.setBlockState(pos, blockState, 11)) return false;
-
+//            if (!world.setBlockState(pos, blockState, 11)) return false;
+//
             IBlockState state = world.getBlockState(pos);
-            if (state.getBlock() == block)
-            {
-                ((ItemBlock) itemstack.getItem()).setTileEntityNBT(world, player, pos, itemstack);
-                block.onBlockPlacedBy(world, pos, state, player, itemstack);
-
-//                if (player instanceof EntityPlayerMP)
-//                    CriteriaTriggers.PLACED_BLOCK.trigger((EntityPlayerMP)player, pos, itemstack);
-            }
+//            if (state.getBlock() == block)
+//            {
+//                ((ItemBlock) itemstack.getItem()).setTileEntityNBT(world, player, pos, itemstack);
+//                block.onBlockPlacedBy(world, pos, state, player, itemstack);
+//
+////                if (player instanceof EntityPlayerMP)
+////                    CriteriaTriggers.PLACED_BLOCK.trigger((EntityPlayerMP)player, pos, itemstack);
+//            }
 
             if (playSound) {
                 SoundType soundtype = state.getBlock().getSoundType(state, world, pos, player);
@@ -168,13 +172,16 @@ public class SurvivalHelper {
         if (player.isCreative()) return;
 
         IBlockState blockState = world.getBlockState(pos);
+        Block block = blockState.getBlock();
 
-        int fortune = EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, player.getHeldItemMainhand());
-        List<ItemStack> drops = blockState.getBlock().getDrops(world, pos, blockState, fortune);
-        for (ItemStack drop : drops)
-        {
-            ItemHandlerHelper.giveItemToPlayer(player, drop);
-        }
+        block.harvestBlock(world, player, pos, blockState, world.getTileEntity(pos), player.getHeldItemMainhand());
+
+//        int fortune = EnchantmentHelper.getEnchantmentLevel(Enchantments.FORTUNE, player.getHeldItemMainhand());
+//        List<ItemStack> drops = blockState.getBlock().getDrops(world, pos, blockState, fortune);
+//        for (ItemStack drop : drops)
+//        {
+//            ItemHandlerHelper.giveItemToPlayer(player, drop);
+//        }
     }
 
     //From EntityPlayer#canPlayerEdit
@@ -197,9 +204,9 @@ public class SurvivalHelper {
     public static boolean mayPlace(World world, Block blockIn, IBlockState newBlockState, BlockPos pos, boolean skipCollisionCheck, EnumFacing sidePlacedOn, @Nullable Entity placer)
     {
         IBlockState iblockstate1 = world.getBlockState(pos);
-        AxisAlignedBB axisalignedbb = skipCollisionCheck ? null : blockIn.getDefaultState().getCollisionBoundingBox(world, pos);
+        AxisAlignedBB axisalignedbb = skipCollisionCheck ? Block.NULL_AABB : blockIn.getDefaultState().getCollisionBoundingBox(world, pos);
 
-        if (axisalignedbb != Block.NULL_AABB && !world.checkNoEntityCollision(axisalignedbb.offset(pos), placer))
+        if (axisalignedbb != Block.NULL_AABB && !world.checkNoEntityCollision(axisalignedbb.offset(pos)))
         {
             return false;
         }

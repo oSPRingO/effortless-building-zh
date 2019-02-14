@@ -232,7 +232,7 @@ public class RenderHelper implements IWorldEventListener {
                         ItemStack itemstack = itemStacks.get(i);
                         //Check if can place
                         if (!itemstack.isEmpty() && SurvivalHelper.canPlayerEdit(player, player.world, blockPos, itemstack) &&
-                            SurvivalHelper.mayPlace(player.world, Block.getBlockFromItem(itemstack.getItem()), blockState, blockPos, true, EnumFacing.UP, player) &&
+                            SurvivalHelper.mayPlace(player.world, Block.getBlockFromItem(itemstack.getItem()), blockState, blockPos, false, EnumFacing.UP, player) &&
                             SurvivalHelper.canReplace(player.world, player, blockPos)) {
                             renderBlockPreview(dispatcher, blockPos, blockState);
                         }

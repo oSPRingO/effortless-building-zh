@@ -74,7 +74,7 @@ public class BuildModifiers {
             if (world.isBlockLoaded(blockPos, true)) {
                 //check itemstack empty
                 if (itemStack.isEmpty()) continue;
-                SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, true, false);
+                SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, false, false);
             }
         }
     }
