@@ -25,7 +25,7 @@ import java.util.List;
 public class BuildModifiers {
 
     //Called from BuildModes
-    public static void onBlockPlaced(EntityPlayer player, List<BlockPos> posList, EnumFacing sideHit, Vec3d hitVec) {
+    public static void onBlockPlaced(EntityPlayer player, List<BlockPos> startCoordinates, EnumFacing sideHit, Vec3d hitVec) {
         World world = player.world;
         ItemRandomizerBag.renewRandomness();
 
@@ -33,9 +33,9 @@ public class BuildModifiers {
         hitVec = new Vec3d(Math.abs(hitVec.x - ((int) hitVec.x)), Math.abs(hitVec.y - ((int) hitVec.y)), Math.abs(hitVec.z - ((int) hitVec.z)));
 
         //find coordinates and blockstates
-        List<BlockPos> coordinates = findCoordinates(player, posList);
+        List<BlockPos> coordinates = findCoordinates(player, startCoordinates);
         List<ItemStack> itemStacks = new ArrayList<>();
-        List<IBlockState> blockStates = findBlockStates(player, posList, hitVec, sideHit, itemStacks);
+        List<IBlockState> blockStates = findBlockStates(player, startCoordinates, hitVec, sideHit, itemStacks);
 
         //check if valid blockstates
         if (blockStates.size() == 0 || coordinates.size() != blockStates.size()) return;
@@ -54,7 +54,7 @@ public class BuildModifiers {
             if (world.isBlockLoaded(blockPos, true)) {
                 //check itemstack empty
                 if (itemStack.isEmpty()) continue;
-                SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, true, false);
+                SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, false, false);
             }
         }
 
@@ -66,6 +66,11 @@ public class BuildModifiers {
         List<BlockPos> coordinates = findCoordinates(player, posList);
 
         if (coordinates.isEmpty()) return;
+
+        if (world.isRemote) {
+            BlockPreviewRenderer.onBlocksBroken();
+            return;
+        }
 
         //If the player is going to instabreak grass or a plant, only break other instabreaking things
         boolean onlyInstaBreaking = world.getBlockState(posList.get(0)).getBlockHardness(world, posList.get(0)) == 0f;
@@ -122,10 +127,11 @@ public class BuildModifiers {
         ItemStack itemBlock = ItemStack.EMPTY;
         if (itemStack.getItem() instanceof ItemBlock) itemBlock = itemStack;
         else itemBlock = CompatHelper.getItemBlockFromStack(itemStack);
+        ItemRandomizerBag.resetRandomness();
 
         //Add blocks in posList first
         for (BlockPos blockPos : posList) {
-            //if (itemStack.getItem() instanceof ItemRandomizerBag) itemBlock = ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(itemStack));
+            if (!(itemStack.getItem() instanceof ItemBlock)) itemBlock = CompatHelper.getItemBlockFromStack(itemStack);
             IBlockState blockState = getBlockStateFromItem(itemBlock, player, blockPos, facing, hitVec, EnumHand.MAIN_HAND);
             blockStates.add(blockState);
             itemStacks.add(itemBlock);

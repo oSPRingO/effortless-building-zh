@@ -23,8 +23,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
+import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 import nl.requios.effortlessbuilding.network.RequestLookAtMessage;
@@ -83,22 +85,31 @@ public class EventHandler
     //Only called serverside
     public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
         //Cancel event if necessary
-        BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(event.getPlayer()).getBuildMode();
-        if (buildMode != BuildModes.BuildModeEnum.Normal) {
+        EntityPlayer player = event.getPlayer();
+        BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+
+        if (buildMode != BuildModes.BuildModeEnum.Normal || modifierSettings.doQuickReplace()) {
             event.setCanceled(true);
         } else {
+            //Normal mode, let vanilla handle block placing
+            //But modifiers should still work
+
             //Send message to client, which sends message back with raytrace info
-            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(), (EntityPlayerMP) event.getPlayer());
+            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(), (EntityPlayerMP) player);
         }
     }
 
     @SubscribeEvent
     public static void onBlockBroken(BlockEvent.BreakEvent event) {
         //Cancel event if necessary
+        //If cant break far then dont cancel event ever
         BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(event.getPlayer()).getBuildMode();
-        if (buildMode != BuildModes.BuildModeEnum.Normal) {
+        if (buildMode != BuildModes.BuildModeEnum.Normal && ReachHelper.canBreakFar(event.getPlayer())) {
             event.setCanceled(true);
         } else {
+            //Normal mode, let vanilla handle block breaking
+            //But modifiers should still work
             BuildModes.onBlockBroken(event);
         }
     }

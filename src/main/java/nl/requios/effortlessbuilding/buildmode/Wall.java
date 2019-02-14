@@ -5,7 +5,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.*;
@@ -29,7 +28,7 @@ public class Wall implements IBuildMode {
     }
 
     @Override
-    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec) {
+    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
 
         Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
@@ -52,7 +51,7 @@ public class Wall implements IBuildMode {
         } else {
             //Second click, place wall
 
-            list = findCoordinates(player, blockPos);
+            list = findCoordinates(player, blockPos, skipRaytrace);
             rightClickTable.put(player.getUniqueID(), 0);
         }
 
@@ -60,7 +59,7 @@ public class Wall implements IBuildMode {
     }
 
     @Override
-    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos) {
+    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
         Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
         int rightClickNr = rightClickTable.get(player.getUniqueID());
@@ -123,10 +122,12 @@ public class Wall implements IBuildMode {
             if (selected == null) return list;
 
             //check if it doesnt go through blocks
-            RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
-            if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {
-                //return empty list
-                return list;
+            if (!skipRaytrace) {
+                RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
+                if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {
+                    //return empty list
+                    return list;
+                }
             }
             
             BlockPos secondPos = new BlockPos(selected);
@@ -134,10 +135,19 @@ public class Wall implements IBuildMode {
             //Add whole wall
             //Limit amount of blocks you can place per row
             int limit = ReachHelper.getMaxBlocksPlacedAtOnce(player);
+            int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
 
             int x1 = firstPos.getX(), x2 = secondPos.getX();
             int y1 = firstPos.getY(), y2 = secondPos.getY();
             int z1 = firstPos.getZ(), z2 = secondPos.getZ();
+
+            //limit axis
+            if (x2 - x1 > axisLimit) x2 = x1 + axisLimit;
+            if (x1 - x2 > axisLimit) x2 = x1 - axisLimit;
+            if (y2 - y1 > axisLimit) y2 = y1 + axisLimit;
+            if (y1 - y2 > axisLimit) y2 = y1 - axisLimit;
+            if (z2 - z1 > axisLimit) z2 = z1 + axisLimit;
+            if (z1 - z2 > axisLimit) z2 = z1 - axisLimit;
 
             for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
 

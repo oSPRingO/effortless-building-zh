@@ -28,7 +28,7 @@ public class Line implements IBuildMode {
     }
 
     @Override
-    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec) {
+    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
 
         Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
@@ -51,7 +51,7 @@ public class Line implements IBuildMode {
         } else {
             //Second click, place wall
 
-            list = findCoordinates(player, blockPos);
+            list = findCoordinates(player, blockPos, skipRaytrace);
             rightClickTable.put(player.getUniqueID(), 0);
         }
 
@@ -59,7 +59,7 @@ public class Line implements IBuildMode {
     }
 
     @Override
-    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos) {
+    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
         Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
         int rightClickNr = rightClickTable.get(player.getUniqueID());
@@ -155,13 +155,17 @@ public class Line implements IBuildMode {
             if (selected == null) return list;
 
             //check if it doesnt go through blocks
-            RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
-            if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {
-                //return empty list
-                return list;
+            if (!skipRaytrace) {
+                RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
+                if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {
+                    //return empty list
+                    return list;
+                }
             }
 
             BlockPos secondPos = new BlockPos(selected);
+
+            int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
 
             //Add whole line
 
@@ -169,11 +173,13 @@ public class Line implements IBuildMode {
             int y1 = firstPos.getY(), y2 = secondPos.getY();
             int z1 = firstPos.getZ(), z2 = secondPos.getZ();
 
+            outerloop:
             for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
 
                 for (int n = z1; z1 < z2 ? n <= z2 : n >= z2; n += z1 < z2 ? 1 : -1) {
 
                     for (int m = y1; y1 < y2 ? m <= y2 : m >= y2; m += y1 < y2 ? 1 : -1) {
+                        if (list.size() >= axisLimit) break outerloop;
                         list.add(new BlockPos(l, m, n));
                     }
                 }

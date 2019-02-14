@@ -41,7 +41,7 @@ public class Mirror {
         }
 
         public int getReach() {
-            return radius * 2;
+            return radius * 2; //Change ModifierSettings#setReachUpgrade too
         }
     }
     
@@ -114,8 +114,7 @@ public class Mirror {
         //Randomizer bag synergy
         if (bagInventory != null) {
             itemStack = ItemRandomizerBag.pickRandomStack(bagInventory);
-            oldBlockState = BuildModifiers
-                    .getBlockStateFromItem(itemStack, player, oldBlockPos, EnumFacing.UP, new Vec3d(0, 0, 0), hand);
+            oldBlockState = BuildModifiers.getBlockStateFromItem(itemStack, player, oldBlockPos, EnumFacing.UP, new Vec3d(0, 0, 0), hand);
         }
 
         //Find blockstate

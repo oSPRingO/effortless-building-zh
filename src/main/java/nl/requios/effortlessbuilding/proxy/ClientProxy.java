@@ -186,11 +186,12 @@ public class ClientProxy implements IProxy {
                 if (breakCooldown <= 0) {
                     breakCooldown = 6;
                     RayTraceResult lookingAt = getLookingAt(player);
-                    if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
-                        BuildModes.onBlockBrokenMessage(player, new BlockBrokenMessage(lookingAt));
-                        EffortlessBuilding.packetHandler.sendToServer(new BlockBrokenMessage(lookingAt));
 
-                        //play sound
+                    BuildModes.onBlockBrokenMessage(player, new BlockBrokenMessage(lookingAt));
+                    EffortlessBuilding.packetHandler.sendToServer(new BlockBrokenMessage(lookingAt));
+
+                    //play sound
+                    if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
                         BlockPos blockPos = lookingAt.getBlockPos();
                         IBlockState state = player.world.getBlockState(blockPos);
                         SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);

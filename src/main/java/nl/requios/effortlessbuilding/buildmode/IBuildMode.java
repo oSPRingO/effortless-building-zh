@@ -14,10 +14,10 @@ public interface IBuildMode {
 
     //Fired when a block would be placed
     //Return a list of coordinates where you want to place blocks
-    List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec);
+    List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean skipRaytrace);
 
     //Fired continuously for visualization purposes
-    List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos);
+    List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos, boolean skipRaytrace);
 
     EnumFacing getSideHit(EntityPlayer player);
 

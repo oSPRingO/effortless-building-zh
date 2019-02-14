@@ -15,14 +15,14 @@ public class Normal implements IBuildMode {
     }
 
     @Override
-    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec) {
+    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
         list.add(blockPos);
         return list;
     }
 
     @Override
-    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos) {
+    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
         list.add(blockPos);
         return list;

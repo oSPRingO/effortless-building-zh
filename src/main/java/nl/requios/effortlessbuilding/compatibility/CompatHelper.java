@@ -49,7 +49,6 @@ public class CompatHelper {
     public static ItemStack getItemBlockFromStack(ItemStack stack) {
         Item item = stack.getItem();
         if(item instanceof ItemRandomizerBag) {
-            ItemRandomizerBag.resetRandomness();
             return ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(stack));
         } else if(item == dankNullItem) {
             int index = 0;

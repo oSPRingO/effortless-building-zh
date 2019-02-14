@@ -200,17 +200,17 @@ public class RenderHandler implements IWorldEventListener {
         GlStateManager.popMatrix();
     }
 
-    protected static void renderBlockOutline(BlockPos pos) {
-        renderBlockOutline(pos, pos);
+    protected static void renderBlockOutline(BlockPos pos, Vec3d color) {
+        renderBlockOutline(pos, pos, color);
     }
 
     //Renders outline. Pos1 has to be minimal x,y,z and pos2 maximal x,y,z
-    protected static void renderBlockOutline(BlockPos pos1, BlockPos pos2) {
+    protected static void renderBlockOutline(BlockPos pos1, BlockPos pos2, Vec3d color) {
         GL11.glLineWidth(2);
 
         AxisAlignedBB aabb = new AxisAlignedBB(pos1, pos2.add(1, 1, 1)).grow(0.0020000000949949026);
 
-        RenderGlobal.drawSelectionBoundingBox(aabb, 0f, 0f, 0f, 0.4f);
+        RenderGlobal.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
     }
 
 

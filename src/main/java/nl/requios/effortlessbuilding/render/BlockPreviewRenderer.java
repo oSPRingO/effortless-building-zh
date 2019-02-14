@@ -55,14 +55,17 @@ public class BlockPreviewRenderer {
         List<ItemStack> itemStacks;
         BlockPos firstPos;
         BlockPos secondPos;
+        boolean breaking;
 
-        public PlacedData(float time, List<BlockPos> coordinates, List<IBlockState> blockStates, List<ItemStack> itemStacks, BlockPos firstPos, BlockPos secondPos) {
+        public PlacedData(float time, List<BlockPos> coordinates, List<IBlockState> blockStates,
+                          List<ItemStack> itemStacks, BlockPos firstPos, BlockPos secondPos, boolean breaking) {
             this.time = time;
             this.coordinates = coordinates;
             this.blockStates = blockStates;
             this.itemStacks = itemStacks;
             this.firstPos = firstPos;
             this.secondPos = secondPos;
+            this.breaking = breaking;
         }
     }
 
@@ -73,17 +76,18 @@ public class BlockPreviewRenderer {
     public static void render(EntityPlayer player, ModifierSettings modifierSettings, ModeSettings modeSettings) {
 
         //Render placed blocks with dissolve effect
-        for (int i = 0; i < placedDataList.size(); i++) {
-            PlacedData placed = placedDataList.get(i);
-            if (placed.coordinates != null && !placed.coordinates.isEmpty()) {
+        //Use fancy shader if config allows, otherwise no dissolve
+        if (BuildConfig.visuals.useShaders) {
+            RenderHandler.beginBlockPreviews();
+            for (int i = 0; i < placedDataList.size(); i++) {
+                PlacedData placed = placedDataList.get(i);
+                if (placed.coordinates != null && !placed.coordinates.isEmpty()) {
 
-                RenderHandler.beginBlockPreviews();
-
-                float dissolve = (ClientProxy.ticksInGame - placed.time) / (float) BuildConfig.visuals.dissolveTime;
-                renderBlockPreviews(placed.coordinates, placed.blockStates, placed.itemStacks, dissolve, placed.firstPos, placed.secondPos, false);
-
-                RenderHandler.endBlockPreviews();
+                    float dissolve = (ClientProxy.ticksInGame - placed.time) / (float) BuildConfig.visuals.dissolveTime;
+                    renderBlockPreviews(placed.coordinates, placed.blockStates, placed.itemStacks, dissolve, placed.firstPos, placed.secondPos, false, placed.breaking);
+                }
             }
+            RenderHandler.endBlockPreviews();
         }
         //Expire
         placedDataList.removeIf(placed -> placed.time + BuildConfig.visuals.dissolveTime < ClientProxy.ticksInGame);
@@ -122,16 +126,17 @@ public class BlockPreviewRenderer {
         //Unless alwaysShowBlockPreview is true in config
         if (doRenderBlockPreviews(modifierSettings, modeSettings, startPos)) {
 
-            RenderHandler.beginBlockPreviews();
-
             IBuildMode buildModeInstance = modeSettings.getBuildMode().instance;
             if (buildModeInstance.getSideHit(player) != null) sideHit = buildModeInstance.getSideHit(player);
             if (buildModeInstance.getHitVec(player) != null) hitVec = buildModeInstance.getHitVec(player);
 
             if (sideHit != null) {
 
+                //Should be red?
+                boolean breaking = BuildModes.currentlyBreakingClient.get(player) != null && BuildModes.currentlyBreakingClient.get(player);
+
                 //get coordinates
-                List<BlockPos> startCoordinates = BuildModes.findCoordinates(player, startPos);
+                List<BlockPos> startCoordinates = BuildModes.findCoordinates(player, startPos, breaking || modifierSettings.doQuickReplace());
 
                 BlockPos firstPos = BlockPos.ORIGIN, secondPos = BlockPos.ORIGIN;
                 //Remember first and last pos for the shader
@@ -157,8 +162,19 @@ public class BlockPreviewRenderer {
 
                 hitVec = new Vec3d(Math.abs(hitVec.x - ((int) hitVec.x)), Math.abs(hitVec.y - ((int) hitVec.y)),
                         Math.abs(hitVec.z - ((int) hitVec.z)));
+
+                //Get blockstates
                 List<ItemStack> itemStacks = new ArrayList<>();
-                List<IBlockState> blockStates = BuildModifiers.findBlockStates(player, startCoordinates, hitVec, sideHit, itemStacks);
+                List<IBlockState> blockStates = new ArrayList<>();
+                if (breaking) {
+                    //Find blockstate of world
+                    for (BlockPos coordinate : newCoordinates) {
+                        blockStates.add(player.world.getBlockState(coordinate));
+                    }
+                } else {
+                    blockStates = BuildModifiers.findBlockStates(player, startCoordinates, hitVec, sideHit, itemStacks);
+                }
+
 
                 //Check if they are different from previous
                 //TODO fix triggering when moving player
@@ -173,7 +189,7 @@ public class BlockPreviewRenderer {
                     //if so, renew randomness of randomizer bag
                     ItemRandomizerBag.renewRandomness();
                     //and play sound (max once every tick)
-                    if (newCoordinates.size() > 1 && blockStates.size() > 1 && soundTime < ClientProxy.ticksInGame - 0) {
+                    if (startCoordinates.size() > 1 && blockStates.size() > 1 && soundTime < ClientProxy.ticksInGame - 0) {
                         soundTime = ClientProxy.ticksInGame;
                         //player.playSound(EffortlessBuilding.SOUND_BUILD_CLICK, 0.2f, 1f);
                         player.playSound(blockStates.get(0).getBlock().getSoundType(blockStates.get(0), player.world,
@@ -183,11 +199,29 @@ public class BlockPreviewRenderer {
 
                 //Render block previews
                 if (blockStates.size() != 0 && newCoordinates.size() == blockStates.size()) {
-                    renderBlockPreviews(newCoordinates, blockStates, itemStacks, 0f, firstPos, secondPos, true);
+                    //Use fancy shader if config allows, otherwise outlines
+                    if (BuildConfig.visuals.useShaders && newCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
+
+                        RenderHandler.beginBlockPreviews();
+
+                        renderBlockPreviews(newCoordinates, blockStates, itemStacks, 0f, firstPos, secondPos, !breaking, breaking);
+
+                        RenderHandler.endBlockPreviews();
+                    } else {
+
+                        RenderHandler.beginLines();
+
+                        Vec3d color = new Vec3d(1f, 1f, 1f);
+                        if (breaking) color = new Vec3d(1f, 0f, 0f);
+
+                        for (int i = newCoordinates.size() - 1; i >= 0; i--) {
+                            RenderHandler.renderBlockOutline(newCoordinates.get(i), color);
+                        }
+
+                        RenderHandler.endLines();
+                    }
                 }
             }
-
-            RenderHandler.endBlockPreviews();
 
             RenderHandler.beginLines();
             //Draw outlines if tool in hand
@@ -205,7 +239,7 @@ public class BlockPreviewRenderer {
                     IBlockState blockState = player.world.getBlockState(coordinate);
                     if (!blockState.getBlock().isAir(blockState, player.world, coordinate)) {
                         if (SurvivalHelper.canBreak(player.world, player, coordinate) || i == 0) {
-                            RenderHandler.renderBlockOutline(coordinate);
+                            RenderHandler.renderBlockOutline(coordinate, new Vec3d(0f, 0f, 0f));
                         }
                     }
                 }
@@ -214,6 +248,7 @@ public class BlockPreviewRenderer {
         }
     }
 
+    //Whether to draw any block previews or outlines
     public static boolean doRenderBlockPreviews(ModifierSettings modifierSettings, ModeSettings modeSettings, BlockPos startPos) {
         return modeSettings.getBuildMode() != BuildModes.BuildModeEnum.Normal ||
                 (startPos != null && BuildModifiers.isEnabled(modifierSettings, startPos)) ||
@@ -222,8 +257,9 @@ public class BlockPreviewRenderer {
 
     protected static void renderBlockPreviews(List<BlockPos> coordinates, List<IBlockState> blockStates,
                                               List<ItemStack> itemStacks, float dissolve, BlockPos firstPos,
-                                              BlockPos secondPos, boolean checkCanPlace) {
+                                              BlockPos secondPos, boolean checkCanPlace, boolean red) {
         EntityPlayer player = Minecraft.getMinecraft().player;
+        ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
 
         if (coordinates.isEmpty()) return;
@@ -231,22 +267,21 @@ public class BlockPreviewRenderer {
         for (int i = coordinates.size() - 1; i >= 0; i--) {
             BlockPos blockPos = coordinates.get(i);
             IBlockState blockState = blockStates.get(i);
-            ItemStack itemstack = itemStacks.get(i);
-            if(CompatHelper.isItemBlockProxy(itemstack))
+            ItemStack itemstack = itemStacks.isEmpty() ? ItemStack.EMPTY : itemStacks.get(i);
+            if (CompatHelper.isItemBlockProxy(itemstack))
                 itemstack = CompatHelper.getItemBlockByState(itemstack, blockState);
 
             //Check if can place
             //If check is turned off, check if blockstate is the same (for dissolve effect)
-            if (SurvivalHelper.canPlace(player.world, player, blockPos, blockState, itemstack, true, EnumFacing.UP) ||
-                (!checkCanPlace && player.world.getBlockState(blockPos) == blockState)) {
+            if ((!checkCanPlace /*&& player.world.getBlockState(blockPos) == blockState*/) ||
+                SurvivalHelper.canPlace(player.world, player, blockPos, blockState, itemstack, modifierSettings.doQuickReplace(), EnumFacing.UP)) {
 
                 ShaderHandler.useShader(ShaderHandler.dissolve, generateShaderCallback(dissolve,
                         new Vec3d(blockPos), new Vec3d(firstPos), new Vec3d(secondPos),
-                        blockPos == secondPos));
+                        blockPos == secondPos, red));
                 RenderHandler.renderBlockPreview(dispatcher, blockPos, blockState);
             }
         }
-
     }
 
     public static void onBlocksPlaced() {
@@ -256,18 +291,45 @@ public class BlockPreviewRenderer {
 
         //Check if block previews are enabled
         if (doRenderBlockPreviews(modifierSettings, modeSettings, previousFirstPos)) {
+
             //Save current coordinates, blockstates and itemstacks
-            placedDataList.add(new PlacedData(ClientProxy.ticksInGame, previousCoordinates, previousBlockStates,
-                    previousItemStacks, previousFirstPos, previousSecondPos));
+            if (!previousCoordinates.isEmpty() && previousBlockStates.size() == previousCoordinates.size() &&
+                previousCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
+
+                placedDataList.add(new PlacedData(ClientProxy.ticksInGame, previousCoordinates, previousBlockStates,
+                        previousItemStacks, previousFirstPos, previousSecondPos, false));
+            }
         }
 
     }
 
-    private static Consumer<Integer> generateShaderCallback(final float dissolve, final Vec3d blockpos, final Vec3d firstpos, final Vec3d secondpos, final boolean highlight) {
+    public static void onBlocksBroken() {
+        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+        ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+
+        //Check if block previews are enabled
+        if (doRenderBlockPreviews(modifierSettings, modeSettings, previousFirstPos)) {
+
+            //Save current coordinates, blockstates and itemstacks
+            if (!previousCoordinates.isEmpty() && previousBlockStates.size() == previousCoordinates.size() &&
+                previousCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
+
+                placedDataList.add(new PlacedData(ClientProxy.ticksInGame, previousCoordinates, previousBlockStates,
+                        previousItemStacks, previousFirstPos, previousSecondPos, true));
+            }
+        }
+
+    }
+
+    private static Consumer<Integer> generateShaderCallback(final float dissolve, final Vec3d blockpos,
+                                                            final Vec3d firstpos, final Vec3d secondpos,
+                                                            final boolean highlight, final boolean red) {
         Minecraft mc = Minecraft.getMinecraft();
         return (Integer shader) -> {
             int percentileUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "dissolve");
             int highlightUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "highlight");
+            int redUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "red");
             int blockposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "blockpos");
             int firstposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "firstpos");
             int secondposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "secondpos");
@@ -298,6 +360,8 @@ public class BlockPreviewRenderer {
             ARBShaderObjects.glUniform1fARB(percentileUniform, dissolve);
             //highlight
             ARBShaderObjects.glUniform1iARB(highlightUniform, highlight ? 1 : 0);
+            //red
+            ARBShaderObjects.glUniform1iARB(redUniform, red ? 1 : 0);
         };
     }
 }

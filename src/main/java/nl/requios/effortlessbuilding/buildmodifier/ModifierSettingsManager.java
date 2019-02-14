@@ -5,6 +5,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
@@ -161,6 +162,20 @@ public class ModifierSettingsManager {
 
         public void setReachUpgrade(int reachUpgrade) {
             this.reachUpgrade = reachUpgrade;
+            //Set mirror radius to max
+            int reach = 10;
+            switch (reachUpgrade) {
+                case 0: reach = BuildConfig.reach.maxReachLevel0; break;
+                case 1: reach =  BuildConfig.reach.maxReachLevel1; break;
+                case 2: reach =  BuildConfig.reach.maxReachLevel2; break;
+                case 3: reach =  BuildConfig.reach.maxReachLevel3; break;
+            }
+
+            if (this.mirrorSettings != null)
+                this.mirrorSettings.radius = reach / 2;
+            if (this.radialMirrorSettings != null)
+                this.radialMirrorSettings.radius = reach / 2;
+
         }
     }
 

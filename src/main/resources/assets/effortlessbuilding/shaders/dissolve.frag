@@ -4,6 +4,7 @@ uniform int time; // Passed in, see ShaderHelper.java
 
 uniform float dissolve; // Passed in via Callback
 uniform int highlight;
+uniform int red;
 uniform vec3 blockpos;
 uniform vec3 firstpos;
 uniform vec3 secondpos;
@@ -87,10 +88,12 @@ void main() {
         color.rgb -= 0.05;
 
 
-    if(highlight == 1 && dissolve == 0.0) {
-        color.r += 0.0;
-        color.g += 0.1;
-        color.b -= 0.2;
+    if (highlight == 1 && dissolve == 0.0) {
+        color.rgb += vec3(0.0, 0.1, -0.2);
+    }
+
+    if (red == 1) {
+        color.rgb += vec3(0.4, -0.3, -0.5);
     }
 
     color.r = max(0, min(1, color.r));

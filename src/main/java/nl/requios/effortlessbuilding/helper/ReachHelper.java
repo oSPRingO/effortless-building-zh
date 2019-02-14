@@ -1,6 +1,7 @@
 package nl.requios.effortlessbuilding.helper;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.MathHelper;
 import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 
@@ -27,7 +28,12 @@ public class ReachHelper {
 
     public static int getMaxBlocksPlacedAtOnce(EntityPlayer player) {
         if (player.isCreative()) return 1000000;
-        return getMaxReach(player) / 2;
+        return getMaxReach(player) * 5;
+    }
+
+    public static int getMaxBlocksPerAxis(EntityPlayer player) {
+        if (player.isCreative()) return 2000;
+        return MathHelper.ceil(MathHelper.sqrt(getMaxReach(player)));
     }
 
     public static boolean canBreakFar(EntityPlayer player) {

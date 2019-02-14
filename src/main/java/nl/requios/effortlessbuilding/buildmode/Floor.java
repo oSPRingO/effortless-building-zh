@@ -28,7 +28,7 @@ public class Floor implements IBuildMode {
     }
 
     @Override
-    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec) {
+    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
 
         Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
@@ -51,7 +51,7 @@ public class Floor implements IBuildMode {
         } else {
             //Second click, place wall
 
-            list = findCoordinates(player, blockPos);
+            list = findCoordinates(player, blockPos, skipRaytrace);
             rightClickTable.put(player.getUniqueID(), 0);
         }
 
@@ -59,7 +59,7 @@ public class Floor implements IBuildMode {
     }
 
     @Override
-    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos) {
+    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
         Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
         int rightClickNr = rightClickTable.get(player.getUniqueID());
@@ -98,10 +98,12 @@ public class Floor implements IBuildMode {
             if (selected == null) return list;
 
             //check if it doesnt go through blocks
-            RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
-            if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {
-                //return empty list
-                return list;
+            if (!skipRaytrace) {
+                RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
+                if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {
+                    //return empty list
+                    return list;
+                }
             }
 
             BlockPos secondPos = new BlockPos(selected);

@@ -15,12 +15,12 @@ public class Cube implements IBuildMode {
     }
 
     @Override
-    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec) {
+    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean skipRaytrace) {
         return new ArrayList<>();
     }
 
     @Override
-    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos) {
+    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos, boolean skipRaytrace) {
         return new ArrayList<>();
     }
 
