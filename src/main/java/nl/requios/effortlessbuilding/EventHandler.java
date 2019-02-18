@@ -55,11 +55,6 @@ public class EventHandler
     }
 
     @SubscribeEvent
-    public static void registerSounds(RegistryEvent.Register<SoundEvent> event) {
-        event.getRegistry().registerAll(EffortlessBuilding.SOUND_EVENTS);
-    }
-
-    @SubscribeEvent
     public static void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof EntityPlayer) {
             event.addCapability(new ResourceLocation(EffortlessBuilding.MODID, "BuildModifier"), new ModifierCapabilityManager.Provider());

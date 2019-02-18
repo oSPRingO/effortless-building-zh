@@ -31,10 +31,10 @@ public class BuildModes {
         Line ("Line", new Line()),
         Wall ("Wall", new Wall()),
         Floor ("Floor", new Floor()),
-        DiagonalLine ("Diagonal Line", new DiagonalLine()),
-        DiagonalWall ("Diagonal Wall", new DiagonalWall()),
-        SlopeFloor ("Slope Floor", new SlopeFloor()),
-        Cube ("Cube", new Cube());
+        DiagonalLine ("", new DiagonalLine()),
+        DiagonalWall ("", new DiagonalWall()),
+        SlopeFloor ("", new SlopeFloor()),
+        Cube ("", new Cube());
 
         public String name;
         public IBuildMode instance;

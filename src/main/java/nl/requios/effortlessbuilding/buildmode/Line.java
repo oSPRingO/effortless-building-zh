@@ -135,6 +135,7 @@ public class Line implements IBuildMode {
                              zDistSquared > 4 && zDistSquared < reach * reach;
 
             //select the one that is closest (from wall position to its line counterpart) and is valid
+            //TODO: if multiple are very close, choose closest to player
             Vec3d selected = null;
             double selectedDistToLine = 0;
 

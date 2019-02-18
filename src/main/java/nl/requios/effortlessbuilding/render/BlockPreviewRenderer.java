@@ -12,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.relauncher.Side;
@@ -83,14 +84,18 @@ public class BlockPreviewRenderer {
                 PlacedData placed = placedDataList.get(i);
                 if (placed.coordinates != null && !placed.coordinates.isEmpty()) {
 
-                    float dissolve = (ClientProxy.ticksInGame - placed.time) / (float) BuildConfig.visuals.dissolveTime;
+                    double totalTime = MathHelper.clampedLerp(30, 60, placed.firstPos.distanceSq(placed.secondPos) / 100.0) * BuildConfig.visuals.dissolveTimeMultiplier;
+                    float dissolve = (ClientProxy.ticksInGame - placed.time) / (float) totalTime;
                     renderBlockPreviews(placed.coordinates, placed.blockStates, placed.itemStacks, dissolve, placed.firstPos, placed.secondPos, false, placed.breaking);
                 }
             }
             RenderHandler.endBlockPreviews();
         }
         //Expire
-        placedDataList.removeIf(placed -> placed.time + BuildConfig.visuals.dissolveTime < ClientProxy.ticksInGame);
+        placedDataList.removeIf(placed -> {
+            double totalTime = MathHelper.clampedLerp(30, 60, placed.firstPos.distanceSq(placed.secondPos) / 100.0) * BuildConfig.visuals.dissolveTimeMultiplier;
+            return placed.time + totalTime < ClientProxy.ticksInGame;
+        });
 
         //Render block previews
         RayTraceResult lookingAt = ClientProxy.getLookingAt(player);
@@ -294,7 +299,7 @@ public class BlockPreviewRenderer {
 
             //Save current coordinates, blockstates and itemstacks
             if (!previousCoordinates.isEmpty() && previousBlockStates.size() == previousCoordinates.size() &&
-                previousCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
+                previousCoordinates.size() > 1 && previousCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
 
                 placedDataList.add(new PlacedData(ClientProxy.ticksInGame, previousCoordinates, previousBlockStates,
                         previousItemStacks, previousFirstPos, previousSecondPos, false));
@@ -313,7 +318,7 @@ public class BlockPreviewRenderer {
 
             //Save current coordinates, blockstates and itemstacks
             if (!previousCoordinates.isEmpty() && previousBlockStates.size() == previousCoordinates.size() &&
-                previousCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
+                previousCoordinates.size() > 1 && previousCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
 
                 placedDataList.add(new PlacedData(ClientProxy.ticksInGame, previousCoordinates, previousBlockStates,
                         previousItemStacks, previousFirstPos, previousSecondPos, true));

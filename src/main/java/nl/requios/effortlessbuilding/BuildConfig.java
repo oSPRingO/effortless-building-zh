@@ -58,10 +58,14 @@ public class BuildConfig {
         @Comment({"Show a block preview if you have a block in hand on build mode Normal"})
         public boolean alwaysShowBlockPreview = false;
 
-        @Comment({"How long the dissolve effect takes when placing blocks, in ticks."})
-        public int dissolveTime = 40;
+        @Comment({"How long the dissolve effect takes when placing blocks.",
+                 "Default between 30 and 60 ticks, you can multiply that here.",
+                 "Recommended values:",
+                 "Snappy: 0.7",
+                 "Relaxing: 1.5"})
+        public double dissolveTimeMultiplier = 1.0;
 
-        @Comment({"Switch to using the simple performance shader when placing more than so many blocks."})
+        @Comment({"Switch to using the simple performance shader when placing more than this many blocks."})
         public int shaderTreshold = 1500;
 
         @Comment({"Use fancy shaders while placing blocks"})

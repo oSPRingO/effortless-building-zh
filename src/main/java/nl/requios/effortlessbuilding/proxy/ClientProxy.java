@@ -73,14 +73,14 @@ public class ClientProxy implements IProxy {
     @Override
     public void init(FMLInitializationEvent event) {
         // register key bindings
-        keyBindings = new KeyBinding[5];
+        keyBindings = new KeyBinding[4];
 
         // instantiate the key bindings
         keyBindings[0] = new KeyBinding("key.effortlessbuilding.hud.desc", Keyboard.KEY_ADD, "key.effortlessbuilding.category");
         keyBindings[1] = new KeyBinding("key.effortlessbuilding.replace.desc", Keyboard.KEY_SUBTRACT, "key.effortlessbuilding.category");
-        keyBindings[2] = new KeyBinding("key.effortlessbuilding.creative.desc", Keyboard.KEY_F4, "key.effortlessbuilding.category");
+        keyBindings[2] = new KeyBinding("key.effortlessbuilding.creative.desc", Keyboard.KEY_NONE, "key.effortlessbuilding.category");
         keyBindings[3] = new KeyBinding("key.effortlessbuilding.mode.desc", Keyboard.KEY_LMENU, "key.effortlessbuilding.category");
-        keyBindings[4] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
+//        keyBindings[4] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {
@@ -221,7 +221,7 @@ public class ClientProxy implements IProxy {
         if (keyBindings[0].isPressed()) {
             //Disabled if max reach is 0, might be set in the config that way.
             if (ReachHelper.getMaxReach(player) == 0) {
-                EffortlessBuilding.log(player, "Effortless Building is disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
+                EffortlessBuilding.log(player, "Build modifiers are disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
             } else {
                 if (Minecraft.getMinecraft().currentScreen == null) {
                     Minecraft.getMinecraft().displayGuiScreen(new ModifierSettingsGui());
@@ -249,13 +249,11 @@ public class ClientProxy implements IProxy {
             }
         }
 
-        if (keyBindings[4].isPressed()) {
-            //TODO remove
-            ShaderHandler.init();
-            EffortlessBuilding.log(player, "Reloaded shaders");
-            //player.playSound(SoundEvents.UI_BUTTON_CLICK, 1f, 1f);
-            //player.playSound(EffortlessBuilding.SOUND_BUILD_CLICK, 1f, 1f);
-        }
+//        if (keyBindings[4].isPressed()) {
+//            //TODO remove
+//            ShaderHandler.init();
+//            EffortlessBuilding.log(player, "Reloaded shaders");
+//        }
 
     }
 

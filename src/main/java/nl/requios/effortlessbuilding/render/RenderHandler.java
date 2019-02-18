@@ -33,6 +33,7 @@ import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
+import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
@@ -69,7 +70,8 @@ public class RenderHandler implements IWorldEventListener {
     @SubscribeEvent
     //Display Radial Menu
     public static void onRenderGameOverlay(final RenderGameOverlayEvent.Post event ) {
-        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        Minecraft mc = Minecraft.getMinecraft();
+        EntityPlayerSP player = mc.player;
 
         //check if chisel and bits tool in hand (and has menu)
         final boolean hasChiselInHand = CompatHelper.chiselsAndBitsProxy.isHoldingChiselTool(EnumHand.MAIN_HAND);
@@ -79,8 +81,12 @@ public class RenderHandler implements IWorldEventListener {
             final boolean wasVisible = RadialMenu.instance.isVisible();
 
             if (ClientProxy.keyBindings[3].isKeyDown()) {
-                RadialMenu.instance.actionUsed = false;
-                RadialMenu.instance.raiseVisibility();
+                if (ReachHelper.getMaxReach(player) > 0) {
+                    RadialMenu.instance.actionUsed = false;
+                    RadialMenu.instance.raiseVisibility();
+                } else if (ClientProxy.keyBindings[3].isPressed()) {
+                    EffortlessBuilding.log(player, "Build modes are disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
+                }
             } else {
                 if ( !RadialMenu.instance.actionUsed ) {
                     ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
@@ -109,21 +115,21 @@ public class RenderHandler implements IWorldEventListener {
                 RadialMenu.instance.configure(res.getScaledWidth(), res.getScaledHeight());
 
                 if (!wasVisible) {
-                    RadialMenu.instance.mc.inGameHasFocus = false;
-                    RadialMenu.instance.mc.mouseHelper.ungrabMouseCursor();
+                    mc.inGameHasFocus = false;
+                    mc.mouseHelper.ungrabMouseCursor();
                 }
 
-                if (RadialMenu.instance.mc.inGameHasFocus) {
+                if (mc.inGameHasFocus) {
                     KeyBinding.unPressAllKeys();
                 }
 
-                final int k1 = Mouse.getX() * res.getScaledWidth() / RadialMenu.instance.mc.displayWidth;
-                final int l1 = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / RadialMenu.instance.mc.displayHeight - 1;
+                final int k1 = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
+                final int l1 = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
 
                 net.minecraftforge.client.ForgeHooksClient.drawScreen(RadialMenu.instance, k1, l1, event.getPartialTicks());
             } else {
                 if (wasVisible) {
-                    RadialMenu.instance.mc.setIngameFocus();
+                    mc.setIngameFocus();
                 }
             }
         }

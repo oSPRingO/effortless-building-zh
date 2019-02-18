@@ -39,7 +39,7 @@ public class EffortlessBuilding
 {
     public static final String MODID = "effortlessbuilding";
     public static final String NAME = "Effortless Building";
-    public static final String VERSION = "1.1a";
+    public static final String VERSION = "1.12.2-2.0";
 
     @Mod.Instance(EffortlessBuilding.MODID)
     public static EffortlessBuilding instance;
@@ -59,8 +59,6 @@ public class EffortlessBuilding
     public static final ItemReachUpgrade2 ITEM_REACH_UPGRADE_2 = new ItemReachUpgrade2();
     public static final ItemReachUpgrade3 ITEM_REACH_UPGRADE_3 = new ItemReachUpgrade3();
 
-    public static final SoundEvent SOUND_BUILD_CLICK = createSoundEvent("build_click");
-
     public static final Block[] BLOCKS = {
     };
 
@@ -69,10 +67,6 @@ public class EffortlessBuilding
             ITEM_REACH_UPGRADE_1,
             ITEM_REACH_UPGRADE_2,
             ITEM_REACH_UPGRADE_3
-    };
-
-    public static final SoundEvent[] SOUND_EVENTS = {
-            SOUND_BUILD_CLICK
     };
 
     public static final int RANDOMIZER_BAG_GUI = 0;
@@ -140,10 +134,5 @@ public class EffortlessBuilding
 
     public static void log(EntityPlayer player, String msg, boolean actionBar){
         player.sendStatusMessage(new TextComponentString(msg), actionBar);
-    }
-
-    private static SoundEvent createSoundEvent(String soundName) {
-        final ResourceLocation soundID = new ResourceLocation(EffortlessBuilding.MODID, soundName);
-        return new SoundEvent(soundID).setRegistryName(soundID);
     }
 }

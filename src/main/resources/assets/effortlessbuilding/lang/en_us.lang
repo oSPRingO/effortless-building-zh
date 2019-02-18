@@ -1,5 +1,5 @@
 key.effortlessbuilding.category=Effortless Building
-key.effortlessbuilding.hud.desc=Open Settings
+key.effortlessbuilding.hud.desc=Modifier Menu
 key.effortlessbuilding.replace.desc=Toggle QuickReplace
 key.effortlessbuilding.creative.desc=Toggle Survival/Creative Mode
 key.effortlessbuilding.mode.desc=Radial Menu
@@ -10,5 +10,3 @@ item.effortlessbuilding:reach_upgrade2.name=Reach Upgrade 2
 item.effortlessbuilding:reach_upgrade3.name=Reach Upgrade 3
 
 commands.reach.usage=/reach <level>
-
-effortlessbuilding.subtitle.build_click=Click

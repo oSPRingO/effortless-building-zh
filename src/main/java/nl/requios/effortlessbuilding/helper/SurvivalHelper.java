@@ -81,8 +81,8 @@ public class SurvivalHelper {
         //Check if can break
         if (canBreak(world, player, pos))
         {
-            player.addStat(StatList.getBlockStats(world.getBlockState(pos).getBlock()));
-            player.addExhaustion(0.005F);
+//            player.addStat(StatList.getBlockStats(world.getBlockState(pos).getBlock()));
+//            player.addExhaustion(0.005F);
 
             //Drop existing block
             dropBlock(world, player, pos);
