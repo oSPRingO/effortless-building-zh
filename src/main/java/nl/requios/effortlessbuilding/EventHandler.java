@@ -19,6 +19,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
@@ -77,8 +78,10 @@ public class EventHandler
 //    }
 
     @SubscribeEvent
-    //Only called serverside
+    //Only called serverside (except with lilypads...)
     public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
+        if (event.getWorld().isRemote) return;
+
         //Cancel event if necessary
         EntityPlayer player = event.getPlayer();
         BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
@@ -97,6 +100,8 @@ public class EventHandler
 
     @SubscribeEvent
     public static void onBlockBroken(BlockEvent.BreakEvent event) {
+        if (event.getWorld().isRemote) return;
+
         //Cancel event if necessary
         //If cant break far then dont cancel event ever
         BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(event.getPlayer()).getBuildMode();
@@ -105,7 +110,8 @@ public class EventHandler
         } else {
             //Normal mode, let vanilla handle block breaking
             //But modifiers and QuickReplace should still work
-            BuildModes.onBlockBroken(event.getPlayer(), event.getPos());
+            //Dont break the original block yourself, otherwise Tinkers Hammer and Veinminer won't work
+            BuildModes.onBlockBroken(event.getPlayer(), event.getPos(), false);
         }
     }
 

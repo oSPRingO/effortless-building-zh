@@ -125,11 +125,11 @@ public class BuildModes {
             !CompatHelper.chiselsAndBitsProxy.isHoldingChiselTool(EnumHand.MAIN_HAND)) {
 
             BlockPos startPos = message.isBlockHit() ? message.getBlockPos() : null;
-            onBlockBroken(player, startPos);
+            onBlockBroken(player, startPos, true);
         }
     }
 
-    public static void onBlockBroken(EntityPlayer player, BlockPos startPos) {
+    public static void onBlockBroken(EntityPlayer player, BlockPos startPos, boolean breakStartPos) {
 
         //Check if not in the middle of placing
         Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
@@ -156,7 +156,7 @@ public class BuildModes {
         }
 
         //Let buildmodifiers break blocks
-        BuildModifiers.onBlockBroken(player, coordinates);
+        BuildModifiers.onBlockBroken(player, coordinates, breakStartPos);
 
         //Only works when finishing a buildmode is equal to breaking some blocks
         //No intermediate blocks allowed

@@ -60,7 +60,7 @@ public class BuildModifiers {
 
     }
 
-    public static void onBlockBroken(EntityPlayer player, List<BlockPos> posList) {
+    public static void onBlockBroken(EntityPlayer player, List<BlockPos> posList, boolean breakStartPos) {
         World world = player.world;
 
         List<BlockPos> coordinates = findCoordinates(player, posList);
@@ -76,7 +76,8 @@ public class BuildModifiers {
         boolean onlyInstaBreaking = world.getBlockState(posList.get(0)).getBlockHardness(world, posList.get(0)) == 0f;
 
         //break all those blocks
-        for (BlockPos coordinate : coordinates) {
+        for (int i = breakStartPos ? 0 : 1; i < coordinates.size(); i++) {
+            BlockPos coordinate = coordinates.get(i);
             if (world.isBlockLoaded(coordinate, false)) {
                 if (!onlyInstaBreaking || world.getBlockState(coordinate).getBlockHardness(world, coordinate) == 0f) {
                     SurvivalHelper.breakBlock(world, player, coordinate);
