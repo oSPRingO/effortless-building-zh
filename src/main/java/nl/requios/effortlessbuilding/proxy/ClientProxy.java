@@ -13,6 +13,7 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.IThreadListener;
@@ -52,6 +53,7 @@ import nl.requios.effortlessbuilding.render.ShaderHandler;
 import nl.requios.effortlessbuilding.network.*;
 import org.lwjgl.input.Keyboard;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 
 @Mod.EventBusSubscriber(Side.CLIENT)
@@ -59,6 +61,7 @@ public class ClientProxy implements IProxy {
     public static KeyBinding[] keyBindings;
     public static RayTraceResult previousLookAt;
     public static RayTraceResult currentLookAt;
+    private static int placeCooldown = 0;
     private static int breakCooldown = 0;
 
     public static int ticksInGame = 0;
@@ -143,63 +146,111 @@ public class ClientProxy implements IProxy {
     }
 
     @SubscribeEvent
-    public static void onMouseInput(InputEvent.MouseInputEvent event) {
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+
+        if (event.phase == TickEvent.Phase.START) {
+            onMouseInput();
+
+            //Update previousLookAt
+            RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
+            //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
+            if (objectMouseOver == null) return;
+
+            if (currentLookAt == null) {
+                currentLookAt = objectMouseOver;
+                previousLookAt = objectMouseOver;
+                return;
+            }
+
+            if (objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK) {
+                if (currentLookAt.typeOfHit != RayTraceResult.Type.BLOCK) {
+                    currentLookAt = objectMouseOver;
+                    previousLookAt = objectMouseOver;
+                } else {
+                    if (currentLookAt.getBlockPos() != objectMouseOver.getBlockPos()) {
+                        previousLookAt = currentLookAt;
+                        currentLookAt = objectMouseOver;
+                    }
+                }
+            }
+        } else if (event.phase == TickEvent.Phase.END){
+            GuiScreen gui = Minecraft.getMinecraft().currentScreen;
+            if(gui == null || !gui.doesGuiPauseGame()) {
+                ticksInGame++;
+            }
+        }
+
+    }
+
+    private static void onMouseInput() {
         Minecraft mc = Minecraft.getMinecraft();
         EntityPlayerSP player = mc.player;
+        if (player == null) return;
+        BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
 
         if (Minecraft.getMinecraft().currentScreen != null ||
-            ModeSettingsManager.getModeSettings(player).getBuildMode() == BuildModes.BuildModeEnum.Normal ||
+            buildMode == BuildModes.BuildModeEnum.Normal ||
             RadialMenu.instance.isVisible()) {
             return;
         }
 
-        if (mc.gameSettings.keyBindUseItem.isPressed()) {
+        if (mc.gameSettings.keyBindUseItem.isKeyDown()) {
             //KeyBinding.setKeyBindState(mc.gameSettings.keyBindUseItem.getKeyCode(), false);
 
-            ItemStack currentItemStack = player.getHeldItem(EnumHand.MAIN_HAND);
-            if (CompatHelper.isItemBlockProxy(currentItemStack) && !player.isSneaking()) {
+            if (placeCooldown <= 0) {
+                placeCooldown = 4;
 
-                //find position in distance
-                RayTraceResult lookingAt = getLookingAt(player);
-                BuildModes.onBlockPlacedMessage(player, new BlockPlacedMessage(lookingAt));
-                EffortlessBuilding.packetHandler.sendToServer(new BlockPlacedMessage(lookingAt));
+                ItemStack currentItemStack = player.getHeldItem(EnumHand.MAIN_HAND);
+                if (currentItemStack.getItem() instanceof ItemBlock ||
+                    (CompatHelper.isItemBlockProxy(currentItemStack) && !player.isSneaking())) {
 
-                //play sound if further than normal
-                if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK &&
-                    (lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
+                    //find position in distance
+                    RayTraceResult lookingAt = getLookingAt(player);
+                    BuildModes.onBlockPlacedMessage(player, lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt));
+                    EffortlessBuilding.packetHandler.sendToServer(lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt));
 
-                    BlockPos blockPos = lookingAt.getBlockPos();
-                    IBlockState state = player.world.getBlockState(blockPos);
-                    SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
-                    player.world.playSound(player, blockPos, soundtype.getPlaceSound(), SoundCategory.BLOCKS,
-                            (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
-                    player.swingArm(EnumHand.MAIN_HAND);
+                    //play sound if further than normal
+                    if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK &&
+                        (lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
+
+                        IBlockState state = ((ItemBlock) currentItemStack.getItem()).getBlock().getDefaultState();
+                        BlockPos blockPos = lookingAt.getBlockPos();
+                        SoundType soundType = state.getBlock().getSoundType(state, player.world, blockPos, player);
+                        player.world.playSound(player, player.getPosition(), soundType.getPlaceSound(), SoundCategory.BLOCKS,
+                                0.4f, soundType.getPitch() * 1f);
+                        player.swingArm(EnumHand.MAIN_HAND);
+                    }
                 }
+            } else if (buildMode == BuildModes.BuildModeEnum.NormalPlus) {
+                placeCooldown--;
             }
+        } else {
+            placeCooldown = 0;
         }
 
         if (mc.gameSettings.keyBindAttack.isKeyDown()) {
-            //KeyBinding.setKeyBindState(mc.gameSettings.keyBindAttack.getKeyCode(), false);
 
             //Break block in distance in creative (or survival if enabled in config)
             if (ReachHelper.canBreakFar(player)) {
                 if (breakCooldown <= 0) {
-                    breakCooldown = 6;
+                    breakCooldown = 4;
                     RayTraceResult lookingAt = getLookingAt(player);
 
-                    BuildModes.onBlockBrokenMessage(player, new BlockBrokenMessage(lookingAt));
-                    EffortlessBuilding.packetHandler.sendToServer(new BlockBrokenMessage(lookingAt));
+                    BuildModes.onBlockBrokenMessage(player, lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
+                    EffortlessBuilding.packetHandler.sendToServer(lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
 
-                    //play sound
-                    if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
+                    //play sound if further than normal
+                    if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK &&
+                        (lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
+
                         BlockPos blockPos = lookingAt.getBlockPos();
                         IBlockState state = player.world.getBlockState(blockPos);
                         SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
-                        player.world.playSound(player, blockPos, soundtype.getBreakSound(), SoundCategory.BLOCKS,
-                                (soundtype.getVolume() + 1.0F) / 2.0F, soundtype.getPitch() * 0.8F);
+                        player.world.playSound(player, player.getPosition(), soundtype.getBreakSound(), SoundCategory.BLOCKS,
+                                0.4f, soundtype.getPitch() * 1f);
                         player.swingArm(EnumHand.MAIN_HAND);
                     }
-                } else {
+                } else if (buildMode == BuildModes.BuildModeEnum.NormalPlus) {
                     breakCooldown--;
                 }
             }
@@ -209,7 +260,6 @@ public class ClientProxy implements IProxy {
         } else {
             breakCooldown = 0;
         }
-        event.setResult(Event.Result.ALLOW);
     }
 
     @SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
@@ -258,39 +308,6 @@ public class ClientProxy implements IProxy {
     }
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) {
-            RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
-            //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
-            if (objectMouseOver == null) return;
-
-            if (currentLookAt == null) {
-                currentLookAt = objectMouseOver;
-                previousLookAt = objectMouseOver;
-                return;
-            }
-
-            if (objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK) {
-                if (currentLookAt.typeOfHit != RayTraceResult.Type.BLOCK) {
-                    currentLookAt = objectMouseOver;
-                    previousLookAt = objectMouseOver;
-                } else {
-                    if (currentLookAt.getBlockPos() != objectMouseOver.getBlockPos()) {
-                        previousLookAt = currentLookAt;
-                        currentLookAt = objectMouseOver;
-                    }
-                }
-            }
-        } else if (event.phase == TickEvent.Phase.END){
-            GuiScreen gui = Minecraft.getMinecraft().currentScreen;
-            if(gui == null || !gui.doesGuiPauseGame()) {
-                ticksInGame++;
-            }
-        }
-
-    }
-
-    @SubscribeEvent
     public static void onGuiOpen(GuiOpenEvent event) {
         EntityPlayer player = Minecraft.getMinecraft().player;
         if (player != null) {
@@ -298,6 +315,7 @@ public class ClientProxy implements IProxy {
         }
     }
 
+    @Nullable
     public static RayTraceResult getLookingAt(EntityPlayer player) {
 //        World world = player.world;
 

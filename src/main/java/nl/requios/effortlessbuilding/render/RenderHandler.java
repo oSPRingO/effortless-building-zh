@@ -219,6 +219,15 @@ public class RenderHandler implements IWorldEventListener {
         RenderGlobal.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
     }
 
+    //Renders outline with given bounding box
+    protected static void renderBlockOutline(BlockPos pos, AxisAlignedBB boundingBox, Vec3d color) {
+        GL11.glLineWidth(2);
+
+        AxisAlignedBB aabb = boundingBox.offset(pos).grow(0.0020000000949949026);
+
+        RenderGlobal.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
+    }
+
 
 
     //IWORLDEVENTLISTENER IMPLEMENTATION

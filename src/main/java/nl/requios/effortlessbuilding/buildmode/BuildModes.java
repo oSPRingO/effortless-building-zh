@@ -1,5 +1,6 @@
 package nl.requios.effortlessbuilding.buildmode;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -10,6 +11,7 @@ import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.*;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
+import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 
@@ -61,7 +63,6 @@ public class BuildModes {
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
         BuildModeEnum buildMode = modeSettings.getBuildMode();
-        int maxReach = ReachHelper.getMaxReach(player);
 
         BlockPos startPos = null;
 
@@ -70,7 +71,8 @@ public class BuildModes {
 
             //Offset in direction of sidehit if not quickreplace and not replaceable
             boolean replaceable = player.world.getBlockState(startPos).getBlock().isReplaceable(player.world, startPos);
-            if (!modifierSettings.doQuickReplace() && !replaceable) {
+            boolean becomesDoubleSlab = SurvivalHelper.doesBecomeDoubleSlab(player, startPos, message.getSideHit());
+            if (!modifierSettings.doQuickReplace() && !replaceable && !becomesDoubleSlab) {
                 startPos = startPos.offset(message.getSideHit());
             }
 
@@ -80,6 +82,7 @@ public class BuildModes {
             }
 
             //Check if player reach does not exceed startpos
+            int maxReach = ReachHelper.getMaxReach(player);
             if (player.getPosition().distanceSq(startPos) > maxReach * maxReach) {
                 EffortlessBuilding.log(player, "Placement exceeds your reach.");
                 return;
@@ -117,19 +120,16 @@ public class BuildModes {
 
     //Use a network message to break blocks in the distance using clientside mouse input
     public static void onBlockBrokenMessage(EntityPlayer player, BlockBrokenMessage message) {
-        BlockPos blockPos = message.getBlockPos();
 
-        if (ReachHelper.canBreakFar(player) && message.isBlockHit() &&
+        if (ReachHelper.canBreakFar(player) &&
             !CompatHelper.chiselsAndBitsProxy.isHoldingChiselTool(EnumHand.MAIN_HAND)) {
 
-            BlockEvent.BreakEvent event = new BlockEvent.BreakEvent(player.world, blockPos, player.world.getBlockState(blockPos), player);
-            onBlockBroken(event);
+            BlockPos startPos = message.isBlockHit() ? message.getBlockPos() : null;
+            onBlockBroken(player, startPos);
         }
     }
 
-    public static void onBlockBroken(BlockEvent.BreakEvent event) {
-        EntityPlayer player = event.getPlayer();
-        BlockPos pos = event.getPos();
+    public static void onBlockBroken(EntityPlayer player, BlockPos startPos) {
 
         //Check if not in the middle of placing
         Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
@@ -139,18 +139,28 @@ public class BuildModes {
             return;
         }
 
-        //get coordinates
+        //If first click
+        if (currentlyBreaking.get(player) == null) {
+            //If startpos is null, dont do anything
+            if (startPos == null) return;
+        }
+
+        //Get coordinates
         ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
         BuildModeEnum buildMode = modeSettings.getBuildMode();
-        List<BlockPos> coordinates = buildMode.instance.onRightClick(player, pos, EnumFacing.UP, Vec3d.ZERO, true);
+        List<BlockPos> coordinates = buildMode.instance.onRightClick(player, startPos, EnumFacing.UP, Vec3d.ZERO, true);
 
         if (coordinates.isEmpty()) {
             currentlyBreaking.put(player, true);
             return;
         }
 
-        //let buildmodifiers break blocks
+        //Let buildmodifiers break blocks
         BuildModifiers.onBlockBroken(player, coordinates);
+
+        //Only works when finishing a buildmode is equal to breaking some blocks
+        //No intermediate blocks allowed
+        currentlyBreaking.remove(player);
     }
 
     public static List<BlockPos> findCoordinates(EntityPlayer player, BlockPos startPos, boolean skipRaytrace) {

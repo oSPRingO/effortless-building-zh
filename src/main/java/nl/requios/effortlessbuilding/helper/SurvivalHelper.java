@@ -2,8 +2,10 @@ package nl.requios.effortlessbuilding.helper;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
+import net.minecraft.block.BlockSlab;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
+import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
@@ -12,15 +14,20 @@ import net.minecraft.init.Blocks;
 import net.minecraft.init.Enchantments;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemSlab;
 import net.minecraft.item.ItemStack;
 import net.minecraft.stats.StatList;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.items.ItemHandlerHelper;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
@@ -43,13 +50,15 @@ public class SurvivalHelper {
 
         //Randomizer bag, other proxy item synergy
         //Preliminary compatibility code for other items that hold blocks
-        if(CompatHelper.isItemBlockProxy(itemstack))
+        if (CompatHelper.isItemBlockProxy(itemstack))
             itemstack = CompatHelper.getItemBlockByState(itemstack, blockState);
 
-        if(!(itemstack.getItem() instanceof ItemBlock))
+        if (!(itemstack.getItem() instanceof ItemBlock))
             return false;
         Block block = ((ItemBlock) itemstack.getItem()).getBlock();
 
+
+        //More manual with ItemBlock#placeBlockAt
         if (canPlace(world, player, pos, blockState, itemstack, skipCollisionCheck, facing.getOpposite())) {
             //Drop existing block
             dropBlock(world, player, pos);
@@ -71,6 +80,30 @@ public class SurvivalHelper {
             return true;
         }
         return false;
+
+        //Using ItemBlock#onItemUse
+//        EnumActionResult result;
+//        PlayerInteractEvent.RightClickBlock event = ForgeHooks.onRightClickBlock(player, EnumHand.MAIN_HAND, pos, facing, net.minecraftforge.common.ForgeHooks.rayTraceEyeHitVec(player, ReachHelper.getPlacementReach(player)));
+//        if (player.isCreative())
+//        {
+//            int i = itemstack.getMetadata();
+//            int j = itemstack.getCount();
+//            if (event.getUseItem() != net.minecraftforge.fml.common.eventhandler.Event.Result.DENY) {
+//                EnumActionResult enumactionresult = itemstack.getItem().onItemUse(player, world, pos, EnumHand.MAIN_HAND, facing, (float) hitVec.x, (float) hitVec.y, (float) hitVec.z);
+//                itemstack.setItemDamage(i);
+//                itemstack.setCount(j);
+//                return enumactionresult == EnumActionResult.SUCCESS;
+//            } else return false;
+//        }
+//        else
+//        {
+//            ItemStack copyForUse = itemstack.copy();
+//            if (event.getUseItem() != net.minecraftforge.fml.common.eventhandler.Event.Result.DENY)
+//                result = itemstack.getItem().onItemUse(player, world, pos, EnumHand.MAIN_HAND, facing, (float) hitVec.x, (float) hitVec.y, (float) hitVec.z);
+//            if (itemstack.isEmpty()) net.minecraftforge.event.ForgeEventFactory.onPlayerDestroyItem(player, copyForUse, EnumHand.MAIN_HAND);
+//            return false;
+//        }
+
     }
 
     //Used for all breaking of blocks in this mod.
@@ -202,6 +235,11 @@ public class SurvivalHelper {
             return false;
         }
 
+        //Check if double slab
+        if (placer != null && doesBecomeDoubleSlab(((EntityPlayer) placer), pos, sidePlacedOn)) {
+            return true;
+        }
+
         //Check if same block
         //Necessary otherwise extra items will be dropped
         if (iblockstate1 == newBlockState) {
@@ -265,5 +303,30 @@ public class SurvivalHelper {
         }
 
         return toolLevel >= block.getHarvestLevel(state);
+    }
+
+    public static boolean doesBecomeDoubleSlab(EntityPlayer player, BlockPos pos, EnumFacing facing) {
+        IBlockState placedBlockState = player.world.getBlockState(pos);
+
+        ItemStack itemstack = player.getHeldItem(EnumHand.MAIN_HAND);
+        if (CompatHelper.isItemBlockProxy(itemstack))
+            itemstack = CompatHelper.getItemBlockFromStack(itemstack);
+
+        if (itemstack.isEmpty() || !(itemstack.getItem() instanceof ItemSlab)) return false;
+        BlockSlab heldSlab = (BlockSlab) ((ItemSlab) itemstack.getItem()).getBlock();
+
+        if (placedBlockState.getBlock() == heldSlab) {
+            IProperty<?> variantProperty = heldSlab.getVariantProperty();
+            Comparable<?> placedVariant = placedBlockState.getValue(variantProperty);
+            BlockSlab.EnumBlockHalf placedHalf = placedBlockState.getValue(BlockSlab.HALF);
+
+            Comparable<?> heldVariant = heldSlab.getTypeForItem(itemstack);
+
+            if ((facing == EnumFacing.UP && placedHalf == BlockSlab.EnumBlockHalf.BOTTOM || facing == EnumFacing.DOWN && placedHalf == BlockSlab.EnumBlockHalf.TOP) && placedVariant == heldVariant)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

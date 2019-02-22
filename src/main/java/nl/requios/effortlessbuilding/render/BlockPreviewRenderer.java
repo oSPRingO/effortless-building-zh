@@ -1,5 +1,6 @@
 package nl.requios.effortlessbuilding.render;
 
+import net.minecraft.block.SoundType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -11,10 +12,9 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.*;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import nl.requios.effortlessbuilding.BuildConfig;
@@ -114,7 +114,8 @@ public class BlockPreviewRenderer {
 
             //Check if tool (or none) in hand
             boolean replaceable = player.world.getBlockState(startPos).getBlock().isReplaceable(player.world, startPos);
-            if (!modifierSettings.doQuickReplace() && !toolInHand && !replaceable) {
+            boolean becomesDoubleSlab = SurvivalHelper.doesBecomeDoubleSlab(player, startPos, lookingAt.sideHit);
+            if (!modifierSettings.doQuickReplace() && !toolInHand && !replaceable && !becomesDoubleSlab) {
                 startPos = startPos.offset(lookingAt.sideHit);
             }
 
@@ -196,9 +197,11 @@ public class BlockPreviewRenderer {
                     //and play sound (max once every tick)
                     if (startCoordinates.size() > 1 && blockStates.size() > 1 && soundTime < ClientProxy.ticksInGame - 0) {
                         soundTime = ClientProxy.ticksInGame;
-                        //player.playSound(EffortlessBuilding.SOUND_BUILD_CLICK, 0.2f, 1f);
-                        player.playSound(blockStates.get(0).getBlock().getSoundType(blockStates.get(0), player.world,
-                                newCoordinates.get(0), player).getPlaceSound(), 0.3f, 1f);
+
+                        SoundType soundType = blockStates.get(0).getBlock().getSoundType(blockStates.get(0), player.world,
+                                newCoordinates.get(0), player);
+                        player.world.playSound(player, player.getPosition(), breaking ? soundType.getBreakSound() : soundType.getPlaceSound(),
+                                SoundCategory.BLOCKS, 0.3f, 0.8f);
                     }
                 }
 
@@ -220,7 +223,8 @@ public class BlockPreviewRenderer {
                         if (breaking) color = new Vec3d(1f, 0f, 0f);
 
                         for (int i = newCoordinates.size() - 1; i >= 0; i--) {
-                            RenderHandler.renderBlockOutline(newCoordinates.get(i), color);
+                            AxisAlignedBB boundingBox = blockStates.get(i).getBoundingBox(player.world, newCoordinates.get(i));
+                            RenderHandler.renderBlockOutline(newCoordinates.get(i), boundingBox, color);
                         }
 
                         RenderHandler.endLines();
@@ -244,7 +248,8 @@ public class BlockPreviewRenderer {
                     IBlockState blockState = player.world.getBlockState(coordinate);
                     if (!blockState.getBlock().isAir(blockState, player.world, coordinate)) {
                         if (SurvivalHelper.canBreak(player.world, player, coordinate) || i == 0) {
-                            RenderHandler.renderBlockOutline(coordinate, new Vec3d(0f, 0f, 0f));
+                            AxisAlignedBB boundingBox = blockState.getBoundingBox(player.world, coordinate);
+                            RenderHandler.renderBlockOutline(coordinate, boundingBox, new Vec3d(0f, 0f, 0f));
                         }
                     }
                 }
@@ -278,7 +283,7 @@ public class BlockPreviewRenderer {
 
             //Check if can place
             //If check is turned off, check if blockstate is the same (for dissolve effect)
-            if ((!checkCanPlace /*&& player.world.getBlockState(blockPos) == blockState*/) ||
+            if ((!checkCanPlace /*&& player.world.getBlockState(blockPos) == blockState*/) || //TODO enable
                 SurvivalHelper.canPlace(player.world, player, blockPos, blockState, itemstack, modifierSettings.doQuickReplace(), EnumFacing.UP)) {
 
                 ShaderHandler.useShader(ShaderHandler.dissolve, generateShaderCallback(dissolve,

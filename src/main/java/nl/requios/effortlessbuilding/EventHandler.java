@@ -88,7 +88,7 @@ public class EventHandler
             event.setCanceled(true);
         } else {
             //Normal mode, let vanilla handle block placing
-            //But modifiers should still work
+            //But modifiers and QuickReplace should still work
 
             //Send message to client, which sends message back with raytrace info
             EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(), (EntityPlayerMP) player);
@@ -104,8 +104,8 @@ public class EventHandler
             event.setCanceled(true);
         } else {
             //Normal mode, let vanilla handle block breaking
-            //But modifiers should still work
-            BuildModes.onBlockBroken(event);
+            //But modifiers and QuickReplace should still work
+            BuildModes.onBlockBroken(event.getPlayer(), event.getPos());
         }
     }
 

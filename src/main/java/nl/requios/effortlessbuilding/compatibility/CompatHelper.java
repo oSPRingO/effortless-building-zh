@@ -35,11 +35,11 @@ public class CompatHelper {
     // /dank/null, or plain old blocks.
     public static boolean isItemBlockProxy(ItemStack stack) {
         Item item = stack.getItem();
-        if(item instanceof ItemBlock)
+        if (item instanceof ItemBlock)
             return true;
-        if((item instanceof ItemRandomizerBag))
+        if ((item instanceof ItemRandomizerBag))
             return true;
-        if(item == dankNullItem)
+        if (item == dankNullItem)
             return true;
         return false;
     }
@@ -48,14 +48,20 @@ public class CompatHelper {
     // pointed to by nbt integer selectedIndex.
     public static ItemStack getItemBlockFromStack(ItemStack stack) {
         Item item = stack.getItem();
-        if(item instanceof ItemRandomizerBag) {
+
+        if (item instanceof ItemBlock)
+            return stack;
+
+        if (item instanceof ItemRandomizerBag)
             return ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(stack));
-        } else if(item == dankNullItem) {
+
+        if(item == dankNullItem) {
             int index = 0;
             if(stack.hasTagCompound() && stack.getTagCompound().hasKey("selectedIndex"))
                 index = stack.getTagCompound().getInteger("selectedIndex");
             return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).getStackInSlot(index);
         }
+
         return ItemStack.EMPTY;
     }
 
