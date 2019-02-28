@@ -122,6 +122,7 @@ public class Wall implements IBuildMode {
             if (selected == null) return list;
 
             //check if it doesnt go through blocks
+            //TODO collision within a 1 block radius to selected is fine
             if (!skipRaytrace) {
                 RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
                 if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {

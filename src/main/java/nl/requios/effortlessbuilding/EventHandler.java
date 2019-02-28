@@ -8,7 +8,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.config.Config;
@@ -19,7 +18,6 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
@@ -29,7 +27,6 @@ import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
-import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 import nl.requios.effortlessbuilding.network.RequestLookAtMessage;
 
 import java.util.List;
@@ -87,10 +84,10 @@ public class EventHandler
         BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
 
-        if (buildMode != BuildModes.BuildModeEnum.Normal || modifierSettings.doQuickReplace()) {
+        if (buildMode != BuildModes.BuildModeEnum.NORMAL || modifierSettings.doQuickReplace()) {
             event.setCanceled(true);
         } else {
-            //Normal mode, let vanilla handle block placing
+            //NORMAL mode, let vanilla handle block placing
             //But modifiers and QuickReplace should still work
 
             //Send message to client, which sends message back with raytrace info
@@ -105,10 +102,10 @@ public class EventHandler
         //Cancel event if necessary
         //If cant break far then dont cancel event ever
         BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(event.getPlayer()).getBuildMode();
-        if (buildMode != BuildModes.BuildModeEnum.Normal && ReachHelper.canBreakFar(event.getPlayer())) {
+        if (buildMode != BuildModes.BuildModeEnum.NORMAL && ReachHelper.canBreakFar(event.getPlayer())) {
             event.setCanceled(true);
         } else {
-            //Normal mode, let vanilla handle block breaking
+            //NORMAL mode, let vanilla handle block breaking
             //But modifiers and QuickReplace should still work
             //Dont break the original block yourself, otherwise Tinkers Hammer and Veinminer won't work
             BuildModes.onBlockBroken(event.getPlayer(), event.getPos(), false);

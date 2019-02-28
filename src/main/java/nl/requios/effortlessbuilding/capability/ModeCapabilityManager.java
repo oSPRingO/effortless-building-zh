@@ -3,8 +3,6 @@ package nl.requios.effortlessbuilding.capability;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
@@ -66,7 +64,7 @@ public class ModeCapabilityManager {
 
             //TODO add mode settings
 
-            ModeSettings modeSettings = new ModeSettings(BuildModes.BuildModeEnum.Normal);
+            ModeSettings modeSettings = new ModeSettings(BuildModes.BuildModeEnum.NORMAL);
             instance.setModeData(modeSettings);
         }
     }

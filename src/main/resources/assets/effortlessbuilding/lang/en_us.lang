@@ -9,4 +9,19 @@ item.effortlessbuilding:reach_upgrade1.name=Reach Upgrade 1
 item.effortlessbuilding:reach_upgrade2.name=Reach Upgrade 2
 item.effortlessbuilding:reach_upgrade3.name=Reach Upgrade 3
 
+effortlessbuilding.mode.normal=Normal
+effortlessbuilding.mode.normal_plus=Normal+
+effortlessbuilding.mode.line=Line
+effortlessbuilding.mode.wall=Wall
+effortlessbuilding.mode.floor=Floor
+effortlessbuilding.mode.diagonal_line=Diagonal Line (WIP)
+effortlessbuilding.mode.diagonal_wall=Diagonal Wall (WIP)
+effortlessbuilding.mode.slope_floor=Slope Floor (WIP)
+effortlessbuilding.mode.cube=Cube (WIP)
+
+effortlessbuilding.action.undo=Undo (WIP)
+effortlessbuilding.action.redo=Redo (WIP)
+effortlessbuilding.action.replace=Replace
+effortlessbuilding.action.open_modifier_settings=Open Modifier Settings
+
 commands.reach.usage=/reach <level>

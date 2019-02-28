@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -28,6 +29,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmode.ModeOptions;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
@@ -35,6 +37,7 @@ import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
+import nl.requios.effortlessbuilding.network.ModeActionMessage;
 import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.lwjgl.input.Mouse;
@@ -88,19 +91,24 @@ public class RenderHandler implements IWorldEventListener {
                     EffortlessBuilding.log(player, "Build modes are disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
                 }
             } else {
-                if ( !RadialMenu.instance.actionUsed ) {
+                if (!RadialMenu.instance.actionUsed) {
                     ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
 
-                    if ( RadialMenu.instance.switchTo != null ) {
+                    if (RadialMenu.instance.switchTo != null) {
                         playRadialMenuSound();
                         modeSettings.setBuildMode(RadialMenu.instance.switchTo);
                         ModeSettingsManager.setModeSettings(player, modeSettings);
                         EffortlessBuilding.packetHandler.sendToServer(new ModeSettingsMessage(modeSettings));
 
-                        EffortlessBuilding.log(player, modeSettings.getBuildMode().name, true);
+                        EffortlessBuilding.log(player, I18n.format(modeSettings.getBuildMode().name), true);
                     }
 
-                    //TODO change buildmode settings
+                    //Perform button action
+                    ModeOptions.ActionEnum action = RadialMenu.instance.doAction;
+                    if (action != null) {
+                        ModeOptions.performAction(player, action);
+                        EffortlessBuilding.packetHandler.sendToServer(new ModeActionMessage(action));
+                    }
 
                     playRadialMenuSound();
                 }
@@ -123,12 +131,12 @@ public class RenderHandler implements IWorldEventListener {
                     KeyBinding.unPressAllKeys();
                 }
 
-                final int k1 = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
-                final int l1 = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
+                final int mouseX = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
+                final int mouseY = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
 
-                net.minecraftforge.client.ForgeHooksClient.drawScreen(RadialMenu.instance, k1, l1, event.getPartialTicks());
+                net.minecraftforge.client.ForgeHooksClient.drawScreen(RadialMenu.instance, mouseX, mouseY, event.getPartialTicks());
             } else {
-                if (wasVisible) {
+                if (wasVisible && RadialMenu.instance.doAction != ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS) {
                     mc.setIngameFocus();
                 }
             }

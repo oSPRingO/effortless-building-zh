@@ -13,7 +13,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.*;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -99,7 +98,7 @@ public class BlockPreviewRenderer {
 
         //Render block previews
         RayTraceResult lookingAt = ClientProxy.getLookingAt(player);
-        if (modeSettings.getBuildMode() == BuildModes.BuildModeEnum.Normal) lookingAt = Minecraft.getMinecraft().objectMouseOver;
+        if (modeSettings.getBuildMode() == BuildModes.BuildModeEnum.NORMAL) lookingAt = Minecraft.getMinecraft().objectMouseOver;
 
         ItemStack mainhand = player.getHeldItemMainhand();
         boolean toolInHand = !(!mainhand.isEmpty() && CompatHelper.isItemBlockProxy(mainhand));
@@ -260,9 +259,9 @@ public class BlockPreviewRenderer {
 
     //Whether to draw any block previews or outlines
     public static boolean doRenderBlockPreviews(ModifierSettings modifierSettings, ModeSettings modeSettings, BlockPos startPos) {
-        return modeSettings.getBuildMode() != BuildModes.BuildModeEnum.Normal ||
-                (startPos != null && BuildModifiers.isEnabled(modifierSettings, startPos)) ||
-                BuildConfig.visuals.alwaysShowBlockPreview;
+        return modeSettings.getBuildMode() != BuildModes.BuildModeEnum.NORMAL ||
+               (startPos != null && BuildModifiers.isEnabled(modifierSettings, startPos)) ||
+               BuildConfig.visuals.alwaysShowBlockPreview;
     }
 
     protected static void renderBlockPreviews(List<BlockPos> coordinates, List<IBlockState> blockStates,

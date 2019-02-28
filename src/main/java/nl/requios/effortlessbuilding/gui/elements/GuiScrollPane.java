@@ -73,22 +73,24 @@ public class GuiScrollPane extends GuiListExtended {
             int insideLeft = this.left + this.width / 2 - this.getListWidth() / 2 + 2;
             int insideTop = this.top + 4 - (int)this.amountScrolled;
 
-            if (this.hasListHeader)
-            {
+            if (this.hasListHeader) {
                 this.drawListHeader(insideLeft, insideTop, tessellator);
             }
 
             //All entries
             this.drawSelectionBox(insideLeft, insideTop, mouseXIn, mouseYIn, partialTicks);
             GlStateManager.disableDepth();
+
             //Dirt overlays on top and bottom
 //            this.overlayBackground(0, this.top, 255, 255);
 //            this.overlayBackground(this.bottom, this.height, 255, 255);
+
             GlStateManager.enableBlend();
             GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
             GlStateManager.disableAlpha();
             GlStateManager.shadeModel(7425);
             GlStateManager.disableTexture2D();
+
 //            //top fade
 //            bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
 //            bufferbuilder.pos((double)this.left, (double)(this.top + 5), 0.0D).tex(0.0D, 1.0D).color(100, 100, 100, 0).endVertex();
@@ -96,6 +98,7 @@ public class GuiScrollPane extends GuiListExtended {
 //            bufferbuilder.pos((double)this.right, (double)this.top, 0.0D).tex(1.0D, 0.0D).color(100, 100, 100, 100).endVertex();
 //            bufferbuilder.pos((double)this.left, (double)this.top, 0.0D).tex(0.0D, 0.0D).color(100, 100, 100, 100).endVertex();
 //            tessellator.draw();
+
 //            //top line
 //            bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
 //            bufferbuilder.pos((double)this.left, (double)this.top, 0.0D).tex(0.0D, 1.0D).color(20, 20, 20, 255).endVertex();
@@ -103,6 +106,7 @@ public class GuiScrollPane extends GuiListExtended {
 //            bufferbuilder.pos((double)this.right, (double)(this.top - 1), 0.0D).tex(1.0D, 0.0D).color(20, 20, 20, 255).endVertex();
 //            bufferbuilder.pos((double)this.left, (double)(this.top - 1), 0.0D).tex(0.0D, 0.0D).color(20, 20, 20, 255).endVertex();
 //            tessellator.draw();
+
 //            //bottom fade
 //            bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
 //            bufferbuilder.pos((double)this.left, (double)this.bottom, 0.0D).tex(0.0D, 1.0D).color(10, 10, 10, 100).endVertex();
@@ -110,6 +114,7 @@ public class GuiScrollPane extends GuiListExtended {
 //            bufferbuilder.pos((double)this.right, (double)(this.bottom - 5), 0.0D).tex(1.0D, 0.0D).color(10, 10, 10, 0).endVertex();
 //            bufferbuilder.pos((double)this.left, (double)(this.bottom - 5), 0.0D).tex(0.0D, 0.0D).color(10, 10, 10, 0).endVertex();
 //            tessellator.draw();
+
 //            //bottom line
 //            bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
 //            bufferbuilder.pos((double)this.left, (double)(this.bottom + 1), 0.0D).tex(0.0D, 1.0D).color(20, 20, 20, 255).endVertex();
@@ -137,12 +142,14 @@ public class GuiScrollPane extends GuiListExtended {
                 bufferbuilder.pos((double)scrollBarRight, (double)this.top, 0.0D).tex(1.0D, 0.0D).color(0, 0, 0, 255).endVertex();
                 bufferbuilder.pos((double)scrollBarLeft, (double)this.top, 0.0D).tex(0.0D, 0.0D).color(0, 0, 0, 255).endVertex();
                 tessellator.draw();
+
                 bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
                 bufferbuilder.pos((double)scrollBarLeft, (double)(l1 + k1), 0.0D).tex(0.0D, 1.0D).color(128, 128, 128, 255).endVertex();
                 bufferbuilder.pos((double)scrollBarRight, (double)(l1 + k1), 0.0D).tex(1.0D, 1.0D).color(128, 128, 128, 255).endVertex();
                 bufferbuilder.pos((double)scrollBarRight, (double)l1, 0.0D).tex(1.0D, 0.0D).color(128, 128, 128, 255).endVertex();
                 bufferbuilder.pos((double)scrollBarLeft, (double)l1, 0.0D).tex(0.0D, 0.0D).color(128, 128, 128, 255).endVertex();
                 tessellator.draw();
+
                 bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
                 bufferbuilder.pos((double)scrollBarLeft, (double)(l1 + k1 - 1), 0.0D).tex(0.0D, 1.0D).color(192, 192, 192, 255).endVertex();
                 bufferbuilder.pos((double)(scrollBarRight - 1), (double)(l1 + k1 - 1), 0.0D).tex(1.0D, 1.0D).color(192, 192, 192, 255).endVertex();
@@ -184,8 +191,7 @@ public class GuiScrollPane extends GuiListExtended {
     public int getSlotIndexFromScreenCoords(int posX, int posY) {
         int left = this.left + (this.width - this.getListWidth()) / 2;
         int right = this.left + (this.width + this.getListWidth()) / 2;
-        int relativeMouseY = posY - this.top - this.headerPadding + (int)this.amountScrolled - 4; //click height in content dimensions
-        //int slotIndex = relativeMouseY / this.slotHeight;
+        int relativeMouseY = getRelativeMouseY(mouseY, 0);
 
         //Iterate over every entry until relativeMouseY falls within its height
         for (int i = 0; i < listEntries.size(); i++) {
@@ -201,24 +207,32 @@ public class GuiScrollPane extends GuiListExtended {
     @Override
     public boolean mouseClicked(int mouseX, int mouseY, int mouseEvent)
     {
-        if (this.isMouseYWithinSlotBounds(mouseY))
-        {
-            int i = this.getSlotIndexFromScreenCoords(mouseX, mouseY);
+        int selectedSlot = this.getSlotIndexFromScreenCoords(mouseX, mouseY);
+        int relativeX = getRelativeMouseX(mouseX);
 
-            if (i >= 0)
-            {
-                int j = this.left + this.width / 2 - this.getListWidth() / 2 + 2;
-                int k = this.top + 4 - this.getAmountScrolled() + getContentHeight(i) + this.headerPadding;
-                int relativeX = mouseX - j;
-                int relativeY = mouseY - k;
-
-                if (this.getListEntry(i).mousePressed(i, mouseX, mouseY, mouseEvent, relativeX, relativeY))
-                {
-                    this.setEnabled(false);
-                    return true;
-                }
-            }
+        //Always pass through mouseclicked, to be able to unfocus textfields
+        for (int i = 0; i < this.listEntries.size(); i++) {
+            int relativeY = getRelativeMouseY(mouseY, i);
+            this.getListEntry(i).mousePressed(selectedSlot, mouseX, mouseY, mouseEvent, relativeX, relativeY);
         }
+
+
+//        if (this.isMouseYWithinSlotBounds(mouseY))
+//        {
+//            int i = this.getSlotIndexFromScreenCoords(mouseX, mouseY);
+//
+//            if (i >= 0)
+//            {
+//                int relativeX = getRelativeMouseX(mouseX);
+//                int relativeY = getRelativeMouseY(mouseY, i);
+//
+//                if (this.getListEntry(i).mousePressed(i, mouseX, mouseY, mouseEvent, relativeX, relativeY))
+//                {
+//                    this.setEnabled(false);
+//                    return true;
+//                }
+//            }
+//        }
 
         return false;
     }
@@ -228,10 +242,8 @@ public class GuiScrollPane extends GuiListExtended {
     {
         for (int i = 0; i < this.getSize(); ++i)
         {
-            int j = this.left + this.width / 2 - this.getListWidth() / 2 + 2;
-            int k = this.top + 4 - this.getAmountScrolled() + getContentHeight(i) + this.headerPadding;
-            int relativeX = x - j;
-            int relativeY = y - k;
+            int relativeX = getRelativeMouseX(mouseX);
+            int relativeY = getRelativeMouseY(mouseY, i);
             this.getListEntry(i).mouseReleased(i, x, y, mouseEvent, relativeX, relativeY);
         }
 
@@ -246,9 +258,8 @@ public class GuiScrollPane extends GuiListExtended {
                 this.mouseY <= this.bottom) {
                 int i = this.left + (this.width - this.getListWidth()) / 2;
                 int j = this.left + (this.width + this.getListWidth()) / 2;
-                int relativeMouseY = this.mouseY - this.top - this.headerPadding + (int) this.amountScrolled -
-                                     4; //click height in content dimensions
                 int slotIndex = getSlotIndexFromScreenCoords(this.mouseX, this.mouseY);
+                int relativeMouseY = getRelativeMouseY(mouseY, slotIndex);
 
                 if (slotIndex > -1) {
                     this.elementClicked(slotIndex, false, this.mouseX, this.mouseY);
@@ -265,9 +276,8 @@ public class GuiScrollPane extends GuiListExtended {
                     if (this.mouseY >= this.top && this.mouseY <= this.bottom) {
                         int i2 = this.left + (this.width - this.getListWidth()) / 2;
                         int j2 = this.left + (this.width + this.getListWidth()) / 2;
-                        int relativeMouseY = this.mouseY - this.top - this.headerPadding + (int) this.amountScrolled -
-                                             4; //click height in content dimensions
                         int slotIndex = getSlotIndexFromScreenCoords(this.mouseX, this.mouseY);
+                        int relativeMouseY = getRelativeMouseY(mouseY, slotIndex);
 
                         if (slotIndex > -1) {
                             boolean flag = slotIndex == this.selectedElement &&
@@ -381,6 +391,26 @@ public class GuiScrollPane extends GuiListExtended {
             this.drawSlot(i, insideLeft, y, entryHeight2, mouseXIn, mouseYIn, partialTicks);
             y += entryHeight;
         }
+    }
+
+    private int getRelativeMouseX(int mouseX) {
+        int j = this.left + this.width / 2 - this.getListWidth() / 2 + 2;
+        return mouseX - j;
+    }
+
+    private int getRelativeMouseY(int mouseY, int contentIndex) {
+        int k = this.top + 4 - this.getAmountScrolled() + getContentHeight(contentIndex) + this.headerPadding;
+        int relativeMouseY = mouseY - k;
+
+        //Content might be centered, adjust relative mouse y accordingly
+        int contentHeight = getContentHeight();
+        int insideHeight = this.bottom - this.top - 4;
+
+        if (contentHeight < insideHeight) {
+            //it fits, so we can center it vertically
+            relativeMouseY -= (insideHeight - contentHeight) / 2;
+        }
+        return relativeMouseY;
     }
 
     //PASSTHROUGHS

@@ -25,7 +25,7 @@ import java.util.List;
 public class BuildModifiers {
 
     //Called from BuildModes
-    public static void onBlockPlaced(EntityPlayer player, List<BlockPos> startCoordinates, EnumFacing sideHit, Vec3d hitVec) {
+    public static void onBlockPlaced(EntityPlayer player, List<BlockPos> startCoordinates, EnumFacing sideHit, Vec3d hitVec, boolean placeStartPos) {
         World world = player.world;
         ItemRandomizerBag.renewRandomness();
 
@@ -46,7 +46,7 @@ public class BuildModifiers {
         }
 
         //place blocks
-        for (int i = 0; i < coordinates.size(); i++) {
+        for (int i = placeStartPos ? 0 : 1; i < coordinates.size(); i++) {
             BlockPos blockPos = coordinates.get(i);
             IBlockState blockState = blockStates.get(i);
             ItemStack itemStack = itemStacks.get(i);

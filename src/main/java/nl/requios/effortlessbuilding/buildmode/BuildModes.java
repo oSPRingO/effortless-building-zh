@@ -1,12 +1,10 @@
 package nl.requios.effortlessbuilding.buildmode;
 
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.event.world.BlockEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.*;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
@@ -28,15 +26,15 @@ public class BuildModes {
     public static Dictionary<EntityPlayer, Boolean> currentlyBreakingServer = new Hashtable<>();
 
     public enum BuildModeEnum {
-        Normal ("Normal", new Normal()),
-        NormalPlus ("Normal+", new NormalPlus()),
-        Line ("Line", new Line()),
-        Wall ("Wall", new Wall()),
-        Floor ("Floor", new Floor()),
-        DiagonalLine ("", new DiagonalLine()),
-        DiagonalWall ("", new DiagonalWall()),
-        SlopeFloor ("", new SlopeFloor()),
-        Cube ("", new Cube());
+        NORMAL("effortlessbuilding.mode.normal", new Normal()),
+        NORMAL_PLUS("effortlessbuilding.mode.normal_plus", new NormalPlus()),
+        LINE("effortlessbuilding.mode.line", new Line()),
+        WALL("effortlessbuilding.mode.wall", new Wall()),
+        FLOOR("effortlessbuilding.mode.floor", new Floor()),
+        DIAGONAL_LINE("effortlessbuilding.mode.diagonal_line", new DiagonalLine()),
+        DIAGONAL_WALL("effortlessbuilding.mode.diagonal_wall", new DiagonalWall()),
+        SLOPE_FLOOR("effortlessbuilding.mode.slope_floor", new SlopeFloor()),
+        CUBE("effortlessbuilding.mode.cube", new Cube());
 
         public String name;
         public IBuildMode instance;
@@ -83,7 +81,7 @@ public class BuildModes {
 
             //Check if player reach does not exceed startpos
             int maxReach = ReachHelper.getMaxReach(player);
-            if (player.getPosition().distanceSq(startPos) > maxReach * maxReach) {
+            if (buildMode != BuildModeEnum.NORMAL && player.getPosition().distanceSq(startPos) > maxReach * maxReach) {
                 EffortlessBuilding.log(player, "Placement exceeds your reach.");
                 return;
             }
@@ -110,7 +108,7 @@ public class BuildModes {
         Vec3d hitVec = buildMode.instance.getHitVec(player);
         if (hitVec == null) hitVec = message.getHitVec();
 
-        BuildModifiers.onBlockPlaced(player, coordinates, sideHit, hitVec);
+        BuildModifiers.onBlockPlaced(player, coordinates, sideHit, hitVec, message.getPlaceStartPos());
 
         //Only works when finishing a buildmode is equal to placing some blocks
         //No intermediate blocks allowed

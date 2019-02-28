@@ -55,7 +55,7 @@ public class BuildConfig {
     }
 
     public static class Visuals {
-        @Comment({"Show a block preview if you have a block in hand on build mode Normal"})
+        @Comment({"Show a block preview if you have a block in hand on build mode NORMAL"})
         public boolean alwaysShowBlockPreview = false;
 
         @Comment({"How long the dissolve effect takes when placing blocks.",

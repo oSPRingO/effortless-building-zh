@@ -142,7 +142,7 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
 
     @Override
     public boolean mousePressed(int slotIndex, int mouseX, int mouseY, int mouseEvent, int relativeX, int relativeY) {
-         super.mousePressed(slotIndex, mouseX, mouseY, mouseEvent, relativeX, relativeY);
+        super.mousePressed(slotIndex, mouseX, mouseY, mouseEvent, relativeX, relativeY);
         arrayNumberFieldList.forEach(numberField -> numberField.mouseClicked(mouseX, mouseY, mouseEvent));
 
         boolean insideArrayEnabledLabel = mouseX >= left && mouseX < right && relativeY >= -2 && relativeY < 12;

@@ -39,7 +39,7 @@ public class EffortlessBuilding
 {
     public static final String MODID = "effortlessbuilding";
     public static final String NAME = "Effortless Building";
-    public static final String VERSION = "1.12.2-2.2";
+    public static final String VERSION = "1.12.2-2.4";
 
     @Mod.Instance(EffortlessBuilding.MODID)
     public static EffortlessBuilding instance;
@@ -86,14 +86,17 @@ public class EffortlessBuilding
         EffortlessBuilding.packetHandler.registerMessage(ModeSettingsMessage.MessageHandler.class, ModeSettingsMessage.class, 1, Side.SERVER);
         EffortlessBuilding.packetHandler.registerMessage(ModeSettingsMessage.MessageHandler.class, ModeSettingsMessage.class, 1, Side.CLIENT);
 
-        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 2, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 2, Side.CLIENT);
+        EffortlessBuilding.packetHandler.registerMessage(ModeActionMessage.MessageHandler.class, ModeActionMessage.class, 2, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(ModeActionMessage.MessageHandler.class, ModeActionMessage.class, 2, Side.CLIENT);
 
-        EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 3, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 3, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 3, Side.CLIENT);
 
-        EffortlessBuilding.packetHandler.registerMessage(CancelModeMessage.MessageHandler.class, CancelModeMessage.class, 4, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 4, Side.SERVER);
 
-        EffortlessBuilding.packetHandler.registerMessage(RequestLookAtMessage.MessageHandler.class, RequestLookAtMessage.class, 5, Side.CLIENT);
+        EffortlessBuilding.packetHandler.registerMessage(CancelModeMessage.MessageHandler.class, CancelModeMessage.class, 5, Side.SERVER);
+
+        EffortlessBuilding.packetHandler.registerMessage(RequestLookAtMessage.MessageHandler.class, RequestLookAtMessage.class, 6, Side.CLIENT);
 
         proxy.preInit(event);
     }

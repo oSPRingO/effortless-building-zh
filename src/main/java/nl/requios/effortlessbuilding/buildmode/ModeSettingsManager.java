@@ -55,7 +55,7 @@ public class ModeSettingsManager {
     }
 
     public static class ModeSettings {
-        private BuildModes.BuildModeEnum buildMode = BuildModes.BuildModeEnum.Normal;
+        private BuildModes.BuildModeEnum buildMode = BuildModes.BuildModeEnum.NORMAL;
 
         public ModeSettings() {
         }

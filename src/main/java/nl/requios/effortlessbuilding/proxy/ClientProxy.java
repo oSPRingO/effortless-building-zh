@@ -33,7 +33,6 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
@@ -42,6 +41,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
+import nl.requios.effortlessbuilding.buildmode.ModeOptions;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
@@ -67,6 +67,7 @@ public class ClientProxy implements IProxy {
     public static int ticksInGame = 0;
 
     private static final HashMap<BuildModes.BuildModeEnum, TextureAtlasSprite> buildModeIcons = new HashMap<>();
+    private static final HashMap<ModeOptions.ActionEnum, TextureAtlasSprite> modeOptionIcons = new HashMap<>();
 
     @Override
     public void preInit(FMLPreInitializationEvent event) {
@@ -139,10 +140,20 @@ public class ClientProxy implements IProxy {
             final ResourceLocation sprite = new ResourceLocation("effortlessbuilding", "icons/" + mode.name().toLowerCase());
             buildModeIcons.put( mode, map.registerSprite(sprite));
         }
+
+        for ( final ModeOptions.ActionEnum action : ModeOptions.ActionEnum.values() )
+        {
+            final ResourceLocation sprite = new ResourceLocation("effortlessbuilding", "icons/" + action.name().toLowerCase());
+            modeOptionIcons.put( action, map.registerSprite(sprite));
+        }
     }
 
     public static TextureAtlasSprite getBuildModeIcon(BuildModes.BuildModeEnum mode) {
         return buildModeIcons.get(mode);
+    }
+
+    public static TextureAtlasSprite getModeOptionIcon(ModeOptions.ActionEnum action) {
+        return modeOptionIcons.get(action);
     }
 
     @SubscribeEvent
@@ -189,7 +200,7 @@ public class ClientProxy implements IProxy {
         BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
 
         if (Minecraft.getMinecraft().currentScreen != null ||
-            buildMode == BuildModes.BuildModeEnum.Normal ||
+            buildMode == BuildModes.BuildModeEnum.NORMAL ||
             RadialMenu.instance.isVisible()) {
             return;
         }
@@ -203,17 +214,18 @@ public class ClientProxy implements IProxy {
                 ItemStack currentItemStack = player.getHeldItem(EnumHand.MAIN_HAND);
                 if (currentItemStack.getItem() instanceof ItemBlock ||
                     (CompatHelper.isItemBlockProxy(currentItemStack) && !player.isSneaking())) {
+                    ItemStack itemStack = CompatHelper.getItemBlockFromStack(currentItemStack);
 
                     //find position in distance
                     RayTraceResult lookingAt = getLookingAt(player);
-                    BuildModes.onBlockPlacedMessage(player, lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt));
-                    EffortlessBuilding.packetHandler.sendToServer(lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt));
+                    BuildModes.onBlockPlacedMessage(player, lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt, true));
+                    EffortlessBuilding.packetHandler.sendToServer(lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt, true));
 
                     //play sound if further than normal
                     if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK &&
                         (lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
 
-                        IBlockState state = ((ItemBlock) currentItemStack.getItem()).getBlock().getDefaultState();
+                        IBlockState state = ((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
                         BlockPos blockPos = lookingAt.getBlockPos();
                         SoundType soundType = state.getBlock().getSoundType(state, player.world, blockPos, player);
                         player.world.playSound(player, player.getPosition(), soundType.getPlaceSound(), SoundCategory.BLOCKS,
@@ -221,7 +233,7 @@ public class ClientProxy implements IProxy {
                         player.swingArm(EnumHand.MAIN_HAND);
                     }
                 }
-            } else if (buildMode == BuildModes.BuildModeEnum.NormalPlus) {
+            } else if (buildMode == BuildModes.BuildModeEnum.NORMAL_PLUS) {
                 placeCooldown--;
             }
         } else {
@@ -250,7 +262,7 @@ public class ClientProxy implements IProxy {
                                 0.4f, soundtype.getPitch() * 1f);
                         player.swingArm(EnumHand.MAIN_HAND);
                     }
-                } else if (buildMode == BuildModes.BuildModeEnum.NormalPlus) {
+                } else if (buildMode == BuildModes.BuildModeEnum.NORMAL_PLUS) {
                     breakCooldown--;
                 }
             }
@@ -260,6 +272,13 @@ public class ClientProxy implements IProxy {
         } else {
             breakCooldown = 0;
         }
+
+        if (mc.gameSettings.keyBindAttack.isPressed()) {
+            if (RadialMenu.instance.isVisible()) {
+                EffortlessBuilding.log(player, "mouse click");
+            }
+        }
+
     }
 
     @SubscribeEvent(priority = EventPriority.NORMAL, receiveCanceled = true)
@@ -267,7 +286,7 @@ public class ClientProxy implements IProxy {
         EntityPlayerSP player = Minecraft.getMinecraft().player;
 
         //Remember to send packet to server if necessary
-        //Show HUD
+        //Show Modifier Settings GUI
         if (keyBindings[0].isPressed()) {
             //Disabled if max reach is 0, might be set in the config that way.
             if (ReachHelper.getMaxReach(player) == 0) {

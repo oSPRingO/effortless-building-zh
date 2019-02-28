@@ -25,19 +25,22 @@ public class BlockPlacedMessage implements IMessage {
     private BlockPos blockPos;
     private EnumFacing sideHit;
     private Vec3d hitVec;
+    private boolean placeStartPos; //prevent double placing in normal mode
 
     public BlockPlacedMessage() {
         this.blockHit = false;
         this.blockPos = BlockPos.ORIGIN;
         this.sideHit = EnumFacing.UP;
         this.hitVec = new Vec3d(0, 0, 0);
+        this.placeStartPos = true;
     }
 
-    public BlockPlacedMessage(RayTraceResult result) {
+    public BlockPlacedMessage(RayTraceResult result, boolean placeStartPos) {
         this.blockHit = result.typeOfHit == RayTraceResult.Type.BLOCK;
         this.blockPos = result.getBlockPos();
         this.sideHit = result.sideHit;
         this.hitVec = result.hitVec;
+        this.placeStartPos = placeStartPos;
     }
 
     public boolean isBlockHit() {
@@ -56,6 +59,10 @@ public class BlockPlacedMessage implements IMessage {
         return hitVec;
     }
 
+    public boolean getPlaceStartPos() {
+        return placeStartPos;
+    }
+
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeBoolean(blockHit);
@@ -66,6 +73,7 @@ public class BlockPlacedMessage implements IMessage {
         buf.writeDouble(hitVec.x);
         buf.writeDouble(hitVec.y);
         buf.writeDouble(hitVec.z);
+        buf.writeBoolean(placeStartPos);
     }
 
     @Override
@@ -74,6 +82,7 @@ public class BlockPlacedMessage implements IMessage {
         blockPos = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
         sideHit = EnumFacing.byIndex(buf.readInt());
         hitVec = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+        placeStartPos = buf.readBoolean();
     }
 
     // The params of the IMessageHandler are <REQ, REPLY>

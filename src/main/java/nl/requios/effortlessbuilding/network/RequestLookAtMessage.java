@@ -42,7 +42,8 @@ public class RequestLookAtMessage implements IMessage {
             if (ctx.side == Side.CLIENT){
                 //Received clientside
                 //Send back your info
-                return new BlockPlacedMessage(ClientProxy.previousLookAt);
+                //Prevent double placing in normal mode with placeStartPos false
+                return new BlockPlacedMessage(ClientProxy.previousLookAt, false);
             }
             return null;
         }
