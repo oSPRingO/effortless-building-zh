@@ -11,18 +11,20 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
+import nl.requios.effortlessbuilding.helper.FixedStack;
+import nl.requios.effortlessbuilding.helper.InventoryHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 import nl.requios.effortlessbuilding.render.BlockPreviewRenderer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class BuildModifiers {
+
 
     //Called from BuildModes
     public static void onBlockPlaced(EntityPlayer player, List<BlockPos> startCoordinates, EnumFacing sideHit, Vec3d hitVec, boolean placeStartPos) {
@@ -41,23 +43,33 @@ public class BuildModifiers {
         if (blockStates.size() == 0 || coordinates.size() != blockStates.size()) return;
 
         if (world.isRemote) {
+
             BlockPreviewRenderer.onBlocksPlaced();
-            return;
-        }
 
-        //place blocks
-        for (int i = placeStartPos ? 0 : 1; i < coordinates.size(); i++) {
-            BlockPos blockPos = coordinates.get(i);
-            IBlockState blockState = blockStates.get(i);
-            ItemStack itemStack = itemStacks.get(i);
+        } else {
 
-            if (world.isBlockLoaded(blockPos, true)) {
-                //check itemstack empty
-                if (itemStack.isEmpty()) continue;
-                SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, false, false);
+            //place blocks
+            for (int i = placeStartPos ? 0 : 1; i < coordinates.size(); i++) {
+                BlockPos blockPos = coordinates.get(i);
+                IBlockState blockState = blockStates.get(i);
+                ItemStack itemStack = itemStacks.get(i);
+
+                if (world.isBlockLoaded(blockPos, true)) {
+                    //check itemstack empty
+                    if (itemStack.isEmpty()) {
+                        //try to find new stack, otherwise continue
+                        itemStack = InventoryHelper.findItemStackInInventory(player, blockState);
+                        if (itemStack.isEmpty()) continue;
+                    }
+                    SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, false, false);
+                }
             }
         }
 
+        //add to undo stack
+        BlockPos firstPos = startCoordinates.get(0);
+        BlockPos secondPos = startCoordinates.get(startCoordinates.size() - 1);
+        UndoRedo.addUndo(player, new BlockSet(coordinates, blockStates, hitVec, firstPos, secondPos));
     }
 
     public static void onBlockBroken(EntityPlayer player, List<BlockPos> posList, boolean breakStartPos) {
@@ -73,7 +85,8 @@ public class BuildModifiers {
         }
 
         //If the player is going to instabreak grass or a plant, only break other instabreaking things
-        boolean onlyInstaBreaking = world.getBlockState(posList.get(0)).getBlockHardness(world, posList.get(0)) == 0f;
+        boolean onlyInstaBreaking = !player.isCreative() &&
+                world.getBlockState(posList.get(0)).getBlockHardness(world, posList.get(0)) == 0f;
 
         //break all those blocks
         for (int i = breakStartPos ? 0 : 1; i < coordinates.size(); i++) {

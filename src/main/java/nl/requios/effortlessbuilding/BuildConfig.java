@@ -52,6 +52,10 @@ public class BuildConfig {
                  "The block in front of you always counts as 100%."})
         @RangeInt(min = 0, max = 200)
         public int miningTimePercentage = 50;
+
+        @Comment({"How many placements are remembered for the undo functionality."})
+        @RequiresMcRestart
+        public int undoStackSize = 5;
     }
 
     public static class Visuals {

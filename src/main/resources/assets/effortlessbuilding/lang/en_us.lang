@@ -3,6 +3,7 @@ key.effortlessbuilding.hud.desc=Modifier Menu
 key.effortlessbuilding.replace.desc=Toggle QuickReplace
 key.effortlessbuilding.creative.desc=Toggle Survival/Creative Mode
 key.effortlessbuilding.mode.desc=Radial Menu
+key.effortlessbuilding.undo.desc=Undo
 
 item.effortlessbuilding:randomizer_bag.name=Randomizer Bag
 item.effortlessbuilding:reach_upgrade1.name=Reach Upgrade 1
@@ -19,8 +20,8 @@ effortlessbuilding.mode.diagonal_wall=Diagonal Wall (WIP)
 effortlessbuilding.mode.slope_floor=Slope Floor (WIP)
 effortlessbuilding.mode.cube=Cube (WIP)
 
-effortlessbuilding.action.undo=Undo (WIP)
-effortlessbuilding.action.redo=Redo (WIP)
+effortlessbuilding.action.undo=Undo
+effortlessbuilding.action.redo=Redo
 effortlessbuilding.action.replace=Replace
 effortlessbuilding.action.open_modifier_settings=Open Modifier Settings
 

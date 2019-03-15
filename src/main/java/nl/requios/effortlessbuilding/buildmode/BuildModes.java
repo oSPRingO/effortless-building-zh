@@ -119,8 +119,7 @@ public class BuildModes {
     //Use a network message to break blocks in the distance using clientside mouse input
     public static void onBlockBrokenMessage(EntityPlayer player, BlockBrokenMessage message) {
 
-        if (ReachHelper.canBreakFar(player) &&
-            !CompatHelper.chiselsAndBitsProxy.isHoldingChiselTool(EnumHand.MAIN_HAND)) {
+        if (ReachHelper.canBreakFar(player)) {
 
             BlockPos startPos = message.isBlockHit() ? message.getBlockPos() : null;
             onBlockBroken(player, startPos, true);
@@ -132,7 +131,7 @@ public class BuildModes {
         //Check if not in the middle of placing
         Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
         if (currentlyBreaking.get(player) != null && !currentlyBreaking.get(player)) {
-            //Cancel placing
+            //Cancel breaking
             initializeMode(player);
             return;
         }
@@ -176,5 +175,21 @@ public class BuildModes {
         currentlyBreaking.remove(player);
 
         ModeSettingsManager.getModeSettings(player).getBuildMode().instance.initialize(player);
+    }
+
+    public static boolean isCurrentlyPlacing(EntityPlayer player) {
+        Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
+        return currentlyBreaking.get(player) != null && !currentlyBreaking.get(player);
+    }
+
+    public static boolean isCurrentlyBreaking(EntityPlayer player) {
+        Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
+        return currentlyBreaking.get(player) != null && currentlyBreaking.get(player);
+    }
+
+    //Either placing or breaking
+    public static boolean isActive(EntityPlayer player) {
+        Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
+        return currentlyBreaking.get(player) != null;
     }
 }

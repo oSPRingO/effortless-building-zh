@@ -265,12 +265,10 @@ public class RadialMenu extends GuiScreen {
 
             final TextureAtlasSprite sprite = ClientProxy.getBuildModeIcon(menuRegion.mode);
 
-            final double scalex = 16 * 0.5;
-            final double scaley = 16 * 0.5;
-            final double x1 = x - scalex;
-            final double x2 = x + scalex;
-            final double y1 = y - scaley;
-            final double y2 = y + scaley;
+            final double x1 = x - 8;
+            final double x2 = x + 8;
+            final double y1 = y - 8;
+            final double y2 = y + 8;
 
             final float f = 1f;
             final float a = 1f;
@@ -298,8 +296,8 @@ public class RadialMenu extends GuiScreen {
 
             final TextureAtlasSprite sprite = ClientProxy.getModeOptionIcon(button.action);
 
-            final double btnmiddleX = (button.x1 + button.x2) / 2.0;
-            final double btnmiddleY = (button.y1 + button.y2) / 2.0;
+            final double btnmiddleX = (button.x1 + button.x2) / 2 + 0.01;
+            final double btnmiddleY = (button.y1 + button.y2) / 2 + 0.01;
             final double btnx1 = btnmiddleX - 8;
             final double btnx2 = btnmiddleX + 8;
             final double btny1 = btnmiddleY - 8;
@@ -337,15 +335,23 @@ public class RadialMenu extends GuiScreen {
             if (button.highlighted) {
                 String text = TextFormatting.AQUA + button.name;
                 int wrap = 120;
-                String keybind = TextFormatting.GRAY + "(None)";
+                String keybind = "None";
 
                 //Add keybind in brackets
+                if (button.action == ModeOptions.ActionEnum.UNDO) {
+                    keybind = ClientProxy.keyBindings[4].getDisplayName();
+                }
+                if (button.action == ModeOptions.ActionEnum.REDO) {
+                    String sneak = Minecraft.getMinecraft().gameSettings.keyBindSneak.getDisplayName();
+                    keybind = sneak + " + " + ClientProxy.keyBindings[4].getDisplayName();
+                }
                 if (button.action == ModeOptions.ActionEnum.REPLACE) {
-                    keybind = TextFormatting.GRAY + " (" + WordUtils.capitalizeFully(ClientProxy.keyBindings[1].getDisplayName().toLowerCase()) + ")";
+                    keybind = ClientProxy.keyBindings[1].getDisplayName();
                 }
                 if (button.action == ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS) {
-                    keybind = TextFormatting.GRAY + " (" + WordUtils.capitalizeFully(ClientProxy.keyBindings[0].getDisplayName()) + ")";
+                    keybind = ClientProxy.keyBindings[0].getDisplayName();
                 }
+                String keybindFormatted = TextFormatting.GRAY + " (" + WordUtils.capitalizeFully(keybind) + ")";
 
                 if (button.textSide == EnumFacing.WEST) {
 
@@ -362,7 +368,7 @@ public class RadialMenu extends GuiScreen {
                     fontRenderer.drawSplitString( text, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(text) * 0.5),
                             (int) (middleY + button.y1 - 26), wrap,0xffffffff);
 
-                    fontRenderer.drawSplitString( keybind, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(keybind) * 0.5),
+                    fontRenderer.drawSplitString( keybindFormatted, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(keybindFormatted) * 0.5),
                             (int) (middleY + button.y1 - 14), wrap,0xffffffff);
 
                 } else if (button.textSide == EnumFacing.DOWN || button.textSide == EnumFacing.SOUTH) {
@@ -370,7 +376,7 @@ public class RadialMenu extends GuiScreen {
                     fontRenderer.drawSplitString(text, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(text) * 0.5),
                             (int) (middleY + button.y1 + 24), wrap, 0xffffffff);
 
-                    fontRenderer.drawSplitString(keybind, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(keybind) * 0.5),
+                    fontRenderer.drawSplitString(keybindFormatted, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(keybindFormatted) * 0.5),
                             (int) (middleY + button.y1 + 36), wrap, 0xffffffff);
 
                 }

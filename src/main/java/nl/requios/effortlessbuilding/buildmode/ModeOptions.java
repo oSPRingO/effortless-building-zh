@@ -7,6 +7,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
+import nl.requios.effortlessbuilding.buildmodifier.UndoRedo;
 import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
 import nl.requios.effortlessbuilding.gui.buildmodifier.ModifierSettingsGui;
 
@@ -21,12 +22,15 @@ public class ModeOptions {
 
     //Called on both client and server
     public static void performAction(EntityPlayer player, ActionEnum action) {
-        EffortlessBuilding.log("Doing "+action.name());
 
         switch (action) {
             case UNDO:
+                UndoRedo.undo(player);
+                EffortlessBuilding.log(player, "Undo", true);
                 break;
             case REDO:
+                UndoRedo.redo(player);
+                EffortlessBuilding.log(player, "Redo", true);
                 break;
             case REPLACE:
                 ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);

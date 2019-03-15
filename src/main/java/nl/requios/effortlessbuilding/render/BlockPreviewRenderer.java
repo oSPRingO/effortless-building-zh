@@ -26,6 +26,7 @@ import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.ModifierSettings;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
+import nl.requios.effortlessbuilding.helper.InventoryHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
@@ -158,12 +159,7 @@ public class BlockPreviewRenderer {
 
                 List<BlockPos> newCoordinates = BuildModifiers.findCoordinates(player, startCoordinates);
 
-                Collections.sort(newCoordinates, (lhs, rhs) -> {
-                    // -1 - less than, 1 - greater than, 0 - equal
-                    double lhsDistanceToPlayer = new Vec3d(lhs).subtract(player.getPositionEyes(1f)).lengthSquared();
-                    double rhsDistanceToPlayer = new Vec3d(rhs).subtract(player.getPositionEyes(1f)).lengthSquared();
-                    return (int) Math.signum(lhsDistanceToPlayer - rhsDistanceToPlayer);
-                });
+                sortOnDistanceToPlayer(newCoordinates, player);
 
                 hitVec = new Vec3d(Math.abs(hitVec.x - ((int) hitVec.x)), Math.abs(hitVec.y - ((int) hitVec.y)),
                         Math.abs(hitVec.z - ((int) hitVec.z)));
@@ -206,12 +202,14 @@ public class BlockPreviewRenderer {
 
                 //Render block previews
                 if (blockStates.size() != 0 && newCoordinates.size() == blockStates.size()) {
+                    int blockCount;
+
                     //Use fancy shader if config allows, otherwise outlines
                     if (BuildConfig.visuals.useShaders && newCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
 
                         RenderHandler.beginBlockPreviews();
 
-                        renderBlockPreviews(newCoordinates, blockStates, itemStacks, 0f, firstPos, secondPos, !breaking, breaking);
+                        blockCount = renderBlockPreviews(newCoordinates, blockStates, itemStacks, 0f, firstPos, secondPos, !breaking, breaking);
 
                         RenderHandler.endBlockPreviews();
                     } else {
@@ -227,8 +225,27 @@ public class BlockPreviewRenderer {
                         }
 
                         RenderHandler.endLines();
+
+                        blockCount = newCoordinates.size();
+                    }
+
+                    //Display block count and dimensions in actionbar
+                    if (BuildModes.isActive(player)) {
+                        BlockPos dim = secondPos.subtract(firstPos);
+                        dim = new BlockPos(Math.abs(dim.getX()) + 1, Math.abs(dim.getY()) + 1, Math.abs(dim.getZ()) + 1);
+
+                        String dimensions = "(";
+                        if (dim.getX() > 1) dimensions += dim.getX() + "x";
+                        if (dim.getZ() > 1) dimensions += dim.getZ() + "x";
+                        if (dim.getY() > 1) dimensions += dim.getY() + "x";
+                        dimensions = dimensions.substring(0, dimensions.length() - 1);
+                        if (dimensions.length() > 1) dimensions += ")";
+
+                        EffortlessBuilding.log(player, blockCount + " blocks " + dimensions, true);
                     }
                 }
+
+
             }
 
             RenderHandler.beginLines();
@@ -264,14 +281,15 @@ public class BlockPreviewRenderer {
                BuildConfig.visuals.alwaysShowBlockPreview;
     }
 
-    protected static void renderBlockPreviews(List<BlockPos> coordinates, List<IBlockState> blockStates,
+    protected static int renderBlockPreviews(List<BlockPos> coordinates, List<IBlockState> blockStates,
                                               List<ItemStack> itemStacks, float dissolve, BlockPos firstPos,
                                               BlockPos secondPos, boolean checkCanPlace, boolean red) {
         EntityPlayer player = Minecraft.getMinecraft().player;
         ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+        int blocksValid = 0;
 
-        if (coordinates.isEmpty()) return;
+        if (coordinates.isEmpty()) return blocksValid;
 
         for (int i = coordinates.size() - 1; i >= 0; i--) {
             BlockPos blockPos = coordinates.get(i);
@@ -289,43 +307,57 @@ public class BlockPreviewRenderer {
                         new Vec3d(blockPos), new Vec3d(firstPos), new Vec3d(secondPos),
                         blockPos == secondPos, red));
                 RenderHandler.renderBlockPreview(dispatcher, blockPos, blockState);
+                blocksValid++;
             }
         }
+        return blocksValid;
     }
 
     public static void onBlocksPlaced() {
+        onBlocksPlaced(previousCoordinates, previousItemStacks, previousBlockStates, previousFirstPos, previousSecondPos);
+    }
+
+    public static void onBlocksPlaced(List<BlockPos> coordinates, List<ItemStack> itemStacks, List<IBlockState> blockStates,
+                                      BlockPos firstPos, BlockPos secondPos) {
         EntityPlayerSP player = Minecraft.getMinecraft().player;
         ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
 
         //Check if block previews are enabled
-        if (doRenderBlockPreviews(modifierSettings, modeSettings, previousFirstPos)) {
+        if (doRenderBlockPreviews(modifierSettings, modeSettings, firstPos)) {
 
             //Save current coordinates, blockstates and itemstacks
-            if (!previousCoordinates.isEmpty() && previousBlockStates.size() == previousCoordinates.size() &&
-                previousCoordinates.size() > 1 && previousCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
+            if (!coordinates.isEmpty() && blockStates.size() == coordinates.size() &&
+                coordinates.size() > 1 && coordinates.size() < BuildConfig.visuals.shaderTreshold) {
 
-                placedDataList.add(new PlacedData(ClientProxy.ticksInGame, previousCoordinates, previousBlockStates,
-                        previousItemStacks, previousFirstPos, previousSecondPos, false));
+                placedDataList.add(new PlacedData(ClientProxy.ticksInGame, coordinates, blockStates,
+                        itemStacks, firstPos, secondPos, false));
             }
         }
 
     }
 
     public static void onBlocksBroken() {
+        onBlocksBroken(previousCoordinates, previousItemStacks, previousBlockStates, previousFirstPos, previousSecondPos);
+    }
+
+    public static void onBlocksBroken(List<BlockPos> coordinates, List<ItemStack> itemStacks, List<IBlockState> blockStates,
+                                      BlockPos firstPos, BlockPos secondPos) {
         EntityPlayerSP player = Minecraft.getMinecraft().player;
         ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
 
         //Check if block previews are enabled
-        if (doRenderBlockPreviews(modifierSettings, modeSettings, previousFirstPos)) {
+        if (doRenderBlockPreviews(modifierSettings, modeSettings, firstPos)) {
 
             //Save current coordinates, blockstates and itemstacks
-            if (!previousCoordinates.isEmpty() && previousBlockStates.size() == previousCoordinates.size() &&
-                previousCoordinates.size() > 1 && previousCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
+            if (!coordinates.isEmpty() && blockStates.size() == coordinates.size() &&
+                coordinates.size() > 1 && coordinates.size() < BuildConfig.visuals.shaderTreshold) {
 
-                placedDataList.add(new PlacedData(ClientProxy.ticksInGame, previousCoordinates, previousBlockStates,
-                        previousItemStacks, previousFirstPos, previousSecondPos, true));
+                sortOnDistanceToPlayer(coordinates, player);
+
+                placedDataList.add(new PlacedData(ClientProxy.ticksInGame, coordinates, blockStates,
+                        itemStacks, firstPos, secondPos, true));
             }
         }
 
@@ -372,5 +404,16 @@ public class BlockPreviewRenderer {
             //red
             ARBShaderObjects.glUniform1iARB(redUniform, red ? 1 : 0);
         };
+    }
+
+    private static void sortOnDistanceToPlayer(List<BlockPos> coordinates, EntityPlayer player) {
+
+        Collections.sort(coordinates, (lhs, rhs) -> {
+            // -1 - less than, 1 - greater than, 0 - equal
+            double lhsDistanceToPlayer = new Vec3d(lhs).subtract(player.getPositionEyes(1f)).lengthSquared();
+            double rhsDistanceToPlayer = new Vec3d(rhs).subtract(player.getPositionEyes(1f)).lengthSquared();
+            return (int) Math.signum(lhsDistanceToPlayer - rhsDistanceToPlayer);
+        });
+
     }
 }

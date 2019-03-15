@@ -77,14 +77,15 @@ public class ClientProxy implements IProxy {
     @Override
     public void init(FMLInitializationEvent event) {
         // register key bindings
-        keyBindings = new KeyBinding[4];
+        keyBindings = new KeyBinding[5];
 
         // instantiate the key bindings
         keyBindings[0] = new KeyBinding("key.effortlessbuilding.hud.desc", Keyboard.KEY_ADD, "key.effortlessbuilding.category");
         keyBindings[1] = new KeyBinding("key.effortlessbuilding.replace.desc", Keyboard.KEY_SUBTRACT, "key.effortlessbuilding.category");
         keyBindings[2] = new KeyBinding("key.effortlessbuilding.creative.desc", Keyboard.KEY_NONE, "key.effortlessbuilding.category");
         keyBindings[3] = new KeyBinding("key.effortlessbuilding.mode.desc", Keyboard.KEY_LMENU, "key.effortlessbuilding.category");
-//        keyBindings[4] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
+        keyBindings[4] = new KeyBinding("key.effortlessbuilding.undo.desc", Keyboard.KEY_U, "key.effortlessbuilding.category");
+//        keyBindings[5] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {
@@ -318,8 +319,16 @@ public class ClientProxy implements IProxy {
             }
         }
 
-//        if (keyBindings[4].isPressed()) {
-//            //TODO remove
+        //Undo
+        if (keyBindings[4].isPressed()) {
+            ModeOptions.ActionEnum action = ModeOptions.ActionEnum.UNDO;
+            if (player.isSneaking()) action = ModeOptions.ActionEnum.REDO;
+            ModeOptions.performAction(player, action);
+            EffortlessBuilding.packetHandler.sendToServer(new ModeActionMessage(action));
+        }
+
+        //For shader development
+//        if (keyBindings[5].isPressed()) {
 //            ShaderHandler.init();
 //            EffortlessBuilding.log(player, "Reloaded shaders");
 //        }
