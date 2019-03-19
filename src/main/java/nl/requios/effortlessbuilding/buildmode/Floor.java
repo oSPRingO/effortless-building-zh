@@ -5,6 +5,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.*;
@@ -17,6 +18,33 @@ public class Floor implements IBuildMode {
     Dictionary<UUID, BlockPos> firstPosTable = new Hashtable<>();
     Dictionary<UUID, EnumFacing> sideHitTable = new Hashtable<>();
     Dictionary<UUID, Vec3d> hitVecTable = new Hashtable<>();
+
+    class Criteria {
+        Vec3d planeBound;
+        double distToPlayerSq;
+
+        Criteria(Vec3d planeBound, Vec3d start) {
+            this.planeBound = planeBound;
+            this.distToPlayerSq = this.planeBound.subtract(start).lengthSquared();
+        }
+
+        //check if its not behind the player and its not too close and not too far
+        //also check if raytrace from player to block does not intersect blocks
+        public boolean isValid(Vec3d start, Vec3d look, int reach, EntityPlayer player, boolean skipRaytrace) {
+
+            boolean intersects = false;
+            if (!skipRaytrace) {
+                //collision within a 1 block radius to selected is fine
+                RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, planeBound, false, true, false);
+                intersects = rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK &&
+                    planeBound.subtract(rayTraceResult.hitVec).lengthSquared() > 4;
+            }
+
+            return planeBound.subtract(start).dotProduct(look) > 0 &&
+                   distToPlayerSq > 4 && distToPlayerSq < reach * reach &&
+                   !intersects;
+        }
+    }
 
     @Override
     public void initialize(EntityPlayer player) {
@@ -69,47 +97,10 @@ public class Floor implements IBuildMode {
             if (blockPos != null)
                 list.add(blockPos);
         } else {
-            Vec3d look = player.getLookVec();
-            Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+            BlockPos secondPos = findFloor(player, firstPos, skipRaytrace);
+            if (secondPos == null) return list;
 
-            //try on z axis
-            double y = firstPos.getY();
-
-            //then x and z are
-            double x = (y - start.y) / look.y * look.x + start.x;
-            double z = (y - start.y) / look.y * look.z + start.z;
-
-            Vec3d yBound = new Vec3d(x, y, z);
-
-            //distance to player
-            double yDistSquared = yBound.subtract(start).lengthSquared();
-
-
-            int reach = ReachHelper.getPlacementReach(player) * 4; //4 times as much as normal placement reach
-
-            //check if its not behind the player and its not too close and not too far
-            boolean yValid = yBound.subtract(start).dotProduct(look) > 0 &&
-                             yDistSquared > 4 && yDistSquared < reach * reach;
-
-            //select the one that is closest to the player and is valid
-            Vec3d selected = null;
-            if (yValid) selected = yBound;
-
-            if (selected == null) return list;
-
-            //check if it doesnt go through blocks
-            //TODO collision within a 1 block radius to selected is fine
-            if (!skipRaytrace) {
-                RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
-                if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {
-                    //return empty list
-                    return list;
-                }
-            }
-
-            BlockPos secondPos = new BlockPos(selected);
-
-            //Add whole wall
+            //Add whole floor
             //Limit amount of blocks you can place per row
             int limit = ReachHelper.getMaxBlocksPlacedAtOnce(player);
 
@@ -133,6 +124,29 @@ public class Floor implements IBuildMode {
         }
 
         return list;
+    }
+
+    public BlockPos findFloor(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
+        Vec3d look = player.getLookVec();
+        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+
+        List<Criteria> criteriaList = new ArrayList<>(3);
+
+        //Y
+        Vec3d yBound = BuildModes.findYBound(firstPos.getY(), start, look);
+        criteriaList.add(new Criteria(yBound, start));
+
+        //Remove invalid criteria
+        int reach = ReachHelper.getPlacementReach(player) * 4; //4 times as much as normal placement reach
+        criteriaList.removeIf(criteria -> !criteria.isValid(start, look, reach, player, skipRaytrace));
+
+        //If none are valid, return empty list of blocks
+        if (criteriaList.isEmpty()) return null;
+
+        //Then only 1 can be valid, return that one
+        Criteria selected = criteriaList.get(0);
+
+        return new BlockPos(selected.planeBound);
     }
 
     @Override

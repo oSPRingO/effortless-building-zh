@@ -18,6 +18,57 @@ public class Line implements IBuildMode {
     Dictionary<UUID, EnumFacing> sideHitTable = new Hashtable<>();
     Dictionary<UUID, Vec3d> hitVecTable = new Hashtable<>();
 
+    class Criteria {
+        Vec3d planeBound;
+        Vec3d lineBound;
+        double distToLineSq;
+        double distToPlayerSq;
+
+        Criteria(Vec3d planeBound, BlockPos firstPos, Vec3d start) {
+            this.planeBound = planeBound;
+            this.lineBound = toLongestLine(this.planeBound, firstPos);
+            this.distToLineSq = this.lineBound.subtract(this.planeBound).lengthSquared();
+            this.distToPlayerSq = this.planeBound.subtract(start).lengthSquared();
+        }
+
+        //Make it from a plane into a line
+        //Select the axis that is longest
+        private Vec3d toLongestLine(Vec3d boundVec, BlockPos firstPos) {
+            BlockPos bound = new BlockPos(boundVec);
+
+            BlockPos firstToSecond = bound.subtract(firstPos);
+            firstToSecond = new BlockPos(Math.abs(firstToSecond.getX()), Math.abs(firstToSecond.getY()), Math.abs(firstToSecond.getZ()));
+            int longest = Math.max(firstToSecond.getX(), Math.max(firstToSecond.getY(), firstToSecond.getZ()));
+            if (longest == firstToSecond.getX()) {
+                return new Vec3d(bound.getX(), firstPos.getY(), firstPos.getZ());
+            }
+            if (longest == firstToSecond.getY()) {
+                return new Vec3d(firstPos.getX(), bound.getY(), firstPos.getZ());
+            }
+            if (longest == firstToSecond.getZ()) {
+                return new Vec3d(firstPos.getX(), firstPos.getY(), bound.getZ());
+            }
+            return null;
+        }
+
+        //check if its not behind the player and its not too close and not too far
+        //also check if raytrace from player to block does not intersect blocks
+        public boolean isValid(Vec3d start, Vec3d look, int reach, EntityPlayer player, boolean skipRaytrace) {
+
+            boolean intersects = false;
+            if (!skipRaytrace) {
+                //collision within a 1 block radius to selected is fine
+                RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, lineBound, false, true, false);
+                intersects = rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK &&
+                             planeBound.subtract(rayTraceResult.hitVec).lengthSquared() > 4;
+            }
+
+            return planeBound.subtract(start).dotProduct(look) > 0 &&
+                   distToPlayerSq > 4 && distToPlayerSq < reach * reach &&
+                   !intersects;
+        }
+    }
+
     @Override
     public void initialize(EntityPlayer player) {
         rightClickClientTable.put(player.getUniqueID(), 0);
@@ -69,107 +120,13 @@ public class Line implements IBuildMode {
             if (blockPos != null)
                 list.add(blockPos);
         } else {
-            Vec3d look = player.getLookVec();
-            Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+            BlockPos secondPos = findLine(player, firstPos, skipRaytrace);
+            if (secondPos == null) return list;
 
-
-
-            //try on x axis
-            double x = firstPos.getX();
-
-            //then y and z are
-            double y = (x - start.x) / look.x * look.y + start.y;
-            double z = (x - start.x) / look.x * look.z + start.z;
-
-            Vec3d xBound = new Vec3d(x, y, z);
-            Vec3d xBoundLine = toLongestLine(xBound, firstPos);
-            double xDistToLine = xBoundLine.subtract(xBound).lengthSquared();
-
-            //distance to player
-            double xDistSquared = xBound.subtract(start).lengthSquared();
-
-
-
-            //try on y axis
-            y = firstPos.getY();
-
-            //then x and z are
-            x = (y - start.y) / look.y * look.x + start.x;
-            z = (y - start.y) / look.y * look.z + start.z;
-
-            Vec3d yBound = new Vec3d(x, y, z);
-            Vec3d yBoundLine = toLongestLine(yBound, firstPos);
-            double yDistToLine = yBoundLine.subtract(yBound).lengthSquared();
-
-            //distance to player
-            double yDistSquared = yBound.subtract(start).lengthSquared();
-
-
-
-            //try on z axis
-            z = firstPos.getZ();
-
-            //then x and y are
-            x = (z - start.z) / look.z * look.x + start.x;
-            y = (z - start.z) / look.z * look.y + start.y;
-
-            Vec3d zBound = new Vec3d(x, y, z);
-            Vec3d zBoundLine = toLongestLine(zBound, firstPos);
-            double zDistToLine = zBoundLine.subtract(zBound).lengthSquared();
-
-            //distance to player
-            double zDistSquared = zBound.subtract(start).lengthSquared();
-
-
-
-            int reach = ReachHelper.getPlacementReach(player) * 4; //4 times as much as normal placement reach
-
-            //check if its not behind the player and its not too close and not too far
-            boolean xValid = xBound.subtract(start).dotProduct(look) > 0 &&
-                             xDistSquared > 4 && xDistSquared < reach * reach;
-
-            boolean yValid = yBound.subtract(start).dotProduct(look) > 0 &&
-                             yDistSquared > 4 && yDistSquared < reach * reach;
-
-            boolean zValid = zBound.subtract(start).dotProduct(look) > 0 &&
-                             zDistSquared > 4 && zDistSquared < reach * reach;
-
-            //select the one that is closest (from wall position to its line counterpart) and is valid
-            //TODO: if multiple are very close, choose closest to player
-            Vec3d selected = null;
-            double selectedDistToLine = 0;
-
-            if (xValid) {
-                selected = xBoundLine;
-                selectedDistToLine = xDistToLine;
-            } else if (yValid) {
-                selected = yBoundLine;
-                selectedDistToLine = yDistToLine;
-            } else if (zValid) {
-                selected = zBoundLine;
-                selectedDistToLine = yDistToLine;
-            }
-
-            if (yValid && yDistToLine < selectedDistToLine) selected = yBoundLine;
-            if (zValid && zDistToLine < selectedDistToLine) selected = zBoundLine;
-
-            if (selected == null) return list;
-
-            //check if it doesnt go through blocks
-            if (!skipRaytrace) {
-                RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, selected, false, true, false);
-                if (rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK) {
-                    //return empty list
-                    return list;
-                }
-            }
-
-            BlockPos secondPos = new BlockPos(selected);
-
+            //Limit amount of blocks we can place
             int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
 
             //Add whole line
-
             int x1 = firstPos.getX(), x2 = secondPos.getX();
             int y1 = firstPos.getY(), y2 = secondPos.getY();
             int z1 = firstPos.getZ(), z2 = secondPos.getZ();
@@ -190,25 +147,50 @@ public class Line implements IBuildMode {
         return list;
     }
 
-    //Make it into a line
-    //Select the axis that is longest
-    private Vec3d toLongestLine(Vec3d boundVec, BlockPos firstPos) {
-        BlockPos bound = new BlockPos(boundVec);
+    public BlockPos findLine(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
+        Vec3d look = player.getLookVec();
+        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
 
-        BlockPos firstToSecond = bound.subtract(firstPos);
-        firstToSecond = new BlockPos(Math.abs(firstToSecond.getX()), Math.abs(firstToSecond.getY()), Math.abs(firstToSecond.getZ()));
-        int longest = Math.max(firstToSecond.getX(), Math.max(firstToSecond.getY(), firstToSecond.getZ()));
-        if (longest == firstToSecond.getX()) {
-            return new Vec3d(bound.getX(), firstPos.getY(), firstPos.getZ());
+        List<Criteria> criteriaList = new ArrayList<>(3);
+
+        //X
+        Vec3d xBound = BuildModes.findXBound(firstPos.getX(), start, look);
+        criteriaList.add(new Criteria(xBound, firstPos, start));
+
+        //Y
+        Vec3d yBound = BuildModes.findYBound(firstPos.getY(), start, look);
+        criteriaList.add(new Criteria(yBound, firstPos, start));
+
+        //Z
+        Vec3d zBound = BuildModes.findZBound(firstPos.getZ(), start, look);
+        criteriaList.add(new Criteria(zBound, firstPos, start));
+
+        //Remove invalid criteria
+        int reach = ReachHelper.getPlacementReach(player) * 4; //4 times as much as normal placement reach
+        criteriaList.removeIf(criteria -> !criteria.isValid(start, look, reach, player, skipRaytrace));
+
+        //If none are valid, return empty list of blocks
+        if (criteriaList.isEmpty()) return null;
+
+        //If only 1 is valid, choose that one
+        Criteria selected = criteriaList.get(0);
+
+        //If multiple are valid, choose based on criteria
+        if (criteriaList.size() > 1) {
+            //Select the one that is closest (from wall position to its line counterpart)
+            for (int i = 1; i < criteriaList.size(); i++) {
+                Criteria criteria = criteriaList.get(i);
+                if (criteria.distToLineSq < selected.distToLineSq)
+                    selected = criteria;
+            }
+
+            //TODO: if multiple are very close, choose closest to player
+
         }
-        if (longest == firstToSecond.getY()) {
-            return new Vec3d(firstPos.getX(), bound.getY(), firstPos.getZ());
-        }
-        if (longest == firstToSecond.getZ()) {
-            return new Vec3d(firstPos.getX(), firstPos.getY(), bound.getZ());
-        }
-        return null;
+
+        return new BlockPos(selected.lineBound);
     }
+
 
     @Override
     public EnumFacing getSideHit(EntityPlayer player) {

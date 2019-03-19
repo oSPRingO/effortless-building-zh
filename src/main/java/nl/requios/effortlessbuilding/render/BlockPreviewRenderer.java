@@ -300,7 +300,7 @@ public class BlockPreviewRenderer {
 
             //Check if can place
             //If check is turned off, check if blockstate is the same (for dissolve effect)
-            if ((!checkCanPlace /*&& player.world.getBlockState(blockPos) == blockState*/) || //TODO enable
+            if ((!checkCanPlace /*&& player.world.getBlockState(blockPos) == blockState*/) || //TODO enable (breaks breaking shader)
                 SurvivalHelper.canPlace(player.world, player, blockPos, blockState, itemstack, modifierSettings.doQuickReplace(), EnumFacing.UP)) {
 
                 ShaderHandler.useShader(ShaderHandler.dissolve, generateShaderCallback(dissolve,
