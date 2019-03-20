@@ -102,7 +102,10 @@ public class ModifierCapabilityManager {
 
             //MIRROR
             boolean mirrorEnabled = compound.getBoolean("mirrorEnabled");
-            Vec3d mirrorPosition = new Vec3d(compound.getDouble("mirrorPosX"), compound.getDouble("mirrorPosY"), compound.getDouble("mirrorPosZ"));
+            Vec3d mirrorPosition = new Vec3d(
+                    compound.getDouble("mirrorPosX"),
+                    compound.getDouble("mirrorPosY"),
+                    compound.getDouble("mirrorPosZ"));
             boolean mirrorX = compound.getBoolean("mirrorX");
             boolean mirrorY = compound.getBoolean("mirrorY");
             boolean mirrorZ = compound.getBoolean("mirrorZ");
@@ -113,7 +116,10 @@ public class ModifierCapabilityManager {
 
             //ARRAY
             boolean arrayEnabled = compound.getBoolean("arrayEnabled");
-            BlockPos arrayOffset = new BlockPos(compound.getInteger("arrayOffsetX"), compound.getInteger("arrayOffsetY"), compound.getInteger("arrayOffsetZ"));
+            BlockPos arrayOffset = new BlockPos(
+                    compound.getInteger("arrayOffsetX"),
+                    compound.getInteger("arrayOffsetY"),
+                    compound.getInteger("arrayOffsetZ"));
             int arrayCount = compound.getInteger("arrayCount");
             Array.ArraySettings arraySettings = new Array.ArraySettings(arrayEnabled, arrayOffset, arrayCount);
 
@@ -123,7 +129,10 @@ public class ModifierCapabilityManager {
 
             //RADIAL MIRROR
             boolean radialMirrorEnabled = compound.getBoolean("radialMirrorEnabled");
-            Vec3d radialMirrorPosition = new Vec3d(compound.getDouble("radialMirrorPosX"), compound.getDouble("radialMirrorPosY"), compound.getDouble("radialMirrorPosZ"));
+            Vec3d radialMirrorPosition = new Vec3d(
+                    compound.getDouble("radialMirrorPosX"),
+                    compound.getDouble("radialMirrorPosY"),
+                    compound.getDouble("radialMirrorPosZ"));
             int radialMirrorSlices = compound.getInteger("radialMirrorSlices");
             boolean radialMirrorAlternate = compound.getBoolean("radialMirrorAlternate");
             int radialMirrorRadius = compound.getInteger("radialMirrorRadius");
@@ -132,8 +141,7 @@ public class ModifierCapabilityManager {
             RadialMirror.RadialMirrorSettings radialMirrorSettings = new RadialMirror.RadialMirrorSettings(radialMirrorEnabled, radialMirrorPosition,
                     radialMirrorSlices, radialMirrorAlternate, radialMirrorRadius, radialMirrorDrawLines, radialMirrorDrawPlanes);
 
-            ModifierSettings
-                    modifierSettings = new ModifierSettings(mirrorSettings, arraySettings, radialMirrorSettings, false, reachUpgrade);
+            ModifierSettings modifierSettings = new ModifierSettings(mirrorSettings, arraySettings, radialMirrorSettings, false, reachUpgrade);
             instance.setModifierData(modifierSettings);
         }
     }

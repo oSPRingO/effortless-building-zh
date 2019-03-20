@@ -342,8 +342,7 @@ public class RadialMenu extends GuiScreen {
                     keybind = ClientProxy.keyBindings[4].getDisplayName();
                 }
                 if (button.action == ModeOptions.ActionEnum.REDO) {
-                    String sneak = Minecraft.getMinecraft().gameSettings.keyBindSneak.getDisplayName();
-                    keybind = sneak + " + " + ClientProxy.keyBindings[4].getDisplayName();
+                    keybind = ClientProxy.keyBindings[5].getDisplayName();
                 }
                 if (button.action == ModeOptions.ActionEnum.REPLACE) {
                     keybind = ClientProxy.keyBindings[1].getDisplayName();
@@ -351,7 +350,7 @@ public class RadialMenu extends GuiScreen {
                 if (button.action == ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS) {
                     keybind = ClientProxy.keyBindings[0].getDisplayName();
                 }
-                String keybindFormatted = TextFormatting.GRAY + " (" + WordUtils.capitalizeFully(keybind) + ")";
+                String keybindFormatted = TextFormatting.GRAY + "(" + WordUtils.capitalizeFully(keybind) + ")";
 
                 if (button.textSide == EnumFacing.WEST) {
 
@@ -365,10 +364,10 @@ public class RadialMenu extends GuiScreen {
 
                 } else if (button.textSide == EnumFacing.UP || button.textSide == EnumFacing.NORTH) {
 
-                    fontRenderer.drawSplitString( text, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(text) * 0.5),
+                    fontRenderer.drawSplitString( keybindFormatted, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(keybindFormatted) * 0.5),
                             (int) (middleY + button.y1 - 26), wrap,0xffffffff);
 
-                    fontRenderer.drawSplitString( keybindFormatted, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(keybindFormatted) * 0.5),
+                    fontRenderer.drawSplitString( text, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(text) * 0.5),
                             (int) (middleY + button.y1 - 14), wrap,0xffffffff);
 
                 } else if (button.textSide == EnumFacing.DOWN || button.textSide == EnumFacing.SOUTH) {

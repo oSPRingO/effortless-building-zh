@@ -102,5 +102,5 @@ void main() {
 
     if (maskgs * 0.3 + place * 0.7 <= dissolve)
     	gl_FragColor = vec4(texcolor.rgb, 0.0);
-    else gl_FragColor = color;
+    else gl_FragColor = vec4(color.rgb, 0.85);
 }

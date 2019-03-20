@@ -171,33 +171,18 @@ public class ModifierSettingsManager {
                 case 3: reach =  BuildConfig.reach.maxReachLevel3; break;
             }
 
+            EffortlessBuilding.log("before "+this.mirrorSettings.radius);
+
             if (this.mirrorSettings != null)
                 this.mirrorSettings.radius = reach / 2;
             if (this.radialMirrorSettings != null)
                 this.radialMirrorSettings.radius = reach / 2;
 
+            EffortlessBuilding.log("after "+this.mirrorSettings.radius);
         }
     }
 
-    @SubscribeEvent
-    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        EntityPlayer player = event.player;
-        handleNewPlayer(player);
-    }
-
-    @SubscribeEvent
-    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        EntityPlayer player = event.player;
-        handleNewPlayer(player);
-    }
-
-    @SubscribeEvent
-    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        EntityPlayer player = event.player;
-        handleNewPlayer(player);
-    }
-
-    private static void handleNewPlayer(EntityPlayer player){
+    public static void handleNewPlayer(EntityPlayer player){
         if (getModifierSettings(player) == null) {
             setModifierSettings(player, new ModifierSettings());
         }

@@ -26,6 +26,9 @@ import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.model.ModelLoader;
+import net.minecraftforge.client.settings.IKeyConflictContext;
+import net.minecraftforge.client.settings.KeyConflictContext;
+import net.minecraftforge.client.settings.KeyModifier;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
@@ -77,15 +80,23 @@ public class ClientProxy implements IProxy {
     @Override
     public void init(FMLInitializationEvent event) {
         // register key bindings
-        keyBindings = new KeyBinding[5];
+        keyBindings = new KeyBinding[7];
 
         // instantiate the key bindings
-        keyBindings[0] = new KeyBinding("key.effortlessbuilding.hud.desc", Keyboard.KEY_ADD, "key.effortlessbuilding.category");
-        keyBindings[1] = new KeyBinding("key.effortlessbuilding.replace.desc", Keyboard.KEY_SUBTRACT, "key.effortlessbuilding.category");
-        keyBindings[2] = new KeyBinding("key.effortlessbuilding.creative.desc", Keyboard.KEY_NONE, "key.effortlessbuilding.category");
-        keyBindings[3] = new KeyBinding("key.effortlessbuilding.mode.desc", Keyboard.KEY_LMENU, "key.effortlessbuilding.category");
-        keyBindings[4] = new KeyBinding("key.effortlessbuilding.undo.desc", Keyboard.KEY_U, "key.effortlessbuilding.category");
-//        keyBindings[5] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
+        keyBindings[0] = new KeyBinding("key.effortlessbuilding.hud.desc", KeyConflictContext.UNIVERSAL, Keyboard.KEY_ADD, "key.effortlessbuilding.category");
+        keyBindings[1] = new KeyBinding("key.effortlessbuilding.replace.desc", KeyConflictContext.IN_GAME, Keyboard.KEY_SUBTRACT, "key.effortlessbuilding.category");
+        keyBindings[2] = new KeyBinding("key.effortlessbuilding.creative.desc", KeyConflictContext.IN_GAME, Keyboard.KEY_NONE, "key.effortlessbuilding.category");
+        keyBindings[3] = new KeyBinding("key.effortlessbuilding.mode.desc", KeyConflictContext.IN_GAME, Keyboard.KEY_LMENU, "key.effortlessbuilding.category") {
+            @Override
+            public boolean conflicts(KeyBinding other) {
+                //Does not conflict with Chisels and Bits radial menu
+                if (other.getKeyCode() == getKeyCode() && other.getKeyDescription().equals("mod.chiselsandbits.other.mode")) return false;
+                return super.conflicts(other);
+            }
+        };
+        keyBindings[4] = new KeyBinding("key.effortlessbuilding.undo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, Keyboard.KEY_Z, "key.effortlessbuilding.category");
+        keyBindings[5] = new KeyBinding("key.effortlessbuilding.redo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, Keyboard.KEY_Y, "key.effortlessbuilding.category");
+        keyBindings[6] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {
@@ -244,28 +255,26 @@ public class ClientProxy implements IProxy {
         if (mc.gameSettings.keyBindAttack.isKeyDown()) {
 
             //Break block in distance in creative (or survival if enabled in config)
-            if (ReachHelper.canBreakFar(player)) {
-                if (breakCooldown <= 0) {
-                    breakCooldown = 4;
-                    RayTraceResult lookingAt = getLookingAt(player);
+            if (breakCooldown <= 0) {
+                breakCooldown = 4;
+                RayTraceResult lookingAt = getLookingAt(player);
 
-                    BuildModes.onBlockBrokenMessage(player, lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
-                    EffortlessBuilding.packetHandler.sendToServer(lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
+                BuildModes.onBlockBrokenMessage(player, lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
+                EffortlessBuilding.packetHandler.sendToServer(lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
 
-                    //play sound if further than normal
-                    if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK &&
-                        (lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
+                //play sound if further than normal
+                if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK &&
+                    (lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
 
-                        BlockPos blockPos = lookingAt.getBlockPos();
-                        IBlockState state = player.world.getBlockState(blockPos);
-                        SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
-                        player.world.playSound(player, player.getPosition(), soundtype.getBreakSound(), SoundCategory.BLOCKS,
-                                0.4f, soundtype.getPitch() * 1f);
-                        player.swingArm(EnumHand.MAIN_HAND);
-                    }
-                } else if (buildMode == BuildModes.BuildModeEnum.NORMAL_PLUS) {
-                    breakCooldown--;
+                    BlockPos blockPos = lookingAt.getBlockPos();
+                    IBlockState state = player.world.getBlockState(blockPos);
+                    SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
+                    player.world.playSound(player, player.getPosition(), soundtype.getBreakSound(), SoundCategory.BLOCKS,
+                            0.4f, soundtype.getPitch() * 1f);
+                    player.swingArm(EnumHand.MAIN_HAND);
                 }
+            } else if (buildMode == BuildModes.BuildModeEnum.NORMAL_PLUS) {
+                breakCooldown--;
             }
 
             //EffortlessBuilding.packetHandler.sendToServer(new CancelModeMessage());
@@ -319,19 +328,25 @@ public class ClientProxy implements IProxy {
             }
         }
 
-        //Undo
+        //Undo (Ctrl+Z)
         if (keyBindings[4].isPressed()) {
             ModeOptions.ActionEnum action = ModeOptions.ActionEnum.UNDO;
-            if (player.isSneaking()) action = ModeOptions.ActionEnum.REDO;
+            ModeOptions.performAction(player, action);
+            EffortlessBuilding.packetHandler.sendToServer(new ModeActionMessage(action));
+        }
+
+        //Redo (Ctrl+Y)
+        if (keyBindings[5].isPressed()) {
+            ModeOptions.ActionEnum action = ModeOptions.ActionEnum.REDO;
             ModeOptions.performAction(player, action);
             EffortlessBuilding.packetHandler.sendToServer(new ModeActionMessage(action));
         }
 
         //For shader development
-//        if (keyBindings[5].isPressed()) {
-//            ShaderHandler.init();
-//            EffortlessBuilding.log(player, "Reloaded shaders");
-//        }
+        if (keyBindings.length >= 7 && keyBindings[6].isPressed()) {
+            ShaderHandler.init();
+            EffortlessBuilding.log(player, "Reloaded shaders");
+        }
 
     }
 

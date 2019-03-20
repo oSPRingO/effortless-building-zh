@@ -41,7 +41,7 @@ public class Floor implements IBuildMode {
             }
 
             return planeBound.subtract(start).dotProduct(look) > 0 &&
-                   distToPlayerSq > 4 && distToPlayerSq < reach * reach &&
+                   distToPlayerSq > 2 && distToPlayerSq < reach * reach &&
                    !intersects;
         }
     }

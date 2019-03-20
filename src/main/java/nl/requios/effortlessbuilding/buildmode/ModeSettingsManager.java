@@ -73,25 +73,7 @@ public class ModeSettingsManager {
         }
     }
 
-    @SubscribeEvent
-    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        EntityPlayer player = event.player;
-        handleNewPlayer(player);
-    }
-
-    @SubscribeEvent
-    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        EntityPlayer player = event.player;
-        handleNewPlayer(player);
-    }
-
-    @SubscribeEvent
-    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
-        EntityPlayer player = event.player;
-        handleNewPlayer(player);
-    }
-
-    private static void handleNewPlayer(EntityPlayer player){
+    public static void handleNewPlayer(EntityPlayer player){
         if (getModeSettings(player) == null) {
             setModeSettings(player, new ModeSettings());
         }

@@ -16,11 +16,15 @@ import java.util.*;
 
 public class UndoRedo {
 
-    private static Map<UUID, FixedStack<BlockSet>> undoStacks = new HashMap<>();
-    private static Map<UUID, FixedStack<BlockSet>> redoStacks = new HashMap<>();
+    //Gets added to twice in singleplayer (server and client) if not careful. So separate stacks.
+    private static Map<UUID, FixedStack<BlockSet>> undoStacksClient = new HashMap<>();
+    private static Map<UUID, FixedStack<BlockSet>> undoStacksServer = new HashMap<>();
+    private static Map<UUID, FixedStack<BlockSet>> redoStacksClient = new HashMap<>();
+    private static Map<UUID, FixedStack<BlockSet>> redoStacksServer = new HashMap<>();
 
     //add to undo stack
     public static void addUndo(EntityPlayer player, BlockSet blockSet) {
+        Map<UUID, FixedStack<BlockSet>> undoStacks = player.world.isRemote ? undoStacksClient : undoStacksServer;
 
         //If no stack exists, make one
         if (!undoStacks.containsKey(player.getUniqueID())) {
@@ -31,6 +35,7 @@ public class UndoRedo {
     }
 
     private static void addRedo(EntityPlayer player, BlockSet blockSet) {
+        Map<UUID, FixedStack<BlockSet>> redoStacks = player.world.isRemote ? redoStacksClient : redoStacksServer;
 
         //If no stack exists, make one
         if (!redoStacks.containsKey(player.getUniqueID())) {
@@ -41,6 +46,8 @@ public class UndoRedo {
     }
 
     public static boolean undo(EntityPlayer player) {
+        Map<UUID, FixedStack<BlockSet>> undoStacks = player.world.isRemote ? undoStacksClient : undoStacksServer;
+
         if (!undoStacks.containsKey(player.getUniqueID())) return false;
 
         FixedStack<BlockSet> undoStack = undoStacks.get(player.getUniqueID());
@@ -54,16 +61,17 @@ public class UndoRedo {
         //Find up to date itemstacks in player inventory
         List<ItemStack> itemStacks = findItemStacksInInventory(player, blockStates);
 
-        //break all those blocks
-        for (int i = 0; i < coordinates.size(); i++) {
-            BlockPos coordinate = coordinates.get(i);
-            if (player.world.isBlockLoaded(coordinate, false)) {
-                SurvivalHelper.breakBlock(player.world, player, coordinate);
+        if (player.world.isRemote) {
+            BlockPreviewRenderer.onBlocksBroken(coordinates, itemStacks, blockStates, blockSet.getSecondPos(), blockSet.getFirstPos());
+        } else {
+            //break all those blocks
+            for (int i = 0; i < coordinates.size(); i++) {
+                BlockPos coordinate = coordinates.get(i);
+                if (player.world.isBlockLoaded(coordinate, false)) {
+                    SurvivalHelper.breakBlock(player.world, player, coordinate);
+                }
             }
         }
-
-        if (player.world.isRemote)
-            BlockPreviewRenderer.onBlocksBroken(coordinates, itemStacks, blockStates, blockSet.getSecondPos(), blockSet.getFirstPos());
 
         //add to redo
         addRedo(player, blockSet);
@@ -72,6 +80,8 @@ public class UndoRedo {
     }
 
     public static boolean redo(EntityPlayer player) {
+        Map<UUID, FixedStack<BlockSet>> redoStacks = player.world.isRemote ? redoStacksClient : redoStacksServer;
+
         if (!redoStacks.containsKey(player.getUniqueID())) return false;
 
         FixedStack<BlockSet> redoStack = redoStacks.get(player.getUniqueID());
@@ -86,26 +96,38 @@ public class UndoRedo {
         //Find up to date itemstacks in player inventory
         List<ItemStack> itemStacks = findItemStacksInInventory(player, blockStates);
 
-        //place blocks
-        for (int i = 0; i < coordinates.size(); i++) {
-            BlockPos blockPos = coordinates.get(i);
-            IBlockState blockState = blockStates.get(i);
-            ItemStack itemStack = itemStacks.get(i);
+        if (player.world.isRemote) {
+            BlockPreviewRenderer.onBlocksPlaced(coordinates, itemStacks, blockStates, blockSet.getFirstPos(), blockSet.getSecondPos());
+        } else {
+            //place blocks
+            for (int i = 0; i < coordinates.size(); i++) {
+                BlockPos blockPos = coordinates.get(i);
+                IBlockState blockState = blockStates.get(i);
+                ItemStack itemStack = itemStacks.get(i);
 
-            if (player.world.isBlockLoaded(blockPos, true)) {
-                //check itemstack empty
-                if (itemStack.isEmpty()) continue;
-                SurvivalHelper.placeBlock(player.world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, false, false);
+                if (player.world.isBlockLoaded(blockPos, true)) {
+                    //check itemstack empty
+                    if (itemStack.isEmpty()) continue;
+                    SurvivalHelper.placeBlock(player.world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, false, false);
+                }
             }
         }
-
-        if (player.world.isRemote)
-            BlockPreviewRenderer.onBlocksPlaced(coordinates, itemStacks, blockStates, blockSet.getFirstPos(), blockSet.getSecondPos());
 
         //add to undo
         addUndo(player, blockSet);
 
         return true;
+    }
+
+    public static void clear(EntityPlayer player) {
+        Map<UUID, FixedStack<BlockSet>> undoStacks = player.world.isRemote ? undoStacksClient : undoStacksServer;
+        Map<UUID, FixedStack<BlockSet>> redoStacks = player.world.isRemote ? redoStacksClient : redoStacksServer;
+        if (undoStacks.containsKey(player.getUniqueID())) {
+            undoStacks.get(player.getUniqueID()).clear();
+        }
+        if (redoStacks.containsKey(player.getUniqueID())) {
+            redoStacks.get(player.getUniqueID()).clear();
+        }
     }
 
     private static List<ItemStack> findItemStacksInInventory(EntityPlayer player, List<IBlockState> blockStates) {

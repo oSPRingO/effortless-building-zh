@@ -9,6 +9,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -21,15 +22,21 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
+import nl.requios.effortlessbuilding.buildmodifier.BlockSet;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
+import nl.requios.effortlessbuilding.buildmodifier.UndoRedo;
 import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.RequestLookAtMessage;
+import scala.actors.threadpool.Arrays;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import static net.minecraftforge.fml.common.gameevent.PlayerEvent.*;
 
 @Mod.EventBusSubscriber
 public class EventHandler
@@ -91,7 +98,7 @@ public class EventHandler
             //But modifiers and QuickReplace should still work
 
             //Send message to client, which sends message back with raytrace info
-            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(), (EntityPlayerMP) player);
+            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(event.getPos(), event.getState()), (EntityPlayerMP) player);
         }
     }
 
@@ -147,5 +154,35 @@ public class EventHandler
         event.setNewSpeed(newSpeed);
 
         //EffortlessBuilding.log(player, String.valueOf(event.getNewSpeed()));
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerLoggedInEvent event) {
+        EntityPlayer player = event.player;
+        ModifierSettingsManager.handleNewPlayer(player);
+        ModeSettingsManager.handleNewPlayer(player);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerLoggedOutEvent event) {
+        UndoRedo.clear(event.player);
+        //TODO call clientside
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerRespawnEvent event) {
+        EntityPlayer player = event.player;
+        ModifierSettingsManager.handleNewPlayer(player);
+        ModeSettingsManager.handleNewPlayer(player);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerChangedDimensionEvent event) {
+        EntityPlayer player = event.player;
+        ModifierSettingsManager.handleNewPlayer(player);
+        ModeSettingsManager.handleNewPlayer(player);
+
+        UndoRedo.clear(event.player);
+        //TODO call clientside
     }
 }

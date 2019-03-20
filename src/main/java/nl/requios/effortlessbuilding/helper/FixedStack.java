@@ -1,5 +1,7 @@
 package nl.requios.effortlessbuilding.helper;
 
+import nl.requios.effortlessbuilding.EffortlessBuilding;
+
 //Stack with fixed size. Removes (overwrites) oldest element on push.
 public class FixedStack<T> {
     private T[] stack;
@@ -20,7 +22,7 @@ public class FixedStack<T> {
         stack[top] = object;
         top++;
 
-        if (filled < size - 1)
+        if (filled < size)
             filled++;
     }
 

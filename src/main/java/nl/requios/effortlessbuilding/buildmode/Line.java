@@ -5,6 +5,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.*;
@@ -64,7 +65,7 @@ public class Line implements IBuildMode {
             }
 
             return planeBound.subtract(start).dotProduct(look) > 0 &&
-                   distToPlayerSq > 4 && distToPlayerSq < reach * reach &&
+                   distToPlayerSq > 2 && distToPlayerSq < reach * reach &&
                    !intersects;
         }
     }
@@ -180,11 +181,16 @@ public class Line implements IBuildMode {
             //Select the one that is closest (from wall position to its line counterpart)
             for (int i = 1; i < criteriaList.size(); i++) {
                 Criteria criteria = criteriaList.get(i);
-                if (criteria.distToLineSq < selected.distToLineSq)
-                    selected = criteria;
+                if (criteria.distToLineSq < 2.0 && selected.distToLineSq < 2.0) {
+                    //Both very close to line, choose closest to player
+                    if (criteria.distToPlayerSq < selected.distToPlayerSq)
+                        selected = criteria;
+                } else {
+                    //Pick closest to line
+                    if (criteria.distToLineSq < selected.distToLineSq)
+                        selected = criteria;
+                }
             }
-
-            //TODO: if multiple are very close, choose closest to player
 
         }
 

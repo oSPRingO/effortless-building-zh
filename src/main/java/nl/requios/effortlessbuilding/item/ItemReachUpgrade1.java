@@ -56,12 +56,6 @@ public class ItemReachUpgrade1 extends Item {
     }
 
     @Override
-    public ItemStack onItemUseFinish(ItemStack stack, World worldIn, EntityLivingBase entityLiving) {
-        EffortlessBuilding.log("used");
-        return ItemStack.EMPTY;
-    }
-
-    @Override
     public void addInformation(ItemStack stack, @Nullable World world, List<String> tooltip, ITooltipFlag flag) {
         tooltip.add(TextFormatting.GRAY + "Consume to increase reach to " + TextFormatting.BLUE + BuildConfig.reach.maxReachLevel1);
     }

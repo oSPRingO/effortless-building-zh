@@ -118,12 +118,8 @@ public class BuildModes {
 
     //Use a network message to break blocks in the distance using clientside mouse input
     public static void onBlockBrokenMessage(EntityPlayer player, BlockBrokenMessage message) {
-
-        if (ReachHelper.canBreakFar(player)) {
-
-            BlockPos startPos = message.isBlockHit() ? message.getBlockPos() : null;
-            onBlockBroken(player, startPos, true);
-        }
+        BlockPos startPos = message.isBlockHit() ? message.getBlockPos() : null;
+        onBlockBroken(player, startPos, true);
     }
 
     public static void onBlockBroken(EntityPlayer player, BlockPos startPos, boolean breakStartPos) {
@@ -131,10 +127,12 @@ public class BuildModes {
         //Check if not in the middle of placing
         Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
         if (currentlyBreaking.get(player) != null && !currentlyBreaking.get(player)) {
-            //Cancel breaking
+            //Cancel placing
             initializeMode(player);
             return;
         }
+
+        if (!ReachHelper.canBreakFar(player)) return;
 
         //If first click
         if (currentlyBreaking.get(player) == null) {

@@ -1,10 +1,12 @@
 package nl.requios.effortlessbuilding.buildmode;
 
+import com.sun.javafx.geom.Vec2d;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.*;
@@ -26,7 +28,10 @@ public class Wall implements IBuildMode {
         Criteria(Vec3d planeBound, BlockPos firstPos, Vec3d start, Vec3d look) {
             this.planeBound = planeBound;
             this.distToPlayerSq = this.planeBound.subtract(start).lengthSquared();
-            this.angle = this.planeBound.subtract(new Vec3d(firstPos)).normalize().dotProduct(look);
+            Vec3d wall = this.planeBound.subtract(new Vec3d(firstPos));
+            Vec2d horizontalWall = new Vec2d(wall.x, wall.z);
+            Vec2d horizontalLook = new Vec2d(look.x, look.z);
+            this.angle = horizontalWall.x * horizontalLook.x + horizontalWall.y * horizontalLook.y;
         }
 
         //check if its not behind the player and its not too close and not too far
@@ -42,7 +47,7 @@ public class Wall implements IBuildMode {
             }
 
             return planeBound.subtract(start).dotProduct(look) > 0 &&
-                   distToPlayerSq > 4 && distToPlayerSq < reach * reach &&
+                   distToPlayerSq > 2 && distToPlayerSq < reach * reach &&
                    !intersects;
         }
     }
@@ -163,14 +168,12 @@ public class Wall implements IBuildMode {
         //If multiple are valid, choose based on criteria
         if (criteriaList.size() > 1) {
             //Select the one that is closest
+            //Limit the angle to not be too extreme
             for (int i = 1; i < criteriaList.size(); i++) {
                 Criteria criteria = criteriaList.get(i);
-                if (criteria.distToPlayerSq < selected.distToPlayerSq)
+                if (criteria.distToPlayerSq < selected.distToPlayerSq && Math.abs(criteria.angle) - Math.abs(selected.angle) < 3)
                     selected = criteria;
             }
-
-            //TODO: limit angle
-            //Math.abs(zAngle) < Math.abs(xAngle)
         }
 
         return new BlockPos(selected.planeBound);
