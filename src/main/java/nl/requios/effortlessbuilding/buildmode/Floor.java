@@ -5,7 +5,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.*;
@@ -13,13 +12,13 @@ import java.util.*;
 public class Floor implements IBuildMode {
     //In singleplayer client and server variables are shared
     //Split everything that needs separate values and may not be called twice in one click
-    Dictionary<UUID, Integer> rightClickClientTable = new Hashtable<>();
-    Dictionary<UUID, Integer> rightClickServerTable = new Hashtable<>();
-    Dictionary<UUID, BlockPos> firstPosTable = new Hashtable<>();
-    Dictionary<UUID, EnumFacing> sideHitTable = new Hashtable<>();
-    Dictionary<UUID, Vec3d> hitVecTable = new Hashtable<>();
+    private Dictionary<UUID, Integer> rightClickClientTable = new Hashtable<>();
+    private Dictionary<UUID, Integer> rightClickServerTable = new Hashtable<>();
+    private Dictionary<UUID, BlockPos> firstPosTable = new Hashtable<>();
+    private Dictionary<UUID, EnumFacing> sideHitTable = new Hashtable<>();
+    private Dictionary<UUID, Vec3d> hitVecTable = new Hashtable<>();
 
-    class Criteria {
+    static class Criteria {
         Vec3d planeBound;
         double distToPlayerSq;
 
@@ -101,32 +100,13 @@ public class Floor implements IBuildMode {
             if (secondPos == null) return list;
 
             //Add whole floor
-            //Limit amount of blocks you can place per row
-            int limit = ReachHelper.getMaxBlocksPlacedAtOnce(player);
-
-            int x1 = firstPos.getX(), x2 = secondPos.getX();
-            int y1 = firstPos.getY(), y2 = secondPos.getY();
-            int z1 = firstPos.getZ(), z2 = secondPos.getZ();
-
-            for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
-
-                for (int n = z1; z1 < z2 ? n <= z2 : n >= z2; n += z1 < z2 ? 1 : -1) {
-
-                    //check if whole row fits within limit
-                    if (Math.abs(y1 - y2) < limit - list.size()) {
-
-                        for (int m = y1; y1 < y2 ? m <= y2 : m >= y2; m += y1 < y2 ? 1 : -1) {
-                            list.add(new BlockPos(l, m, n));
-                        }
-                    }
-                }
-            }
+            list.addAll(getFloorBlocks(player, firstPos, secondPos));
         }
 
         return list;
     }
 
-    public BlockPos findFloor(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
+    public static BlockPos findFloor(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
         Vec3d look = player.getLookVec();
         Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
 
@@ -147,6 +127,33 @@ public class Floor implements IBuildMode {
         Criteria selected = criteriaList.get(0);
 
         return new BlockPos(selected.planeBound);
+    }
+
+    public static List<BlockPos> getFloorBlocks(EntityPlayer player, BlockPos firstPos, BlockPos secondPos) {
+        List<BlockPos> list = new ArrayList<>();
+
+        //Limit amount of blocks you can place per row
+        int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
+
+        int x1 = firstPos.getX(), x2 = secondPos.getX();
+        int y = firstPos.getY();
+        int z1 = firstPos.getZ(), z2 = secondPos.getZ();
+
+        //limit axis
+        if (x2 - x1 >= axisLimit) x2 = x1 + axisLimit - 1;
+        if (x1 - x2 >= axisLimit) x2 = x1 - axisLimit + 1;
+        if (z2 - z1 >= axisLimit) z2 = z1 + axisLimit - 1;
+        if (z1 - z2 >= axisLimit) z2 = z1 - axisLimit + 1;
+
+        for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
+
+            for (int n = z1; z1 < z2 ? n <= z2 : n >= z2; n += z1 < z2 ? 1 : -1) {
+
+                list.add(new BlockPos(l, y, n));
+            }
+        }
+
+        return list;
     }
 
     @Override

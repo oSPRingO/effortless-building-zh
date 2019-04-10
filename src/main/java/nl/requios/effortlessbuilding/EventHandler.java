@@ -98,7 +98,7 @@ public class EventHandler
             //But modifiers and QuickReplace should still work
 
             //Send message to client, which sends message back with raytrace info
-            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(event.getPos(), event.getState()), (EntityPlayerMP) player);
+            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState()), (EntityPlayerMP) player);
         }
     }
 

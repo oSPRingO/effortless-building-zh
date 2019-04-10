@@ -16,10 +16,10 @@ effortlessbuilding.mode.normal_plus=Normal+
 effortlessbuilding.mode.line=Line
 effortlessbuilding.mode.wall=Wall
 effortlessbuilding.mode.floor=Floor
-effortlessbuilding.mode.diagonal_line=Diagonal Line (WIP)
-effortlessbuilding.mode.diagonal_wall=Diagonal Wall (WIP)
-effortlessbuilding.mode.slope_floor=Slope Floor (WIP)
-effortlessbuilding.mode.cube=Cube (WIP)
+effortlessbuilding.mode.diagonal_line=Diagonal Line
+effortlessbuilding.mode.diagonal_wall=Diagonal Wall
+effortlessbuilding.mode.slope_floor=Slope Floor
+effortlessbuilding.mode.cube=Cube
 
 effortlessbuilding.action.undo=Undo
 effortlessbuilding.action.redo=Redo

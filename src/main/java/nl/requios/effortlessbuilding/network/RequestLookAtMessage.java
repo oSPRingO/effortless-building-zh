@@ -3,7 +3,6 @@ package nl.requios.effortlessbuilding.network;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -24,24 +23,31 @@ import java.util.ArrayList;
  */
 public class RequestLookAtMessage implements IMessage {
     private BlockPos coordinate;
-    private IBlockState blockState;
+    private IBlockState previousBlockState;
+    private IBlockState newBlockState;
 
     public RequestLookAtMessage() {
         coordinate = BlockPos.ORIGIN;
-        blockState = null;
+        previousBlockState = null;
+        newBlockState = null;
     }
 
-    public RequestLookAtMessage(BlockPos coordinate, IBlockState blockState) {
+    public RequestLookAtMessage(BlockPos coordinate, IBlockState previousBlockState, IBlockState newBlockState) {
         this.coordinate = coordinate;
-        this.blockState = blockState;
+        this.previousBlockState = previousBlockState;
+        this.newBlockState = newBlockState;
     }
 
     public BlockPos getCoordinate() {
         return coordinate;
     }
 
-    public IBlockState getBlockState() {
-        return blockState;
+    public IBlockState getPreviousBlockState() {
+        return previousBlockState;
+    }
+
+    public IBlockState getNewBlockState() {
+        return newBlockState;
     }
 
     @Override
@@ -49,13 +55,15 @@ public class RequestLookAtMessage implements IMessage {
         buf.writeInt(this.coordinate.getX());
         buf.writeInt(this.coordinate.getY());
         buf.writeInt(this.coordinate.getZ());
-        buf.writeInt(Block.getStateId(this.blockState));
+        buf.writeInt(Block.getStateId(this.previousBlockState));
+        buf.writeInt(Block.getStateId(this.newBlockState));
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
         coordinate = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
-        blockState = Block.getStateById(buf.readInt());
+        previousBlockState = Block.getStateById(buf.readInt());
+        newBlockState = Block.getStateById(buf.readInt());
     }
 
     // The params of the IMessageHandler are <REQ, REPLY>
@@ -76,7 +84,8 @@ public class RequestLookAtMessage implements IMessage {
                     //Add to undo stack clientside
                     UndoRedo.addUndo(player, new BlockSet(
                             new ArrayList<BlockPos>() {{add(message.getCoordinate());}},
-                            new ArrayList<IBlockState>() {{add(message.getBlockState());}},
+                            new ArrayList<IBlockState>() {{add(message.getPreviousBlockState());}},
+                            new ArrayList<IBlockState>() {{add(message.getNewBlockState());}},
                             new Vec3d(0,0,0),
                             message.getCoordinate(), message.getCoordinate()));
                 });

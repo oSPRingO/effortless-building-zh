@@ -109,11 +109,10 @@ public class RandomizerBagContainer extends Container {
     @Override
     public ItemStack slotClick(int slot, int dragType, ClickType clickTypeIn, EntityPlayer player) {
         // this will prevent the player from interacting with the item that opened the inventory:
-        ItemStack clickItemStack = super.slotClick(slot, dragType, clickTypeIn, player);
-        if (slot >= 0 && getSlot(slot) != null && getSlot(slot).getStack() == player.getHeldItem(EnumHand.MAIN_HAND)) {
+        if (slot >= 0 && getSlot(slot) != null && getSlot(slot).getStack().equals(player.getHeldItem(EnumHand.MAIN_HAND))) {
             return ItemStack.EMPTY;
         }
-        return clickItemStack;
+        return super.slotClick(slot, dragType, clickTypeIn, player);
     }
 
     /**

@@ -191,8 +191,9 @@ public class BuildModes {
         return currentlyBreaking.get(player) != null;
     }
 
+
     //Find coordinates on a line bound by a plane
-    protected static Vec3d findXBound(double x, Vec3d start, Vec3d look) {
+    public static Vec3d findXBound(double x, Vec3d start, Vec3d look) {
         //then y and z are
         double y = (x - start.x) / look.x * look.y + start.y;
         double z = (x - start.x) / look.x * look.z + start.z;
@@ -200,7 +201,7 @@ public class BuildModes {
         return new Vec3d(x, y, z);
     }
 
-    protected static Vec3d findYBound(double y, Vec3d start, Vec3d look) {
+    public static Vec3d findYBound(double y, Vec3d start, Vec3d look) {
         //then x and z are
         double x = (y - start.y) / look.y * look.x + start.x;
         double z = (y - start.y) / look.y * look.z + start.z;
@@ -208,13 +209,12 @@ public class BuildModes {
         return new Vec3d(x, y, z);
     }
 
-    protected static Vec3d findZBound(double z, Vec3d start, Vec3d look) {
+    public static Vec3d findZBound(double z, Vec3d start, Vec3d look) {
         //then x and y are
         double x = (z - start.z) / look.z * look.x + start.x;
         double y = (z - start.z) / look.z * look.y + start.y;
 
         return new Vec3d(x, y, z);
     }
-
 
 }

@@ -73,7 +73,7 @@ public class ItemRandomizerBag extends Item {
             IBlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(world, pos, facing,
                     hitX, hitY, hitZ, toPlace.getMetadata(), player, hand);
 
-            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, new Vec3d(hitX, hitY, hitZ), false, true);
+            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, new Vec3d(hitX, hitY, hitZ), false, false, true);
 
             //Synergy
             //Works without calling

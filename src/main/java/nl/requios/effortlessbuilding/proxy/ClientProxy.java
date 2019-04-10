@@ -226,6 +226,7 @@ public class ClientProxy implements IProxy {
                 ItemStack currentItemStack = player.getHeldItem(EnumHand.MAIN_HAND);
                 if (currentItemStack.getItem() instanceof ItemBlock ||
                     (CompatHelper.isItemBlockProxy(currentItemStack) && !player.isSneaking())) {
+
                     ItemStack itemStack = CompatHelper.getItemBlockFromStack(currentItemStack);
 
                     //find position in distance
@@ -235,7 +236,8 @@ public class ClientProxy implements IProxy {
 
                     //play sound if further than normal
                     if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK &&
-                        (lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f) {
+                        (lookingAt.hitVec.subtract(player.getPositionEyes(1f))).lengthSquared() > 25f &&
+                        itemStack.getItem() instanceof ItemBlock) {
 
                         IBlockState state = ((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
                         BlockPos blockPos = lookingAt.getBlockPos();

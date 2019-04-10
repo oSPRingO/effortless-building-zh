@@ -3,7 +3,6 @@ package nl.requios.effortlessbuilding.buildmodifier;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
@@ -11,14 +10,10 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import nl.requios.effortlessbuilding.BuildConfig;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
-import nl.requios.effortlessbuilding.helper.FixedStack;
 import nl.requios.effortlessbuilding.helper.InventoryHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
-import nl.requios.effortlessbuilding.network.BlockPlacedMessage;
 import nl.requios.effortlessbuilding.render.BlockPreviewRenderer;
 
 import java.util.*;
@@ -42,9 +37,18 @@ public class BuildModifiers {
         //check if valid blockstates
         if (blockStates.size() == 0 || coordinates.size() != blockStates.size()) return;
 
+        //remember previous blockstates for undo
+        List<IBlockState> previousBlockStates = new ArrayList<>(coordinates.size());
+        List<IBlockState> newBlockStates = new ArrayList<>(coordinates.size());
+        for (BlockPos coordinate : coordinates) {
+            previousBlockStates.add(world.getBlockState(coordinate));
+        }
+
         if (world.isRemote) {
 
             BlockPreviewRenderer.onBlocksPlaced();
+
+            newBlockStates = blockStates;
 
         } else {
 
@@ -58,45 +62,75 @@ public class BuildModifiers {
                     //check itemstack empty
                     if (itemStack.isEmpty()) {
                         //try to find new stack, otherwise continue
-                        itemStack = InventoryHelper.findItemStackInInventory(player, blockState);
+                        itemStack = InventoryHelper.findItemStackInInventory(player, blockState.getBlock());
                         if (itemStack.isEmpty()) continue;
                     }
-                    SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, false, false);
+                    SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, false, false, false);
                 }
+            }
+
+            //find actual new blockstates for undo
+            for (BlockPos coordinate : coordinates) {
+                newBlockStates.add(world.getBlockState(coordinate));
             }
         }
 
         //add to undo stack
         BlockPos firstPos = startCoordinates.get(0);
         BlockPos secondPos = startCoordinates.get(startCoordinates.size() - 1);
-        UndoRedo.addUndo(player, new BlockSet(coordinates, blockStates, hitVec, firstPos, secondPos));
+        UndoRedo.addUndo(player, new BlockSet(coordinates, previousBlockStates, newBlockStates, hitVec, firstPos, secondPos));
     }
 
-    public static void onBlockBroken(EntityPlayer player, List<BlockPos> posList, boolean breakStartPos) {
+    public static void onBlockBroken(EntityPlayer player, List<BlockPos> startCoordinates, boolean breakStartPos) {
         World world = player.world;
 
-        List<BlockPos> coordinates = findCoordinates(player, posList);
+        List<BlockPos> coordinates = findCoordinates(player, startCoordinates);
 
         if (coordinates.isEmpty()) return;
 
+        //remember previous blockstates for undo
+        List<IBlockState> previousBlockStates = new ArrayList<>(coordinates.size());
+        List<IBlockState> newBlockStates = new ArrayList<>(coordinates.size());
+        for (BlockPos coordinate : coordinates) {
+            previousBlockStates.add(world.getBlockState(coordinate));
+        }
+
         if (world.isRemote) {
             BlockPreviewRenderer.onBlocksBroken();
-            return;
-        }
 
-        //If the player is going to instabreak grass or a plant, only break other instabreaking things
-        boolean onlyInstaBreaking = !player.isCreative() &&
-                world.getBlockState(posList.get(0)).getBlockHardness(world, posList.get(0)) == 0f;
+            //list of air blockstates
+            for (BlockPos coordinate : coordinates) {
+                newBlockStates.add(Block.getBlockById(0).getDefaultState());
+            }
 
-        //break all those blocks
-        for (int i = breakStartPos ? 0 : 1; i < coordinates.size(); i++) {
-            BlockPos coordinate = coordinates.get(i);
-            if (world.isBlockLoaded(coordinate, false)) {
-                if (!onlyInstaBreaking || world.getBlockState(coordinate).getBlockHardness(world, coordinate) == 0f) {
-                    SurvivalHelper.breakBlock(world, player, coordinate);
+        } else {
+
+            //If the player is going to instabreak grass or a plant, only break other instabreaking things
+            boolean onlyInstaBreaking = !player.isCreative() &&
+                                        world.getBlockState(startCoordinates.get(0)).getBlockHardness(world, startCoordinates.get(0)) == 0f;
+
+            //break all those blocks
+            for (int i = breakStartPos ? 0 : 1; i < coordinates.size(); i++) {
+                BlockPos coordinate = coordinates.get(i);
+                if (world.isBlockLoaded(coordinate, false)) {
+                    if (!onlyInstaBreaking || world.getBlockState(coordinate).getBlockHardness(world, coordinate) == 0f) {
+                        SurvivalHelper.breakBlock(world, player, coordinate, false);
+                    }
                 }
             }
+
+            //find actual new blockstates for undo
+            for (BlockPos coordinate : coordinates) {
+                newBlockStates.add(world.getBlockState(coordinate));
+            }
         }
+
+        //add to undo stack
+        BlockPos firstPos = startCoordinates.get(0);
+        BlockPos secondPos = startCoordinates.get(startCoordinates.size() - 1);
+        Vec3d hitVec = new Vec3d(0.5, 0.5, 0.5);
+        UndoRedo.addUndo(player, new BlockSet(coordinates, previousBlockStates, newBlockStates, hitVec, firstPos, secondPos));
+
     }
 
     public static List<BlockPos> findCoordinates(EntityPlayer player, List<BlockPos> posList) {

@@ -1,12 +1,10 @@
 package nl.requios.effortlessbuilding.buildmode;
 
-import com.sun.javafx.geom.Vec2d;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.*;
@@ -14,13 +12,13 @@ import java.util.*;
 public class Wall implements IBuildMode {
     //In singleplayer client and server variables are shared
     //Split everything that needs separate values and may not be called twice in one click
-    Dictionary<UUID, Integer> rightClickClientTable = new Hashtable<>();
-    Dictionary<UUID, Integer> rightClickServerTable = new Hashtable<>();
-    Dictionary<UUID, BlockPos> firstPosTable = new Hashtable<>();
-    Dictionary<UUID, EnumFacing> sideHitTable = new Hashtable<>();
-    Dictionary<UUID, Vec3d> hitVecTable = new Hashtable<>();
+    private Dictionary<UUID, Integer> rightClickClientTable = new Hashtable<>();
+    private Dictionary<UUID, Integer> rightClickServerTable = new Hashtable<>();
+    private Dictionary<UUID, BlockPos> firstPosTable = new Hashtable<>();
+    private Dictionary<UUID, EnumFacing> sideHitTable = new Hashtable<>();
+    private Dictionary<UUID, Vec3d> hitVecTable = new Hashtable<>();
 
-    class Criteria {
+    static class Criteria {
         Vec3d planeBound;
         double distToPlayerSq;
         double angle;
@@ -29,9 +27,7 @@ public class Wall implements IBuildMode {
             this.planeBound = planeBound;
             this.distToPlayerSq = this.planeBound.subtract(start).lengthSquared();
             Vec3d wall = this.planeBound.subtract(new Vec3d(firstPos));
-            Vec2d horizontalWall = new Vec2d(wall.x, wall.z);
-            Vec2d horizontalLook = new Vec2d(look.x, look.z);
-            this.angle = horizontalWall.x * horizontalLook.x + horizontalWall.y * horizontalLook.y;
+            this.angle = wall.x * look.x + wall.z * look.z; //dot product ignoring y (looking up/down should not affect this angle)
         }
 
         //check if its not behind the player and its not too close and not too far
@@ -107,41 +103,13 @@ public class Wall implements IBuildMode {
             if (secondPos == null) return list;
 
             //Add whole wall
-            //Limit amount of blocks we can place per row
-            int limit = ReachHelper.getMaxBlocksPlacedAtOnce(player);
-            int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
-
-            int x1 = firstPos.getX(), x2 = secondPos.getX();
-            int y1 = firstPos.getY(), y2 = secondPos.getY();
-            int z1 = firstPos.getZ(), z2 = secondPos.getZ();
-
-            //limit axis
-            if (x2 - x1 > axisLimit) x2 = x1 + axisLimit;
-            if (x1 - x2 > axisLimit) x2 = x1 - axisLimit;
-            if (y2 - y1 > axisLimit) y2 = y1 + axisLimit;
-            if (y1 - y2 > axisLimit) y2 = y1 - axisLimit;
-            if (z2 - z1 > axisLimit) z2 = z1 + axisLimit;
-            if (z1 - z2 > axisLimit) z2 = z1 - axisLimit;
-
-            for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
-
-                for (int n = z1; z1 < z2 ? n <= z2 : n >= z2; n += z1 < z2 ? 1 : -1) {
-
-                    //check if whole row fits within limit
-                    if (Math.abs(y1 - y2) < limit - list.size()) {
-
-                        for (int m = y1; y1 < y2 ? m <= y2 : m >= y2; m += y1 < y2 ? 1 : -1) {
-                            list.add(new BlockPos(l, m, n));
-                        }
-                    }
-                }
-            }
+            list.addAll(getWallBlocks(player, firstPos, secondPos));
         }
 
         return list;
     }
 
-    public BlockPos findWall(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
+    public static BlockPos findWall(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
         Vec3d look = player.getLookVec();
         Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
 
@@ -177,6 +145,42 @@ public class Wall implements IBuildMode {
         }
 
         return new BlockPos(selected.planeBound);
+    }
+
+    public static List<BlockPos> getWallBlocks(EntityPlayer player, BlockPos firstPos, BlockPos secondPos) {
+        List<BlockPos> list = new ArrayList<>();
+
+        //Limit amount of blocks we can place per row
+        int limit = ReachHelper.getMaxBlocksPlacedAtOnce(player);
+        int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
+
+        int x1 = firstPos.getX(), x2 = secondPos.getX();
+        int y1 = firstPos.getY(), y2 = secondPos.getY();
+        int z1 = firstPos.getZ(), z2 = secondPos.getZ();
+
+        //limit axis
+        if (x2 - x1 >= axisLimit) x2 = x1 + axisLimit - 1;
+        if (x1 - x2 >= axisLimit) x2 = x1 - axisLimit + 1;
+        if (y2 - y1 >= axisLimit) y2 = y1 + axisLimit - 1;
+        if (y1 - y2 >= axisLimit) y2 = y1 - axisLimit + 1;
+        if (z2 - z1 >= axisLimit) z2 = z1 + axisLimit - 1;
+        if (z1 - z2 >= axisLimit) z2 = z1 - axisLimit + 1;
+
+        for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
+
+            for (int n = z1; z1 < z2 ? n <= z2 : n >= z2; n += z1 < z2 ? 1 : -1) {
+
+                //check if whole row fits within limit
+                if (Math.abs(y1 - y2) < limit - list.size()) {
+
+                    for (int m = y1; y1 < y2 ? m <= y2 : m >= y2; m += y1 < y2 ? 1 : -1) {
+                        list.add(new BlockPos(l, m, n));
+                    }
+                }
+            }
+        }
+
+        return list;
     }
 
     @Override

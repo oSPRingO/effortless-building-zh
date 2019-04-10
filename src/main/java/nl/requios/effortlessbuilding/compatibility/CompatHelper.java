@@ -46,20 +46,28 @@ public class CompatHelper {
 
     // Get the block to be placed by this proxy. For the /dank/null, it's the slot stack
     // pointed to by nbt integer selectedIndex.
-    public static ItemStack getItemBlockFromStack(ItemStack stack) {
-        Item item = stack.getItem();
+    public static ItemStack getItemBlockFromStack(ItemStack proxy) {
+        Item proxyItem = proxy.getItem();
 
-        if (item instanceof ItemBlock)
-            return stack;
+        if (proxyItem instanceof ItemBlock)
+            return proxy;
 
-        if (item instanceof ItemRandomizerBag)
-            return ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(stack));
+        //Randomizer Bag
+        if (proxyItem instanceof ItemRandomizerBag) {
+            ItemStack itemStack = proxy;
+            while (!(itemStack.getItem() instanceof ItemBlock || itemStack.isEmpty())) {
+                if (itemStack.getItem() instanceof ItemRandomizerBag)
+                    itemStack = ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(itemStack));
+            }
+            return itemStack;
+        }
 
-        if(item == dankNullItem) {
+        //Dank Null
+        if(proxyItem == dankNullItem) {
             int index = 0;
-            if(stack.hasTagCompound() && stack.getTagCompound().hasKey("selectedIndex"))
-                index = stack.getTagCompound().getInteger("selectedIndex");
-            return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).getStackInSlot(index);
+            if(proxy.hasTagCompound() && proxy.getTagCompound().hasKey("selectedIndex"))
+                index = proxy.getTagCompound().getInteger("selectedIndex");
+            return proxy.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).getStackInSlot(index);
         }
 
         return ItemStack.EMPTY;

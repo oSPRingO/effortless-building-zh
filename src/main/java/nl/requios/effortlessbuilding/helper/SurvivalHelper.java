@@ -7,17 +7,12 @@ import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.properties.IProperty;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.init.Enchantments;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemSlab;
 import net.minecraft.item.ItemStack;
-import net.minecraft.stats.StatList;
-import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundCategory;
@@ -26,17 +21,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.items.ItemHandlerHelper;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.List;
 
 public class SurvivalHelper {
 
@@ -44,9 +33,16 @@ public class SurvivalHelper {
     //Checks if area is loaded, if player has the right permissions, if existing block can be replaced (drops it if so) and consumes an item from the stack.
     //Based on ItemBlock#onItemUse
     public static boolean placeBlock(World world, EntityPlayer player, BlockPos pos, IBlockState blockState,
-                                     ItemStack origstack, EnumFacing facing, Vec3d hitVec, boolean skipCollisionCheck, boolean playSound) {
+                                     ItemStack origstack, EnumFacing facing, Vec3d hitVec, boolean skipPlaceCheck,
+                                     boolean skipCollisionCheck, boolean playSound) {
         if (!world.isBlockLoaded(pos, true)) return false;
         ItemStack itemstack = origstack;
+
+        if (blockState.getBlock().isAir(blockState, world, pos) || itemstack.isEmpty()) {
+            dropBlock(world, player, pos);
+            world.setBlockToAir(pos);
+            return true;
+        }
 
         //Randomizer bag, other proxy item synergy
         //Preliminary compatibility code for other items that hold blocks
@@ -59,7 +55,7 @@ public class SurvivalHelper {
 
 
         //More manual with ItemBlock#placeBlockAt
-        if (canPlace(world, player, pos, blockState, itemstack, skipCollisionCheck, facing.getOpposite())) {
+        if (skipPlaceCheck || canPlace(world, player, pos, blockState, itemstack, skipCollisionCheck, facing.getOpposite())) {
             //Drop existing block
             dropBlock(world, player, pos);
 
@@ -108,13 +104,12 @@ public class SurvivalHelper {
 
     //Used for all breaking of blocks in this mod.
     //Checks if area is loaded, if appropriate tool is used in survival mode, and drops the block directly into the players inventory
-    public static boolean breakBlock(World world, EntityPlayer player, BlockPos pos) {
+    public static boolean breakBlock(World world, EntityPlayer player, BlockPos pos, boolean skipChecks) {
         if (!world.isBlockLoaded(pos, false)) return false;
 
         //Check if can break
-        if (canBreak(world, player, pos))
-        {
-//            player.addStat(StatList.getBlockStats(world.getBlockState(pos).getBlock()));
+        if (skipChecks || canBreak(world, player, pos)) {
+//            player.addStat(StatList.getBlockStats(world.getNewBlockState(pos).getBlock()));
 //            player.addExhaustion(0.005F);
 
             //Drop existing block
