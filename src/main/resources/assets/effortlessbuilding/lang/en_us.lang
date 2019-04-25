@@ -25,5 +25,15 @@ effortlessbuilding.action.undo=Undo
 effortlessbuilding.action.redo=Redo
 effortlessbuilding.action.replace=Replace
 effortlessbuilding.action.open_modifier_settings=Open Modifier Settings
+effortlessbuilding.action.normal_speed=Normal
+effortlessbuilding.action.fast_speed=Fast
+effortlessbuilding.action.full=Full
+effortlessbuilding.action.hollow=Hollow
+effortlessbuilding.action.skeleton=Skeleton
+effortlessbuilding.action.short_edge=Short Edge
+effortlessbuilding.action.long_edge=Long Edge
+effortlessbuilding.action.thickness_1=1 Block Thick
+effortlessbuilding.action.thickness_3=3 Blocks Thick
+effortlessbuilding.action.thickness_5=5 Blocks Thick
 
 commands.reach.usage=/reach <level>

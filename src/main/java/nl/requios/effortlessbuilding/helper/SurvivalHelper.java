@@ -21,6 +21,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 
@@ -198,7 +199,14 @@ public class SurvivalHelper {
 
         IBlockState state = world.getBlockState(pos);
         state = state.getBlock().getActualState(state, world, pos);
-        if (state.getMaterial().isToolNotRequired()) return true;
+
+        switch (BuildConfig.survivalBalancers.quickReplaceMiningLevel) {
+            case -1: return state.getMaterial().isToolNotRequired();
+            case 0: return state.getBlock().getHarvestLevel(state) <= 0;
+            case 1: return state.getBlock().getHarvestLevel(state) <= 1;
+            case 2: return state.getBlock().getHarvestLevel(state) <= 2;
+            case 3: return state.getBlock().getHarvestLevel(state) <= 3;
+        }
 
         return false;
     }

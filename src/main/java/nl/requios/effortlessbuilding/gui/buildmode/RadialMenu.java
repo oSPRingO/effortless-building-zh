@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 import net.minecraft.client.resources.I18n;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.text.TextFormatting;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.ModeOptions;
@@ -110,6 +111,8 @@ public class RadialMenu extends GuiScreen {
     public void drawScreen(final int mouseX, final int mouseY, final float partialTicks) {
         if (!isVisible()) return;
 
+        BuildModeEnum currentBuildMode = ModeSettingsManager.getModeSettings(Minecraft.getMinecraft().player).getBuildMode();
+
         GlStateManager.pushMatrix();
         GlStateManager.translate( 0.0F, 0.0F, 200.0F );
 
@@ -148,13 +151,22 @@ public class RadialMenu extends GuiScreen {
         final ArrayList<MenuRegion> modes = new ArrayList<MenuRegion>();
         final ArrayList<MenuButton> buttons = new ArrayList<MenuButton>();
 
-        buttons.add(new MenuButton("effortlessbuilding.action.undo", ModeOptions.ActionEnum.UNDO, -buttonDistance - 26, -13, EnumFacing.UP));
-        buttons.add(new MenuButton("effortlessbuilding.action.redo", ModeOptions.ActionEnum.REDO, -buttonDistance, -13, EnumFacing.UP));
-        buttons.add(new MenuButton("effortlessbuilding.action.open_modifier_settings", ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS, -buttonDistance - 26, 13, EnumFacing.DOWN));
-        buttons.add(new MenuButton("effortlessbuilding.action.replace", ModeOptions.ActionEnum.REPLACE, -buttonDistance, 13, EnumFacing.DOWN));
-
+        //Add build modes
         for (final BuildModeEnum mode : BuildModeEnum.values()) {
             modes.add(new MenuRegion(mode));
+        }
+
+        //Add actions
+        buttons.add(new MenuButton(ModeOptions.ActionEnum.UNDO.name, ModeOptions.ActionEnum.UNDO, -buttonDistance - 26, -13, EnumFacing.UP));
+        buttons.add(new MenuButton(ModeOptions.ActionEnum.REDO.name, ModeOptions.ActionEnum.REDO, -buttonDistance, -13, EnumFacing.UP));
+        buttons.add(new MenuButton(ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS.name, ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS, -buttonDistance - 26, 13, EnumFacing.DOWN));
+        buttons.add(new MenuButton(ModeOptions.ActionEnum.REPLACE.name, ModeOptions.ActionEnum.REPLACE, -buttonDistance, 13, EnumFacing.DOWN));
+
+        //Add buildmode dependent options
+        ModeOptions.ActionEnum[] options = currentBuildMode.options;
+        for (int i = 0; i < options.length; i++) {
+            ModeOptions.ActionEnum action = options[i];
+            buttons.add(new MenuButton(action.name, action, buttonDistance + i * 26, -20, EnumFacing.DOWN));
         }
 
         switchTo = null;
@@ -193,7 +205,7 @@ public class RadialMenu extends GuiScreen {
                 float a = 0.5f;
 
                 //check if current mode
-                int buildMode = ModeSettingsManager.getModeSettings(Minecraft.getMinecraft().player).getBuildMode().ordinal();
+                int buildMode = currentBuildMode.ordinal();
                 if (buildMode == i) {
                     r = 0f;
                     g = 0.5f;
@@ -225,14 +237,27 @@ public class RadialMenu extends GuiScreen {
         }
 
         for (final MenuButton btn : buttons) {
-            float r = 0.8f;
-            float g = 0.8f;
-            float b = 0.8f;
+            float r = 0.5f;
+            float g = 0.5f;
+            float b = 0.5f;
             float a = 0.5f;
 
-            if (btn.x1 <= mouseXCenter && btn.x2 >= mouseXCenter && btn.y1 <= mouseYCenter && btn.y2 >= mouseYCenter) {
+            //highlight when active option
+            if (btn.action == ModeOptions.getBuildSpeed() ||
+                btn.action == ModeOptions.getFill() ||
+                btn.action == ModeOptions.getCubeFill() ||
+                btn.action == ModeOptions.getRaisedEdge() ||
+                btn.action == ModeOptions.getLineThickness()) {
                 r = 0.0f;
                 g = 0.5f;
+                b = 1f;
+                a = 0.6f;
+            }
+
+            //highlight when mouse over
+            if (btn.x1 <= mouseXCenter && btn.x2 >= mouseXCenter && btn.y1 <= mouseYCenter && btn.y2 >= mouseYCenter) {
+                r = 0.6f;
+                g = 0.8f;
                 b = 1f;
                 a = 0.6f;
                 btn.highlighted = true;
@@ -311,6 +336,36 @@ public class RadialMenu extends GuiScreen {
 
         tessellator.draw();
 
+
+        //fontRenderer.drawStringWithShadow("Actions", (int) (middleX - buttonDistance - 13) - fontRenderer.getStringWidth("Actions") * 0.5f, (int) middleY - 38, 0xffffffff);
+        String title = "";
+        if (currentBuildMode.options.length > 0) {
+            switch (currentBuildMode.options[0]) {
+                case NORMAL_SPEED:
+                case FAST_SPEED:
+                    title = "Build Speed";
+                    break;
+                case FULL:
+                case HOLLOW:
+                case CUBE_FULL:
+                case CUBE_HOLLOW:
+                case CUBE_SKELETON:
+                    title = "Fill";
+                    break;
+                case SHORT_EDGE:
+                case LONG_EDGE:
+                    title = "Raised Edge";
+                    break;
+                case THICKNESS_1:
+                case THICKNESS_3:
+                case THICKNESS_5:
+                    title = "Line Thickness";
+                    break;
+            }
+        }
+        fontRenderer.drawStringWithShadow(title, (int) (middleX + buttonDistance - 9), (int) middleY - 44, 0xffffffff);
+
+
         for (final MenuRegion menuRegion : modes) {
 
             if (menuRegion.highlighted) {
@@ -335,7 +390,8 @@ public class RadialMenu extends GuiScreen {
             if (button.highlighted) {
                 String text = TextFormatting.AQUA + button.name;
                 int wrap = 120;
-                String keybind = "None";
+                String keybind = "";
+                String keybindFormatted = "";
 
                 //Add keybind in brackets
                 if (button.action == ModeOptions.ActionEnum.UNDO) {
@@ -350,7 +406,7 @@ public class RadialMenu extends GuiScreen {
                 if (button.action == ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS) {
                     keybind = ClientProxy.keyBindings[0].getDisplayName();
                 }
-                String keybindFormatted = TextFormatting.GRAY + "(" + WordUtils.capitalizeFully(keybind) + ")";
+                if (!keybind.isEmpty()) keybindFormatted = TextFormatting.GRAY + "(" + WordUtils.capitalizeFully(keybind) + ")";
 
                 if (button.textSide == EnumFacing.WEST) {
 
@@ -373,10 +429,10 @@ public class RadialMenu extends GuiScreen {
                 } else if (button.textSide == EnumFacing.DOWN || button.textSide == EnumFacing.SOUTH) {
 
                     fontRenderer.drawSplitString(text, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(text) * 0.5),
-                            (int) (middleY + button.y1 + 24), wrap, 0xffffffff);
+                            (int) (middleY + button.y1 + 26), wrap, 0xffffffff);
 
                     fontRenderer.drawSplitString(keybindFormatted, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(keybindFormatted) * 0.5),
-                            (int) (middleY + button.y1 + 36), wrap, 0xffffffff);
+                            (int) (middleY + button.y1 + 38), wrap, 0xffffffff);
 
                 }
 
@@ -404,6 +460,10 @@ public class RadialMenu extends GuiScreen {
     @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton ) {
         EffortlessBuilding.log("mouse clicked");
+
+//        KeyBinding.updateKeyBindState();
+//        KeyBinding.setKeyBindState(ClientProxy.keyBindings[3].getKeyCode(), true);
+
 //        if (mouseButton == 0) {
 //            this.mc.displayGuiScreen(null);
 //

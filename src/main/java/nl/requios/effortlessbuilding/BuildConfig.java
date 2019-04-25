@@ -53,6 +53,16 @@ public class BuildConfig {
         @RangeInt(min = 0, max = 200)
         public int miningTimePercentage = 50;
 
+        @Comment({"Determines what blocks can be replaced in survival.",
+                 "-1: only blocks that can be harvested by hand (default)",
+                 "0: blocks that can be harvested with wooden or gold tools",
+                 "1: blocks that can be harvested with stone tools",
+                 "2: blocks that can be harvested with iron tools",
+                 "3: blocks that can be harvested with diamond tools",
+                 })
+        @RangeInt(min = -1, max = 3)
+        public int quickReplaceMiningLevel = -1;
+
         @Comment({"How many placements are remembered for the undo functionality."})
         @RequiresMcRestart
         public int undoStackSize = 5;

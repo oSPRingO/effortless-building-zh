@@ -210,7 +210,21 @@ public class RenderHandler implements IWorldEventListener {
         GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);
         GlStateManager.translate(-0.01f, -0.01f, 0.01f);
         GlStateManager.scale(1.02f, 1.02f, 1.02f);
-        dispatcher.renderBlockBrightness(blockState, 0.85f);
+
+        try {
+            dispatcher.renderBlockBrightness(blockState, 0.85f);
+        } catch (NullPointerException e) {
+            EffortlessBuilding.logger.warn("RenderHandler::renderBlockPreview cannot render " + blockState.getBlock().toString());
+
+            //Render outline as backup
+            GlStateManager.popMatrix();
+//            ShaderHandler.releaseShader();
+            GL11.glDisable(GL11.GL_LIGHTING);
+            renderBlockOutline(blockPos, new Vec3d(1f, 1f, 1f));
+            GL11.glEnable(GL11.GL_LIGHTING);
+            GlStateManager.pushMatrix();
+        }
+
         GlStateManager.popMatrix();
     }
 

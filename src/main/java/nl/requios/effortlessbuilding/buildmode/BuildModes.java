@@ -6,6 +6,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmode.ModeOptions.ActionEnum;
 import nl.requios.effortlessbuilding.buildmodifier.*;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
@@ -26,22 +27,24 @@ public class BuildModes {
     public static Dictionary<EntityPlayer, Boolean> currentlyBreakingServer = new Hashtable<>();
 
     public enum BuildModeEnum {
-        NORMAL("effortlessbuilding.mode.normal", new Normal()),
-        NORMAL_PLUS("effortlessbuilding.mode.normal_plus", new NormalPlus()),
-        LINE("effortlessbuilding.mode.line", new Line()),
-        WALL("effortlessbuilding.mode.wall", new Wall()),
-        FLOOR("effortlessbuilding.mode.floor", new Floor()),
-        DIAGONAL_LINE("effortlessbuilding.mode.diagonal_line", new DiagonalLine()),
-        DIAGONAL_WALL("effortlessbuilding.mode.diagonal_wall", new DiagonalWall()),
-        SLOPE_FLOOR("effortlessbuilding.mode.slope_floor", new SlopeFloor()),
-        CUBE("effortlessbuilding.mode.cube", new Cube());
+        NORMAL("effortlessbuilding.mode.normal", new Normal(), new ActionEnum[]{}),
+        NORMAL_PLUS("effortlessbuilding.mode.normal_plus", new NormalPlus(), new ActionEnum[]{ActionEnum.NORMAL_SPEED, ActionEnum.FAST_SPEED}),
+        LINE("effortlessbuilding.mode.line", new Line(), new ActionEnum[]{ActionEnum.THICKNESS_1, ActionEnum.THICKNESS_3, ActionEnum.THICKNESS_5}),
+        WALL("effortlessbuilding.mode.wall", new Wall(), new ActionEnum[]{ActionEnum.FULL, ActionEnum.HOLLOW}),
+        FLOOR("effortlessbuilding.mode.floor", new Floor(), new ActionEnum[]{ActionEnum.FULL, ActionEnum.HOLLOW}),
+        DIAGONAL_LINE("effortlessbuilding.mode.diagonal_line", new DiagonalLine(), new ActionEnum[]{ActionEnum.THICKNESS_1, ActionEnum.THICKNESS_3, ActionEnum.THICKNESS_5}),
+        DIAGONAL_WALL("effortlessbuilding.mode.diagonal_wall", new DiagonalWall(), new ActionEnum[]{ActionEnum.FULL, ActionEnum.HOLLOW}),
+        SLOPE_FLOOR("effortlessbuilding.mode.slope_floor", new SlopeFloor(), new ActionEnum[]{ActionEnum.SHORT_EDGE, ActionEnum.LONG_EDGE}),
+        CUBE("effortlessbuilding.mode.cube", new Cube(), new ActionEnum[]{ActionEnum.CUBE_FULL, ActionEnum.CUBE_HOLLOW, ActionEnum.CUBE_SKELETON});
 
         public String name;
         public IBuildMode instance;
+        public ActionEnum[] options;
 
-        BuildModeEnum(String name, IBuildMode instance) {
+        BuildModeEnum(String name, IBuildMode instance, ActionEnum[] options) {
             this.name = name;
             this.instance = instance;
+            this.options = options;
         }
     }
 
