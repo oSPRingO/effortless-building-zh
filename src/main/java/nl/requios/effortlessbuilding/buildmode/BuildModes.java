@@ -29,11 +29,11 @@ public class BuildModes {
     public enum BuildModeEnum {
         NORMAL("effortlessbuilding.mode.normal", new Normal(), new ActionEnum[]{}),
         NORMAL_PLUS("effortlessbuilding.mode.normal_plus", new NormalPlus(), new ActionEnum[]{ActionEnum.NORMAL_SPEED, ActionEnum.FAST_SPEED}),
-        LINE("effortlessbuilding.mode.line", new Line(), new ActionEnum[]{ActionEnum.THICKNESS_1, ActionEnum.THICKNESS_3, ActionEnum.THICKNESS_5}),
+        LINE("effortlessbuilding.mode.line", new Line(), new ActionEnum[]{/*ActionEnum.THICKNESS_1, ActionEnum.THICKNESS_3, ActionEnum.THICKNESS_5*/}),
         WALL("effortlessbuilding.mode.wall", new Wall(), new ActionEnum[]{ActionEnum.FULL, ActionEnum.HOLLOW}),
         FLOOR("effortlessbuilding.mode.floor", new Floor(), new ActionEnum[]{ActionEnum.FULL, ActionEnum.HOLLOW}),
-        DIAGONAL_LINE("effortlessbuilding.mode.diagonal_line", new DiagonalLine(), new ActionEnum[]{ActionEnum.THICKNESS_1, ActionEnum.THICKNESS_3, ActionEnum.THICKNESS_5}),
-        DIAGONAL_WALL("effortlessbuilding.mode.diagonal_wall", new DiagonalWall(), new ActionEnum[]{ActionEnum.FULL, ActionEnum.HOLLOW}),
+        DIAGONAL_LINE("effortlessbuilding.mode.diagonal_line", new DiagonalLine(), new ActionEnum[]{/*ActionEnum.THICKNESS_1, ActionEnum.THICKNESS_3, ActionEnum.THICKNESS_5*/}),
+        DIAGONAL_WALL("effortlessbuilding.mode.diagonal_wall", new DiagonalWall(), new ActionEnum[]{/*ActionEnum.FULL, ActionEnum.HOLLOW*/}),
         SLOPE_FLOOR("effortlessbuilding.mode.slope_floor", new SlopeFloor(), new ActionEnum[]{ActionEnum.SHORT_EDGE, ActionEnum.LONG_EDGE}),
         CUBE("effortlessbuilding.mode.cube", new Cube(), new ActionEnum[]{ActionEnum.CUBE_FULL, ActionEnum.CUBE_HOLLOW, ActionEnum.CUBE_SKELETON});
 

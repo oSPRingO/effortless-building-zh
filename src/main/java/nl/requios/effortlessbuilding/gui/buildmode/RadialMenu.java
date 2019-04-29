@@ -166,12 +166,13 @@ public class RadialMenu extends GuiScreen {
         ModeOptions.ActionEnum[] options = currentBuildMode.options;
         for (int i = 0; i < options.length; i++) {
             ModeOptions.ActionEnum action = options[i];
-            buttons.add(new MenuButton(action.name, action, buttonDistance + i * 26, -20, EnumFacing.DOWN));
+            buttons.add(new MenuButton(action.name, action, buttonDistance + i * 26, -13, EnumFacing.DOWN));
         }
 
         switchTo = null;
         doAction = null;
 
+        //Draw buildmode backgrounds
         if (!modes.isEmpty()) {
             final int totalModes = Math.max( 3, modes.size() );
             int currentMode = 0;
@@ -236,6 +237,7 @@ public class RadialMenu extends GuiScreen {
             }
         }
 
+        //Draw action backgrounds
         for (final MenuButton btn : buttons) {
             float r = 0.5f;
             float g = 0.5f;
@@ -283,6 +285,7 @@ public class RadialMenu extends GuiScreen {
 
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
 
+        //Draw buildmode icons
         for (final MenuRegion menuRegion : modes) {
 
             final double x = (menuRegion.x1 + menuRegion.x2) * 0.5 * (ringOuterEdge * 0.6 + 0.4 * ringInnerEdge);
@@ -309,6 +312,7 @@ public class RadialMenu extends GuiScreen {
             buffer.pos(middleX + x2, middleY + y1, zLevel).tex(sprite.getInterpolatedU(u2), sprite.getInterpolatedV(v1)).color(f, f, f, a).endVertex();
         }
 
+        //Draw action icons
         for (final MenuButton button : buttons) {
 
             final float f = 1f;
@@ -336,36 +340,39 @@ public class RadialMenu extends GuiScreen {
 
         tessellator.draw();
 
-
+        //Draw strings
         //fontRenderer.drawStringWithShadow("Actions", (int) (middleX - buttonDistance - 13) - fontRenderer.getStringWidth("Actions") * 0.5f, (int) middleY - 38, 0xffffffff);
         String title = "";
         if (currentBuildMode.options.length > 0) {
             switch (currentBuildMode.options[0]) {
                 case NORMAL_SPEED:
                 case FAST_SPEED:
-                    title = "Build Speed";
+                    title = I18n.format("effortlessbuilding.action.build_speed");
                     break;
                 case FULL:
                 case HOLLOW:
                 case CUBE_FULL:
                 case CUBE_HOLLOW:
                 case CUBE_SKELETON:
-                    title = "Fill";
+                    title = I18n.format("effortlessbuilding.action.filling");
                     break;
                 case SHORT_EDGE:
                 case LONG_EDGE:
-                    title = "Raised Edge";
+                    title = I18n.format("effortlessbuilding.action.raised_edge");
                     break;
                 case THICKNESS_1:
                 case THICKNESS_3:
                 case THICKNESS_5:
-                    title = "Line Thickness";
+                    title = I18n.format("effortlessbuilding.action.thickness");
                     break;
             }
         }
-        fontRenderer.drawStringWithShadow(title, (int) (middleX + buttonDistance - 9), (int) middleY - 44, 0xffffffff);
+        fontRenderer.drawStringWithShadow(title, (int) (middleX + buttonDistance - 9), (int) middleY - 37, 0xeeeeeeff);
 
+        String credits = "Effortless Building";
+        fontRenderer.drawStringWithShadow(credits, width - fontRenderer.getStringWidth(credits) - 4, height - 10, 0x88888888);
 
+        //Draw buildmode text
         for (final MenuRegion menuRegion : modes) {
 
             if (menuRegion.highlighted) {
@@ -386,6 +393,7 @@ public class RadialMenu extends GuiScreen {
             }
         }
 
+        //Draw action text
         for (final MenuButton button : buttons) {
             if (button.highlighted) {
                 String text = TextFormatting.AQUA + button.name;

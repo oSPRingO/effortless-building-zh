@@ -249,6 +249,7 @@ public class ClientProxy implements IProxy {
                 }
             } else if (buildMode == BuildModes.BuildModeEnum.NORMAL_PLUS) {
                 placeCooldown--;
+                if (ModeOptions.getBuildSpeed() == ModeOptions.ActionEnum.FAST_SPEED) placeCooldown = 0;
             }
         } else {
             placeCooldown = 0;

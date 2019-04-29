@@ -94,7 +94,7 @@ public class SlopeFloor implements IBuildMode {
             BlockPos thirdPos = DiagonalLine.findHeight(player, secondPos, skipRaytrace);
             if (thirdPos == null) return list;
 
-            //Add whole cube
+            //Add slope floor blocks
             list.addAll(getSlopeFloorBlocks(player, firstPos, secondPos, thirdPos));
         }
 
@@ -113,18 +113,20 @@ public class SlopeFloor implements IBuildMode {
         int xLength = Math.abs(secondPos.getX() - firstPos.getX());
         int zLength = Math.abs(secondPos.getZ() - firstPos.getZ());
 
-        //Slope along short edge
-        if (zLength > xLength) onXAxis = false;
-
-        //TODO add option for Slope along long edge
-        //if (zLength > xLength) onXAxis = true;
+        if (ModeOptions.getRaisedEdge() == ModeOptions.ActionEnum.SHORT_EDGE) {
+            //Slope along short edge
+            if (zLength > xLength) onXAxis = false;
+        } else {
+            //Slope along long edge
+            if (zLength <= xLength) onXAxis = false;
+        }
 
         if (onXAxis) {
             //Along X goes up
 
             //Get diagonal line blocks
             BlockPos linePoint = new BlockPos(secondPos.getX(), thirdPos.getY(), firstPos.getZ());
-            List<BlockPos> diagonalLineBlocks = DiagonalLine.getDiagonalLineBlocks(player, firstPos, linePoint, 1);
+            List<BlockPos> diagonalLineBlocks = DiagonalLine.getDiagonalLineBlocks(player, firstPos, linePoint, 1f);
 
             //Limit amount of blocks we can place
             int lowest = Math.min(firstPos.getZ(), secondPos.getZ());
@@ -144,7 +146,7 @@ public class SlopeFloor implements IBuildMode {
 
             //Get diagonal line blocks
             BlockPos linePoint = new BlockPos(firstPos.getX(), thirdPos.getY(), secondPos.getZ());
-            List<BlockPos> diagonalLineBlocks = DiagonalLine.getDiagonalLineBlocks(player, firstPos, linePoint, 1);
+            List<BlockPos> diagonalLineBlocks = DiagonalLine.getDiagonalLineBlocks(player, firstPos, linePoint, 1f);
 
             //Limit amount of blocks we can place
             int lowest = Math.min(firstPos.getX(), secondPos.getX());

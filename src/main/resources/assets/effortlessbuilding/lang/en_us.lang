@@ -25,9 +25,15 @@ effortlessbuilding.action.undo=Undo
 effortlessbuilding.action.redo=Redo
 effortlessbuilding.action.replace=Replace
 effortlessbuilding.action.open_modifier_settings=Open Modifier Settings
+
+effortlessbuilding.action.build_speed=Build Speed
+effortlessbuilding.action.filling=Filling
+effortlessbuilding.action.raised_edge=Raised Edge
+effortlessbuilding.action.thickness=Line Thickness
+
 effortlessbuilding.action.normal_speed=Normal
 effortlessbuilding.action.fast_speed=Fast
-effortlessbuilding.action.full=Full
+effortlessbuilding.action.full=Filled
 effortlessbuilding.action.hollow=Hollow
 effortlessbuilding.action.skeleton=Skeleton
 effortlessbuilding.action.short_edge=Short Edge

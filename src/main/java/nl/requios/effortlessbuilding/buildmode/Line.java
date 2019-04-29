@@ -189,19 +189,41 @@ public class Line implements IBuildMode {
         int y1 = firstPos.getY(), y2 = secondPos.getY();
         int z1 = firstPos.getZ(), z2 = secondPos.getZ();
 
-        outerloop:
-        for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
+        //limit axis
+        if (x2 - x1 >= axisLimit) x2 = x1 + axisLimit - 1;
+        if (x1 - x2 >= axisLimit) x2 = x1 - axisLimit + 1;
+        if (y2 - y1 >= axisLimit) y2 = y1 + axisLimit - 1;
+        if (y1 - y2 >= axisLimit) y2 = y1 - axisLimit + 1;
+        if (z2 - z1 >= axisLimit) z2 = z1 + axisLimit - 1;
+        if (z1 - z2 >= axisLimit) z2 = z1 - axisLimit + 1;
 
-            for (int n = z1; z1 < z2 ? n <= z2 : n >= z2; n += z1 < z2 ? 1 : -1) {
-
-                for (int m = y1; y1 < y2 ? m <= y2 : m >= y2; m += y1 < y2 ? 1 : -1) {
-                    if (list.size() >= axisLimit) break outerloop;
-                    list.add(new BlockPos(l, m, n));
-                }
-            }
+        if (x1 != x2) {
+            addXLineBlocks(list, x1, x2, y1, z1);
+        } else if (y1 != y2) {
+            addYLineBlocks(list, y1, y2, x1, z1);
+        } else {
+            addZLineBlocks(list, z1, z2, x1, y1);
         }
 
         return list;
+    }
+
+    public static void addXLineBlocks(List<BlockPos> list, int x1, int x2, int y, int z) {
+        for (int x = x1; x1 < x2 ? x <= x2 : x >= x2; x += x1 < x2 ? 1 : -1) {
+            list.add(new BlockPos(x, y, z));
+        }
+    }
+
+    public static void addYLineBlocks(List<BlockPos> list, int y1, int y2, int x, int z) {
+        for (int y = y1; y1 < y2 ? y <= y2 : y >= y2; y += y1 < y2 ? 1 : -1) {
+            list.add(new BlockPos(x, y, z));
+        }
+    }
+
+    public static void addZLineBlocks(List<BlockPos> list, int z1, int z2, int x, int y) {
+        for (int z = z1; z1 < z2 ? z <= z2 : z >= z2; z += z1 < z2 ? 1 : -1) {
+            list.add(new BlockPos(x, y, z));
+        }
     }
 
     @Override
@@ -213,4 +235,5 @@ public class Line implements IBuildMode {
     public Vec3d getHitVec(EntityPlayer player) {
         return hitVecTable.get(player.getUniqueID());
     }
+
 }

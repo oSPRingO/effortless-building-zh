@@ -145,6 +145,16 @@ public class Floor implements IBuildMode {
         if (z2 - z1 >= axisLimit) z2 = z1 + axisLimit - 1;
         if (z1 - z2 >= axisLimit) z2 = z1 - axisLimit + 1;
 
+        if (ModeOptions.getFill() == ModeOptions.ActionEnum.FULL)
+            addFloorBlocks(list, x1, x2, y, z1, z2);
+        else
+            addHollowFloorBlocks(list, x1, x2, y, z1, z2);
+
+        return list;
+    }
+
+    public static void addFloorBlocks(List<BlockPos> list, int x1, int x2, int y, int z1, int z2) {
+
         for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
 
             for (int n = z1; z1 < z2 ? n <= z2 : n >= z2; n += z1 < z2 ? 1 : -1) {
@@ -152,8 +162,13 @@ public class Floor implements IBuildMode {
                 list.add(new BlockPos(l, y, n));
             }
         }
+    }
 
-        return list;
+    public static void addHollowFloorBlocks(List<BlockPos> list, int x1, int x2, int y, int z1, int z2) {
+        Line.addXLineBlocks(list, x1, x2, y, z1);
+        Line.addXLineBlocks(list, x1, x2, y, z2);
+        Line.addZLineBlocks(list, z1, z2, x1, y);
+        Line.addZLineBlocks(list, z1, z2, x2, y);
     }
 
     @Override

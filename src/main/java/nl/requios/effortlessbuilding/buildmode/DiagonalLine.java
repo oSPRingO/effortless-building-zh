@@ -184,7 +184,7 @@ public class DiagonalLine implements IBuildMode {
     }
 
     //Add diagonal line from first to second
-    public static List<BlockPos> getDiagonalLineBlocks(EntityPlayer player, BlockPos firstPos, BlockPos secondPos, int sampleMultiplier) {
+    public static List<BlockPos> getDiagonalLineBlocks(EntityPlayer player, BlockPos firstPos, BlockPos secondPos, float sampleMultiplier) {
         List<BlockPos> list = new ArrayList<>();
 
         int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
@@ -204,7 +204,7 @@ public class DiagonalLine implements IBuildMode {
         Vec3d first = new Vec3d(x1, y1, z1).add(0.5, 0.5, 0.5);
         Vec3d second = new Vec3d(x2, y2, z2).add(0.5, 0.5, 0.5);
 
-        int iterations = (int) Math.ceil(first.distanceTo(second)) * sampleMultiplier;
+        int iterations = (int) Math.ceil(first.distanceTo(second) * sampleMultiplier);
         for (double t = 0; t <= 1.0; t += 1.0/iterations) {
             Vec3d lerp = first.add(second.subtract(first).scale(t));
             BlockPos candidate = new BlockPos(lerp);

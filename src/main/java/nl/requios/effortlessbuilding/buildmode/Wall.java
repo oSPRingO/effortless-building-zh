@@ -151,7 +151,6 @@ public class Wall implements IBuildMode {
         List<BlockPos> list = new ArrayList<>();
 
         //Limit amount of blocks we can place per row
-        int limit = ReachHelper.getMaxBlocksPlacedAtOnce(player);
         int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
 
         int x1 = firstPos.getX(), x2 = secondPos.getX();
@@ -166,21 +165,53 @@ public class Wall implements IBuildMode {
         if (z2 - z1 >= axisLimit) z2 = z1 + axisLimit - 1;
         if (z1 - z2 >= axisLimit) z2 = z1 - axisLimit + 1;
 
-        for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
-
-            for (int n = z1; z1 < z2 ? n <= z2 : n >= z2; n += z1 < z2 ? 1 : -1) {
-
-                //check if whole row fits within limit
-                if (Math.abs(y1 - y2) < limit - list.size()) {
-
-                    for (int m = y1; y1 < y2 ? m <= y2 : m >= y2; m += y1 < y2 ? 1 : -1) {
-                        list.add(new BlockPos(l, m, n));
-                    }
-                }
-            }
+        if (x1 == x2) {
+            if (ModeOptions.getFill() == ModeOptions.ActionEnum.FULL)
+                addXWallBlocks(list, x1, y1, y2, z1, z2);
+            else
+                addXHollowWallBlocks(list, x1, y1, y2, z1, z2);
+        } else {
+            if (ModeOptions.getFill() == ModeOptions.ActionEnum.FULL)
+                addZWallBlocks(list, x1, x2, y1, y2, z1);
+            else
+                addZHollowWallBlocks(list, x1, x2, y1, y2, z1);
         }
 
         return list;
+    }
+
+    public static void addXWallBlocks(List<BlockPos> list, int x, int y1, int y2, int z1, int z2) {
+
+        for (int z = z1; z1 < z2 ? z <= z2 : z >= z2; z += z1 < z2 ? 1 : -1) {
+
+            for (int y = y1; y1 < y2 ? y <= y2 : y >= y2; y += y1 < y2 ? 1 : -1) {
+                list.add(new BlockPos(x, y, z));
+            }
+        }
+    }
+
+    public static void addZWallBlocks(List<BlockPos> list, int x1, int x2, int y1, int y2, int z) {
+
+        for (int x = x1; x1 < x2 ? x <= x2 : x >= x2; x += x1 < x2 ? 1 : -1) {
+
+            for (int y = y1; y1 < y2 ? y <= y2 : y >= y2; y += y1 < y2 ? 1 : -1) {
+                list.add(new BlockPos(x, y, z));
+            }
+        }
+    }
+
+    public static void addXHollowWallBlocks(List<BlockPos> list, int x, int y1, int y2, int z1, int z2) {
+        Line.addZLineBlocks(list, z1, z2, x, y1);
+        Line.addZLineBlocks(list, z1, z2, x, y2);
+        Line.addYLineBlocks(list, y1, y2, x, z1);
+        Line.addYLineBlocks(list, y1, y2, x, z2);
+    }
+
+    public static void addZHollowWallBlocks(List<BlockPos> list, int x1, int x2, int y1, int y2, int z) {
+        Line.addXLineBlocks(list, x1, x2, y1, z);
+        Line.addXLineBlocks(list, x1, x2, y2, z);
+        Line.addYLineBlocks(list, y1, y2, x1, z);
+        Line.addYLineBlocks(list, y1, y2, x2, z);
     }
 
     @Override
