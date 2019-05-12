@@ -28,8 +28,9 @@ import java.util.function.Consumer;
 
 public final class ShaderHandler {
 
-    private static final int VERT_ST = ARBVertexShader.GL_VERTEX_SHADER_ARB;
-    private static final int FRAG_ST = ARBFragmentShader.GL_FRAGMENT_SHADER_ARB;
+
+    private static final int VERT_ST = GL20.GL_VERTEX_SHADER;
+    private static final int FRAG_ST = GL20.GL_FRAGMENT_SHADER;
 
     private static final int VERT = 1;
     private static final int FRAG = 2;
@@ -54,11 +55,11 @@ public final class ShaderHandler {
         if(!doUseShaders())
             return;
 
-        ARBShaderObjects.glUseProgramObjectARB(shader);
+        GL20.glUseProgram(shader);
 
         if(shader != 0) {
-            int time = ARBShaderObjects.glGetUniformLocationARB(shader, "time");
-            ARBShaderObjects.glUniform1iARB(time, ClientProxy.ticksInGame);
+            int time = GL20.glGetUniformLocation(shader, "time");
+            GL20.glUniform1i(time, ClientProxy.ticksInGame);
 
             if(callback != null)
                 callback.accept(shader);
@@ -74,7 +75,7 @@ public final class ShaderHandler {
     }
 
     public static boolean doUseShaders() {
-        return BuildConfig.visuals.useShaders && OpenGlHelper.shadersSupported;
+        return BuildConfig.visuals.useShaders && OpenGlHelper.shadersSupported && OpenGlHelper.openGL21; //Only GL2.1 shaders
     }
 
     private static int createProgram(String s, int sides) {
@@ -94,24 +95,24 @@ public final class ShaderHandler {
         if(frag != null)
             fragId = createShader(frag, FRAG_ST);
 
-        program = ARBShaderObjects.glCreateProgramObjectARB();
+        program = GL20.glCreateProgram();
         if(program == 0)
             return 0;
 
         if(vert != null)
-            ARBShaderObjects.glAttachObjectARB(program, vertId);
+            GL20.glAttachShader(program, vertId);
         if(frag != null)
-            ARBShaderObjects.glAttachObjectARB(program, fragId);
+            GL20.glAttachShader(program, fragId);
 
-        ARBShaderObjects.glLinkProgramARB(program);
-        if(ARBShaderObjects.glGetObjectParameteriARB(program, ARBShaderObjects.GL_OBJECT_LINK_STATUS_ARB) == GL11.GL_FALSE) {
-            EffortlessBuilding.logger.log(Level.ERROR, getLogInfo(program));
+        GL20.glLinkProgram(program);
+        if(GL20.glGetProgrami(program, GL20.GL_LINK_STATUS) == GL11.GL_FALSE) {
+            EffortlessBuilding.logger.log(Level.ERROR, getProgramLogInfo(program));
             return 0;
         }
 
-        ARBShaderObjects.glValidateProgramARB(program);
-        if (ARBShaderObjects.glGetObjectParameteriARB(program, ARBShaderObjects.GL_OBJECT_VALIDATE_STATUS_ARB) == GL11.GL_FALSE) {
-            EffortlessBuilding.logger.log(Level.ERROR, getLogInfo(program));
+        GL20.glValidateProgram(program);
+        if (GL20.glGetProgrami(program, GL20.GL_VALIDATE_STATUS) == GL11.GL_FALSE) {
+            EffortlessBuilding.logger.log(Level.ERROR, getProgramLogInfo(program));
             return 0;
         }
 
@@ -121,28 +122,32 @@ public final class ShaderHandler {
     private static int createShader(String filename, int shaderType){
         int shader = 0;
         try {
-            shader = ARBShaderObjects.glCreateShaderObjectARB(shaderType);
+            shader = GL20.glCreateShader(shaderType);
 
             if(shader == 0)
                 return 0;
 
-            ARBShaderObjects.glShaderSourceARB(shader, readFileAsString(filename));
-            ARBShaderObjects.glCompileShaderARB(shader);
+            GL20.glShaderSource(shader, readFileAsString(filename));
+            GL20.glCompileShader(shader);
 
-            if (ARBShaderObjects.glGetObjectParameteriARB(shader, ARBShaderObjects.GL_OBJECT_COMPILE_STATUS_ARB) == GL11.GL_FALSE)
-                throw new RuntimeException("Error creating shader: " + getLogInfo(shader));
+            if (GL20.glGetShaderi(shader, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE)
+                throw new RuntimeException("Error creating shader: " + getShaderLogInfo(shader));
 
             return shader;
         }
         catch(Exception e) {
-            ARBShaderObjects.glDeleteObjectARB(shader);
+            GL20.glDeleteShader(shader);
             e.printStackTrace();
             return -1;
         }
     }
 
-    private static String getLogInfo(int obj) {
-        return ARBShaderObjects.glGetInfoLogARB(obj, ARBShaderObjects.glGetObjectParameteriARB(obj, ARBShaderObjects.GL_OBJECT_INFO_LOG_LENGTH_ARB));
+    private static String getProgramLogInfo(int program) {
+        return GL20.glGetProgramInfoLog(program, GL20.glGetProgrami(program, GL20.GL_INFO_LOG_LENGTH));
+    }
+
+    private static String getShaderLogInfo(int shader) {
+        return GL20.glGetShaderInfoLog(shader, GL20.glGetShaderi(shader, GL20.GL_INFO_LOG_LENGTH));
     }
 
     private static String readFileAsString(String filename) throws Exception {

@@ -185,7 +185,7 @@ public class RenderHandler implements IWorldEventListener {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
-//        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         Minecraft.getMinecraft().renderEngine.bindTexture(ShaderHandler.shaderMaskTextureLocation);
 
         GlStateManager.enableBlend();

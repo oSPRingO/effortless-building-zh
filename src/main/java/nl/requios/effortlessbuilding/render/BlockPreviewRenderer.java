@@ -5,13 +5,11 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.*;
 import net.minecraftforge.fml.relauncher.Side;
@@ -26,14 +24,13 @@ import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.ModifierSettings;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
-import nl.requios.effortlessbuilding.helper.InventoryHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.lwjgl.opengl.ARBMultitexture;
-import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -373,39 +370,40 @@ public class BlockPreviewRenderer {
                                                             final boolean highlight, final boolean red) {
         Minecraft mc = Minecraft.getMinecraft();
         return (Integer shader) -> {
-            int percentileUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "dissolve");
-            int highlightUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "highlight");
-            int redUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "red");
-            int blockposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "blockpos");
-            int firstposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "firstpos");
-            int secondposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "secondpos");
-            int imageUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "image");
-            int maskUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "mask");
+            int percentileUniform = GL20.glGetUniformLocation(shader, "dissolve");
+            int highlightUniform = GL20.glGetUniformLocation(shader, "highlight");
+            int redUniform = GL20.glGetUniformLocation(shader, "red");
+            int blockposUniform = GL20.glGetUniformLocation(shader, "blockpos");
+            int firstposUniform = GL20.glGetUniformLocation(shader, "firstpos");
+            int secondposUniform = GL20.glGetUniformLocation(shader, "secondpos");
+            int imageUniform = GL20.glGetUniformLocation(shader, "image");
+            int maskUniform = GL20.glGetUniformLocation(shader, "mask");
 
             //image
-            ARBShaderObjects.glUniform1iARB(imageUniform, primaryTextureUnit);
+            GL20.glUniform1i(imageUniform, primaryTextureUnit);
             OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + primaryTextureUnit);
+
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
 
-            GlStateManager.enableTexture2D();
-            GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+//            GlStateManager.enableTexture2D();
+//            GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 
             //mask
-            ARBShaderObjects.glUniform1iARB(maskUniform, secondaryTextureUnit);
+            GL20.glUniform1i(maskUniform, secondaryTextureUnit);
             OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + secondaryTextureUnit);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(ShaderHandler.shaderMaskTextureLocation).getGlTextureId());
 
             //blockpos
-            ARBShaderObjects.glUniform3fARB(blockposUniform, (float) blockpos.x, (float) blockpos.y, (float) blockpos.z);
-            ARBShaderObjects.glUniform3fARB(firstposUniform, (float) firstpos.x, (float) firstpos.y, (float) firstpos.z);
-            ARBShaderObjects.glUniform3fARB(secondposUniform, (float) secondpos.x, (float) secondpos.y, (float) secondpos.z);
+            GL20.glUniform3f(blockposUniform, (float) blockpos.x, (float) blockpos.y, (float) blockpos.z);
+            GL20.glUniform3f(firstposUniform, (float) firstpos.x, (float) firstpos.y, (float) firstpos.z);
+            GL20.glUniform3f(secondposUniform, (float) secondpos.x, (float) secondpos.y, (float) secondpos.z);
 
             //dissolve
-            ARBShaderObjects.glUniform1fARB(percentileUniform, dissolve);
+            GL20.glUniform1f(percentileUniform, dissolve);
             //highlight
-            ARBShaderObjects.glUniform1iARB(highlightUniform, highlight ? 1 : 0);
+            GL20.glUniform1i(highlightUniform, highlight ? 1 : 0);
             //red
-            ARBShaderObjects.glUniform1iARB(redUniform, red ? 1 : 0);
+            GL20.glUniform1i(redUniform, red ? 1 : 0);
         };
     }
 
