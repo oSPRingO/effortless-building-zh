@@ -1,6 +1,5 @@
 package nl.requios.effortlessbuilding.buildmodifier;
 
-import mod.chiselsandbits.api.IBitLocation;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;

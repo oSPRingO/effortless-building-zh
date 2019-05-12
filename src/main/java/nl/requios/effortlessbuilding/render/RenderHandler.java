@@ -185,8 +185,8 @@ public class RenderHandler implements IWorldEventListener {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
-        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        Minecraft.getMinecraft().renderEngine.bindTexture(new ResourceLocation(EffortlessBuilding.MODID, "textures/shader_mask.png"));
+//        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
+        Minecraft.getMinecraft().renderEngine.bindTexture(ShaderHandler.shaderMaskTextureLocation);
 
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -196,6 +196,7 @@ public class RenderHandler implements IWorldEventListener {
     protected static void endBlockPreviews() {
         ShaderHandler.releaseShader();
         GlStateManager.disableBlend();
+
         GL11.glPopAttrib();
     }
 

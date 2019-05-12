@@ -1,16 +1,11 @@
 package nl.requios.effortlessbuilding.buildmode;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.UndoRedo;
-import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
-import nl.requios.effortlessbuilding.gui.buildmodifier.ModifierSettingsGui;
+import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
 public class ModeOptions {
 
@@ -73,7 +68,6 @@ public class ModeOptions {
     //Called on both client and server
     public static void performAction(EntityPlayer player, ActionEnum action) {
         if (action == null) return;
-        BuildModes.BuildModeEnum currentBuildMode = ModeSettingsManager.getModeSettings(Minecraft.getMinecraft().player).getBuildMode();
 
         switch (action) {
             case UNDO:
@@ -90,7 +84,7 @@ public class ModeOptions {
                 break;
             case OPEN_MODIFIER_SETTINGS:
                 if (player.world.isRemote)
-                    openModifierSettings();
+                    ClientProxy.openModifierSettings();
                 break;
 
             case NORMAL_SPEED:
@@ -132,19 +126,7 @@ public class ModeOptions {
         }
 
         if (player.world.isRemote && action != ActionEnum.REPLACE && action != ActionEnum.OPEN_MODIFIER_SETTINGS) {
-            logAction(action);
+            ClientProxy.logTranslate(action.name);
         }
-    }
-
-    //TODO fix client class import giving error on server (nothing happens, it's just ugly)
-    @SideOnly(Side.CLIENT)
-    private static void openModifierSettings() {
-        Minecraft.getMinecraft().displayGuiScreen(new ModifierSettingsGui());
-        RadialMenu.instance.setVisibility(0f);
-    }
-
-    @SideOnly(Side.CLIENT)
-    private static void logAction(ActionEnum action) {
-        EffortlessBuilding.log(Minecraft.getMinecraft().player, I18n.format(action.name), true);
     }
 }

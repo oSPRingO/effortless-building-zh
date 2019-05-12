@@ -13,6 +13,7 @@
 package nl.requios.effortlessbuilding.render;
 
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.util.ResourceLocation;
 import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
@@ -38,6 +39,8 @@ public final class ShaderHandler {
 
     public static int rawColor;
     public static int dissolve;
+
+    public static ResourceLocation shaderMaskTextureLocation = new ResourceLocation(EffortlessBuilding.MODID, "textures/shader_mask.png");
 
     public static void init() {
         if(!doUseShaders())

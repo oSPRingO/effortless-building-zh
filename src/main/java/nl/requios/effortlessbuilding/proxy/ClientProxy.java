@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -80,7 +81,7 @@ public class ClientProxy implements IProxy {
     @Override
     public void init(FMLInitializationEvent event) {
         // register key bindings
-        keyBindings = new KeyBinding[6];
+        keyBindings = new KeyBinding[7];
 
         // instantiate the key bindings
         keyBindings[0] = new KeyBinding("key.effortlessbuilding.hud.desc", KeyConflictContext.UNIVERSAL, Keyboard.KEY_ADD, "key.effortlessbuilding.category");
@@ -96,7 +97,7 @@ public class ClientProxy implements IProxy {
         };
         keyBindings[4] = new KeyBinding("key.effortlessbuilding.undo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, Keyboard.KEY_Z, "key.effortlessbuilding.category");
         keyBindings[5] = new KeyBinding("key.effortlessbuilding.redo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, Keyboard.KEY_Y, "key.effortlessbuilding.category");
-//        keyBindings[6] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
+        keyBindings[6] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {
@@ -278,6 +279,7 @@ public class ClientProxy implements IProxy {
                 }
             } else if (buildMode == BuildModes.BuildModeEnum.NORMAL_PLUS) {
                 breakCooldown--;
+                if (ModeOptions.getBuildSpeed() == ModeOptions.ActionEnum.FAST_SPEED) breakCooldown = 0;
             }
 
             //EffortlessBuilding.packetHandler.sendToServer(new CancelModeMessage());
@@ -301,16 +303,7 @@ public class ClientProxy implements IProxy {
         //Remember to send packet to server if necessary
         //Show Modifier Settings GUI
         if (keyBindings[0].isPressed()) {
-            //Disabled if max reach is 0, might be set in the config that way.
-            if (ReachHelper.getMaxReach(player) == 0) {
-                EffortlessBuilding.log(player, "Build modifiers are disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
-            } else {
-                if (Minecraft.getMinecraft().currentScreen == null) {
-                    Minecraft.getMinecraft().displayGuiScreen(new ModifierSettingsGui());
-                } else {
-                    player.closeScreen();
-                }
-            }
+            openModifierSettings();
         }
 
         //QuickReplace toggle
@@ -353,6 +346,23 @@ public class ClientProxy implements IProxy {
 
     }
 
+    public static void openModifierSettings() {
+        EntityPlayerSP player = Minecraft.getMinecraft().player;
+
+        RadialMenu.instance.setVisibility(0f);
+
+        //Disabled if max reach is 0, might be set in the config that way.
+        if (ReachHelper.getMaxReach(player) == 0) {
+            EffortlessBuilding.log(player, "Build modifiers are disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
+        } else {
+            if (Minecraft.getMinecraft().currentScreen == null) {
+                Minecraft.getMinecraft().displayGuiScreen(new ModifierSettingsGui());
+            } else {
+                player.closeScreen();
+            }
+        }
+    }
+
     @SubscribeEvent
     public static void onGuiOpen(GuiOpenEvent event) {
         EntityPlayer player = Minecraft.getMinecraft().player;
@@ -373,5 +383,9 @@ public class ClientProxy implements IProxy {
 //        Vec3d end = new Vec3d(player.posX + look.x * raytraceRange, player.posY + player.getEyeHeight() + look.y * raytraceRange, player.posZ + look.z * raytraceRange);
         return player.rayTrace(raytraceRange, 1f);
 //        return world.rayTraceBlocks(start, end, false, false, false);
+    }
+
+    public static void logTranslate(String key) {
+        EffortlessBuilding.log(Minecraft.getMinecraft().player, I18n.format(key), true);
     }
 }
