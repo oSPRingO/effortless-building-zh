@@ -73,7 +73,7 @@ public class BlockPreviewRenderer {
     private static List<PlacedData> placedDataList = new ArrayList<>();
 
     private static final int primaryTextureUnit = 0;
-    private static final int secondaryTextureUnit = 1;
+    private static final int secondaryTextureUnit = 2;
 
     public static void render(EntityPlayer player, ModifierSettings modifierSettings, ModeSettings modeSettings) {
 
@@ -382,11 +382,6 @@ public class BlockPreviewRenderer {
             int imageUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "image");
             int maskUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "mask");
 
-            //image
-            ARBShaderObjects.glUniform1iARB(imageUniform, primaryTextureUnit);
-            OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + primaryTextureUnit);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
-
             GlStateManager.enableTexture2D();
             GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 
@@ -394,6 +389,11 @@ public class BlockPreviewRenderer {
             ARBShaderObjects.glUniform1iARB(maskUniform, secondaryTextureUnit);
             OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + secondaryTextureUnit);
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(ShaderHandler.shaderMaskTextureLocation).getGlTextureId());
+
+            //image
+            ARBShaderObjects.glUniform1iARB(imageUniform, primaryTextureUnit);
+            OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + primaryTextureUnit);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
 
             //blockpos
             ARBShaderObjects.glUniform3fARB(blockposUniform, (float) blockpos.x, (float) blockpos.y, (float) blockpos.z);

@@ -31,9 +31,7 @@ void main() {
         float placeFromFirst = length(worldpos - firstposc) / firstToSecond;
         float placeFromSecond = length(worldpos - secondposc) / firstToSecond;
         place = (placeFromFirst + (1.0 - placeFromSecond)) / 2.0;
-    } else {
-        //only one block
-    }
+    } //else only one block
 
     //find 2d texture coordinate for noise texture based on world position
     vec2 maskcoord = vec2(worldpos.y, worldpos.z);
@@ -80,8 +78,8 @@ void main() {
 //    color.rgb += vec3(0.5 - smoothstep(0, 0.5, distToEdge)) * 0.5;
 
     //add flat shading
-    if (abs(normal.x) > 0.5)
-        color.rgb -= 0.0;
+//    if (abs(normal.x) > 0.5)
+//        color.rgb -= 0.0;
     if (abs(normal.y) > 0.5)
         color.rgb += 0.05;
     if (abs(normal.z) > 0.5)
