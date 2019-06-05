@@ -28,12 +28,20 @@ public class ReachHelper {
 
     public static int getMaxBlocksPlacedAtOnce(EntityPlayer player) {
         if (player.isCreative()) return 1000000;
-        return getMaxReach(player) * 5;
+        return MathHelper.ceil(Math.pow(getMaxReach(player), 1.6));
+        //Level 0: 90
+        //Level 1: 353
+        //Level 2: 1000
+        //Level 3: 2828
     }
 
     public static int getMaxBlocksPerAxis(EntityPlayer player) {
         if (player.isCreative()) return 2000;
-        return MathHelper.ceil(MathHelper.sqrt(getMaxReach(player)));
+        return MathHelper.ceil(getMaxReach(player) * 0.3);
+        //Level 0: 6
+        //Level 1: 15
+        //Level 2: 30
+        //Level 3: 60
     }
 
     public static boolean canBreakFar(EntityPlayer player) {
