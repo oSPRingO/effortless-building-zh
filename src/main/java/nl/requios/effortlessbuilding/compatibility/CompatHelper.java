@@ -1,9 +1,11 @@
 package nl.requios.effortlessbuilding.compatibility;
 
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.items.CapabilityItemHandler;
@@ -63,9 +65,9 @@ public class CompatHelper {
         }
 
         //Dank Null
-        if(proxyItem == dankNullItem) {
+        if (proxyItem == dankNullItem) {
             int index = 0;
-            if(proxy.hasTagCompound() && proxy.getTagCompound().hasKey("selectedIndex"))
+            if (proxy.hasTagCompound() && proxy.getTagCompound().hasKey("selectedIndex"))
                 index = proxy.getTagCompound().getInteger("selectedIndex");
             return proxy.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).getStackInSlot(index);
         }
@@ -75,14 +77,14 @@ public class CompatHelper {
 
     public static ItemStack getItemBlockByState(ItemStack stack, IBlockState state) {
         Item blockItem = Item.getItemFromBlock(state.getBlock());
-        if(stack.getItem() instanceof ItemBlock)
+        if (stack.getItem() instanceof ItemBlock)
             return stack;
-        else if(stack.getItem() instanceof ItemRandomizerBag) {
+        else if (stack.getItem() instanceof ItemRandomizerBag) {
             IItemHandler bagInventory = ItemRandomizerBag.getBagInventory(stack);
             return ItemRandomizerBag.findStack(bagInventory, blockItem);
-        } else if(stack.getItem() == dankNullItem) {
+        } else if (stack.getItem() == dankNullItem) {
             int index = itemHandlerSlotForItem(stack, blockItem);
-            if(index >= 0)
+            if (index >= 0)
                 return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).getStackInSlot(index);
         }
         return ItemStack.EMPTY;
@@ -90,8 +92,11 @@ public class CompatHelper {
 
     // Handle IItemHandler slot stacks not being modifiable. We must call IItemHandler#extractItem,
     // because the ItemStack returned by IItemHandler#getStackInSlot isn't modifiable.
-    public static void shrinkStack(ItemStack origStack, ItemStack curStack) {
-        if(origStack.getItem() == dankNullItem) {
+    public static void shrinkStack(ItemStack origStack, ItemStack curStack, EntityPlayer player) {
+        //Hacky way to get the origstack, because given origStack is itemblock stack and never a proxy
+        origStack = player.getHeldItem(EnumHand.MAIN_HAND);
+
+        if (origStack.getItem() == dankNullItem) {
             int index = itemHandlerSlotForItem(origStack, curStack.getItem());
             origStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).extractItem(index, 1, false);
         } else
@@ -100,10 +105,10 @@ public class CompatHelper {
 
     private static int itemHandlerSlotForItem(ItemStack stack, Item blockItem) {
         IItemHandler handler = stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
-        for(int i = 0; i < handler.getSlots(); i++) {
+        for (int i = 0; i < handler.getSlots(); i++) {
             ItemStack ref = handler.getStackInSlot(i);
-            if(ref.getItem() instanceof ItemBlock)
-                if(ref.getItem() == blockItem)
+            if (ref.getItem() instanceof ItemBlock)
+                if (ref.getItem() == blockItem)
                     return i;
         }
         return -1;
