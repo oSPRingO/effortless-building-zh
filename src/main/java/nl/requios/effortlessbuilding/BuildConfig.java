@@ -55,7 +55,7 @@ public class BuildConfig {
 
         @Comment({"Determines what blocks can be replaced in survival.",
                  "-1: only blocks that can be harvested by hand (default)",
-                 "0: blocks that can be harvested with wooden oref gold tools",
+                 "0: blocks that can be harvested with wooden or gold tools",
                  "1: blocks that can be harvested with stone tools",
                  "2: blocks that can be harvested with iron tools",
                  "3: blocks that can be harvested with diamond tools",

@@ -25,17 +25,20 @@ public class RequestLookAtMessage implements IMessage {
     private BlockPos coordinate;
     private IBlockState previousBlockState;
     private IBlockState newBlockState;
+    private boolean placeStartPos;
 
     public RequestLookAtMessage() {
         coordinate = BlockPos.ORIGIN;
         previousBlockState = null;
         newBlockState = null;
+        placeStartPos = false;
     }
 
-    public RequestLookAtMessage(BlockPos coordinate, IBlockState previousBlockState, IBlockState newBlockState) {
+    public RequestLookAtMessage(BlockPos coordinate, IBlockState previousBlockState, IBlockState newBlockState, boolean placeStartPos) {
         this.coordinate = coordinate;
         this.previousBlockState = previousBlockState;
         this.newBlockState = newBlockState;
+        this.placeStartPos = placeStartPos;
     }
 
     public BlockPos getCoordinate() {
@@ -50,6 +53,10 @@ public class RequestLookAtMessage implements IMessage {
         return newBlockState;
     }
 
+    public boolean getPlaceStartPos() {
+        return placeStartPos;
+    }
+
     @Override
     public void toBytes(ByteBuf buf) {
         buf.writeInt(this.coordinate.getX());
@@ -57,6 +64,7 @@ public class RequestLookAtMessage implements IMessage {
         buf.writeInt(this.coordinate.getZ());
         buf.writeInt(Block.getStateId(this.previousBlockState));
         buf.writeInt(Block.getStateId(this.newBlockState));
+        buf.writeBoolean(this.placeStartPos);
     }
 
     @Override
@@ -64,6 +72,7 @@ public class RequestLookAtMessage implements IMessage {
         coordinate = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
         previousBlockState = Block.getStateById(buf.readInt());
         newBlockState = Block.getStateById(buf.readInt());
+        placeStartPos = buf.readBoolean();
     }
 
     // The params of the IMessageHandler are <REQ, REPLY>
@@ -90,8 +99,9 @@ public class RequestLookAtMessage implements IMessage {
                             message.getCoordinate(), message.getCoordinate()));
                 });
 
-                //Prevent double placing in normal mode with placeStartPos false
-                return new BlockPlacedMessage(ClientProxy.previousLookAt, false);
+                //Prevent double placing in normal mode with placeStartPos false.
+                //Unless QuickReplace is on, then we do need to place start pos.
+                return new BlockPlacedMessage(ClientProxy.previousLookAt, message.getPlaceStartPos());
             }
             return null;
         }

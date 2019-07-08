@@ -91,14 +91,18 @@ public class EventHandler
         BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
 
-        if (buildMode != BuildModes.BuildModeEnum.NORMAL || modifierSettings.doQuickReplace()) {
+        if (buildMode != BuildModes.BuildModeEnum.NORMAL) {
             event.setCanceled(true);
+        } else if (modifierSettings.doQuickReplace()) {
+            //Cancel event and send message if QuickReplace
+            event.setCanceled(true);
+            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState(), true), (EntityPlayerMP) player);
         } else {
             //NORMAL mode, let vanilla handle block placing
-            //But modifiers and QuickReplace should still work
+            //But modifiers should still work
 
             //Send message to client, which sends message back with raytrace info
-            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState()), (EntityPlayerMP) player);
+            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState(), false), (EntityPlayerMP) player);
         }
     }
 
