@@ -261,6 +261,11 @@ public class ClientProxy implements IProxy {
             //Break block in distance in creative (or survival if enabled in config)
             if (breakCooldown <= 0) {
                 breakCooldown = 4;
+
+                //Early out if cant break far, coming from own mouse event (not block broken event)
+                //To make breaking blocks in survival possible without breaking instantly
+                if (!ReachHelper.canBreakFar(player)) return;
+
                 RayTraceResult lookingAt = getLookingAt(player);
 
                 BuildModes.onBlockBrokenMessage(player, lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));

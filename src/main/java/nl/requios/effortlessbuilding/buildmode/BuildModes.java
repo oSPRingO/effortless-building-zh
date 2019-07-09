@@ -122,11 +122,6 @@ public class BuildModes {
     //Use a network message to break blocks in the distance using clientside mouse input
     public static void onBlockBrokenMessage(EntityPlayer player, BlockBrokenMessage message) {
         BlockPos startPos = message.isBlockHit() ? message.getBlockPos() : null;
-
-        //Early out if cant break far, coming from own mouse event (not block broken event)
-        //To make breaking blocks in survival possible without breaking instantly
-        if (!ReachHelper.canBreakFar(player)) return;
-
         onBlockBroken(player, startPos, true);
     }
 
@@ -148,10 +143,6 @@ public class BuildModes {
 
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
-
-        //Early out if cant break far and (if in normal mode) no modifier is enabled
-        //So either cant break far and you are not in normal mode or cant break far and you are in normal mode, but no modifier is enabled
-//        if (!ReachHelper.canBreakFar(player) && (breakStartPos || !BuildModifiers.isEnabled(modifierSettings, startPos))) return;
 
         //Get coordinates
         BuildModeEnum buildMode = modeSettings.getBuildMode();
