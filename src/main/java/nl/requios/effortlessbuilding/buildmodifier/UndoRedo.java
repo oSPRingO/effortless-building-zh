@@ -3,6 +3,7 @@ package nl.requios.effortlessbuilding.buildmodifier;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
@@ -31,16 +32,35 @@ public class UndoRedo {
     public static void addUndo(EntityPlayer player, BlockSet blockSet) {
         Map<UUID, FixedStack<BlockSet>> undoStacks = player.world.isRemote ? undoStacksClient : undoStacksServer;
 
+        //Assert coordinates is as long as previous and new blockstate lists
+        if (blockSet.getCoordinates().size() != blockSet.getPreviousBlockStates().size() ||
+            blockSet.getCoordinates().size() != blockSet.getNewBlockStates().size()) {
+            EffortlessBuilding.logger.error("Coordinates and blockstate lists are not equal length. Coordinates: {}. Previous blockstates: {}. New blockstates: {}.",
+                    blockSet.getCoordinates().size(), blockSet.getPreviousBlockStates().size(), blockSet.getNewBlockStates().size());
+        }
+
+        //Warn if previous and new blockstate are equal
+        //Can happen in a lot of valid cases
+//        for (int i = 0; i < blockSet.getCoordinates().size(); i++) {
+//            if (blockSet.getPreviousBlockStates().get(i).equals(blockSet.getNewBlockStates().get(i))) {
+//                EffortlessBuilding.logger.warn("Previous and new blockstates are equal at index {}. Blockstate: {}.",
+//                        i, blockSet.getPreviousBlockStates().get(i));
+//            }
+//        }
+
         //If no stack exists, make one
         if (!undoStacks.containsKey(player.getUniqueID())) {
             undoStacks.put(player.getUniqueID(), new FixedStack<>(new BlockSet[BuildConfig.survivalBalancers.undoStackSize]));
         }
+
 
         undoStacks.get(player.getUniqueID()).push(blockSet);
     }
 
     private static void addRedo(EntityPlayer player, BlockSet blockSet) {
         Map<UUID, FixedStack<BlockSet>> redoStacks = player.world.isRemote ? redoStacksClient : redoStacksServer;
+
+        //(No asserts necessary, it's private)
 
         //If no stack exists, make one
         if (!redoStacks.containsKey(player.getUniqueID())) {
@@ -76,10 +96,12 @@ public class UndoRedo {
                 BlockPos coordinate = coordinates.get(i);
                 ItemStack itemStack = itemStacks.get(i);
 
+                if (previousBlockStates.get(i).equals(newBlockStates.get(i))) continue;
+
                 //get blockstate from itemstack
-                IBlockState previousBlockState = Block.getBlockById(0).getDefaultState();
+                IBlockState previousBlockState = Blocks.AIR.getDefaultState();
                 if (itemStack.getItem() instanceof ItemBlock) {
-                    previousBlockState = ((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                    previousBlockState = previousBlockStates.get(i);//((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
                 }
 
                 if (player.world.isBlockLoaded(coordinate, true)) {
@@ -88,7 +110,9 @@ public class UndoRedo {
                         itemStack = findItemStackInInventory(player, previousBlockStates.get(i));
                         //get blockstate from new itemstack
                         if (!itemStack.isEmpty() && itemStack.getItem() instanceof ItemBlock) {
-                            previousBlockState = ((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                            previousBlockState = previousBlockStates.get(i);//((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                        } else {
+                            previousBlockState = Blocks.AIR.getDefaultState();
                         }
                     }
                     if (itemStack.isEmpty()) SurvivalHelper.breakBlock(player.world, player, coordinate, true);
@@ -115,6 +139,7 @@ public class UndoRedo {
 
         BlockSet blockSet = redoStack.pop();
         List<BlockPos> coordinates = blockSet.getCoordinates();
+        List<IBlockState> previousBlockStates = blockSet.getPreviousBlockStates();
         List<IBlockState> newBlockStates = blockSet.getNewBlockStates();
         Vec3d hitVec = blockSet.getHitVec();
 
@@ -127,8 +152,15 @@ public class UndoRedo {
             //place blocks
             for (int i = 0; i < coordinates.size(); i++) {
                 BlockPos coordinate = coordinates.get(i);
-                IBlockState newBlockState = newBlockStates.get(i);
                 ItemStack itemStack = itemStacks.get(i);
+
+                if (previousBlockStates.get(i).equals(newBlockStates.get(i))) continue;
+
+                //get blockstate from itemstack
+                IBlockState newBlockState = Blocks.AIR.getDefaultState();
+                if (itemStack.getItem() instanceof ItemBlock) {
+                    newBlockState = newBlockStates.get(i);//((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                }
 
                 if (player.world.isBlockLoaded(coordinate, true)) {
                     //check itemstack empty
@@ -136,7 +168,9 @@ public class UndoRedo {
                         itemStack = findItemStackInInventory(player, newBlockStates.get(i));
                         //get blockstate from new itemstack
                         if (!itemStack.isEmpty() && itemStack.getItem() instanceof ItemBlock) {
-                            newBlockState = ((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                            newBlockState = newBlockStates.get(i);//((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                        } else {
+                            newBlockState = Blocks.AIR.getDefaultState();
                         }
                     }
                     if (itemStack.isEmpty()) SurvivalHelper.breakBlock(player.world, player, coordinate, true);
@@ -174,6 +208,8 @@ public class UndoRedo {
         ItemStack itemStack = ItemStack.EMPTY;
 
         //First try previousBlockStates
+        //TODO try to find itemstack with right blockstate first
+        // then change line 103 back (get state from item)
         itemStack = InventoryHelper.findItemStackInInventory(player, blockState.getBlock());
 
         //then anything it drops

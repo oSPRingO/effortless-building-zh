@@ -5,6 +5,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.util.ResourceLocation;
@@ -30,6 +31,9 @@ import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
+import nl.requios.effortlessbuilding.network.AddUndoMessage;
+import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
+import nl.requios.effortlessbuilding.network.ClearUndoMessage;
 import nl.requios.effortlessbuilding.network.RequestLookAtMessage;
 import scala.actors.threadpool.Arrays;
 
@@ -96,13 +100,15 @@ public class EventHandler
         } else if (modifierSettings.doQuickReplace()) {
             //Cancel event and send message if QuickReplace
             event.setCanceled(true);
-            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState(), true), (EntityPlayerMP) player);
+            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(true), (EntityPlayerMP) player);
+            EffortlessBuilding.packetHandler.sendTo(new AddUndoMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState()), (EntityPlayerMP) player);
         } else {
             //NORMAL mode, let vanilla handle block placing
             //But modifiers should still work
 
             //Send message to client, which sends message back with raytrace info
-            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState(), false), (EntityPlayerMP) player);
+            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(false), (EntityPlayerMP) player);
+            EffortlessBuilding.packetHandler.sendTo(new AddUndoMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState()), (EntityPlayerMP) player);
         }
     }
 
@@ -117,9 +123,12 @@ public class EventHandler
             event.setCanceled(true);
         } else {
             //NORMAL mode, let vanilla handle block breaking
-            //But modifiers and QuickReplace should still work
+            //But modifiers should still work
             //Dont break the original block yourself, otherwise Tinkers Hammer and Veinminer won't work
             BuildModes.onBlockBroken(event.getPlayer(), event.getPos(), false);
+
+            //Add to undo stack in client
+            EffortlessBuilding.packetHandler.sendTo(new AddUndoMessage(event.getPos(), event.getState(), Blocks.AIR.getDefaultState()), (EntityPlayerMP) event.getPlayer());
         }
     }
 
@@ -169,8 +178,11 @@ public class EventHandler
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerLoggedOutEvent event) {
-        UndoRedo.clear(event.player);
-        //TODO call clientside
+        EntityPlayer player = event.player;
+        if (player.getEntityWorld().isRemote) return;
+
+        UndoRedo.clear(player);
+        EffortlessBuilding.packetHandler.sendTo(new ClearUndoMessage(), (EntityPlayerMP) player);
     }
 
     @SubscribeEvent
@@ -183,10 +195,12 @@ public class EventHandler
     @SubscribeEvent
     public static void onPlayerChangedDimension(PlayerChangedDimensionEvent event) {
         EntityPlayer player = event.player;
+        if (player.getEntityWorld().isRemote) return;
+
         ModifierSettingsManager.handleNewPlayer(player);
         ModeSettingsManager.handleNewPlayer(player);
 
         UndoRedo.clear(event.player);
-        //TODO call clientside
+        EffortlessBuilding.packetHandler.sendTo(new ClearUndoMessage(), (EntityPlayerMP) player);
     }
 }

@@ -18,54 +18,38 @@ import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import java.util.ArrayList;
 
 /***
- * Sends a message to the client asking for its lookat (objectmouseover) data.
- * This is then sent back with a BlockPlacedMessage.
+ * Sends a message to the client asking to clear the undo and redo stacks.
  */
-public class RequestLookAtMessage implements IMessage {
-    private boolean placeStartPos;
+public class ClearUndoMessage implements IMessage {
 
-    public RequestLookAtMessage() {
-        placeStartPos = false;
-    }
-
-    public RequestLookAtMessage(boolean placeStartPos) {
-        this.placeStartPos = placeStartPos;
-    }
-
-    public boolean getPlaceStartPos() {
-        return placeStartPos;
+    public ClearUndoMessage() {
     }
 
     @Override
     public void toBytes(ByteBuf buf) {
-        buf.writeBoolean(this.placeStartPos);
     }
 
     @Override
     public void fromBytes(ByteBuf buf) {
-        placeStartPos = buf.readBoolean();
     }
 
     // The params of the IMessageHandler are <REQ, REPLY>
-    public static class MessageHandler implements IMessageHandler<RequestLookAtMessage, IMessage> {
+    public static class MessageHandler implements IMessageHandler<ClearUndoMessage, IMessage> {
         // Do note that the default constructor is required, but implicitly defined in this case
 
         @Override
-        public IMessage onMessage(RequestLookAtMessage message, MessageContext ctx) {
+        public IMessage onMessage(ClearUndoMessage message, MessageContext ctx) {
             //EffortlessBuilding.log("message received on " + ctx.side + " side");
 
             if (ctx.side == Side.CLIENT){
                 //Received clientside
-                //Send back your info
 
-//                EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {
-//                    EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
-//
-//                });
+                EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {
+                    EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
-                //Prevent double placing in normal mode with placeStartPos false.
-                //Unless QuickReplace is on, then we do need to place start pos.
-                return new BlockPlacedMessage(ClientProxy.previousLookAt, message.getPlaceStartPos());
+                    //Add to undo stack clientside
+                    UndoRedo.clear(player);
+                });
             }
             return null;
         }

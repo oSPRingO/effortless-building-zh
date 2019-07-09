@@ -3,6 +3,7 @@ package nl.requios.effortlessbuilding.buildmodifier;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
@@ -75,10 +76,19 @@ public class BuildModifiers {
             }
         }
 
-        //add to undo stack
-        BlockPos firstPos = startCoordinates.get(0);
-        BlockPos secondPos = startCoordinates.get(startCoordinates.size() - 1);
-        UndoRedo.addUndo(player, new BlockSet(coordinates, previousBlockStates, newBlockStates, hitVec, firstPos, secondPos));
+        //Set first previousBlockState to empty if in NORMAL mode, to make undo/redo work
+        //(Block is placed by the time it gets here, and unplaced after this)
+        if (!placeStartPos) previousBlockStates.set(0, Blocks.AIR.getDefaultState());
+
+        //If all new blockstates are air then no use in adding it, no block was actually placed
+        //Can happen when e.g. placing one block in yourself
+        if (Collections.frequency(newBlockStates, Blocks.AIR.getDefaultState()) != newBlockStates.size()) {
+            //add to undo stack
+            BlockPos firstPos = startCoordinates.get(0);
+            BlockPos secondPos = startCoordinates.get(startCoordinates.size() - 1);
+            UndoRedo.addUndo(player, new BlockSet(coordinates, previousBlockStates, newBlockStates, hitVec, firstPos, secondPos));
+        }
+
     }
 
     public static void onBlockBroken(EntityPlayer player, List<BlockPos> startCoordinates, boolean breakStartPos) {
@@ -100,7 +110,7 @@ public class BuildModifiers {
 
             //list of air blockstates
             for (BlockPos coordinate : coordinates) {
-                newBlockStates.add(Block.getBlockById(0).getDefaultState());
+                newBlockStates.add(Blocks.AIR.getDefaultState());
             }
 
         } else {
@@ -124,6 +134,10 @@ public class BuildModifiers {
                 newBlockStates.add(world.getBlockState(coordinate));
             }
         }
+
+        //Set first newBlockState to empty if in NORMAL mode, to make undo/redo work
+        //(Block isn't broken yet by the time it gets here, and broken after this)
+        if (!breakStartPos) newBlockStates.set(0, Blocks.AIR.getDefaultState());
 
         //add to undo stack
         BlockPos firstPos = startCoordinates.get(0);

@@ -93,10 +93,19 @@ public class EffortlessBuilding
         EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 3, Side.CLIENT);
 
         EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 4, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 4, Side.CLIENT);
 
         EffortlessBuilding.packetHandler.registerMessage(CancelModeMessage.MessageHandler.class, CancelModeMessage.class, 5, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(CancelModeMessage.MessageHandler.class, CancelModeMessage.class, 5, Side.CLIENT);
 
+        EffortlessBuilding.packetHandler.registerMessage(RequestLookAtMessage.MessageHandler.class, RequestLookAtMessage.class, 6, Side.SERVER);
         EffortlessBuilding.packetHandler.registerMessage(RequestLookAtMessage.MessageHandler.class, RequestLookAtMessage.class, 6, Side.CLIENT);
+
+        EffortlessBuilding.packetHandler.registerMessage(AddUndoMessage.MessageHandler.class, AddUndoMessage.class, 7, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(AddUndoMessage.MessageHandler.class, AddUndoMessage.class, 7, Side.CLIENT);
+
+        EffortlessBuilding.packetHandler.registerMessage(ClearUndoMessage.MessageHandler.class, ClearUndoMessage.class, 8, Side.SERVER);
+        EffortlessBuilding.packetHandler.registerMessage(ClearUndoMessage.MessageHandler.class, ClearUndoMessage.class, 8, Side.CLIENT);
 
         proxy.preInit(event);
     }
