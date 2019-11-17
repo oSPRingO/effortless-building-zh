@@ -21,7 +21,6 @@ import java.util.*;
 
 public class BuildModifiers {
 
-
     //Called from BuildModes
     public static void onBlockPlaced(EntityPlayer player, List<BlockPos> startCoordinates, EnumFacing sideHit, Vec3d hitVec, boolean placeStartPos) {
         World world = player.world;
@@ -245,6 +244,16 @@ public class BuildModifiers {
         if (coordinates1 == null && coordinates2 == null) return true;
         if (coordinates1 == null || coordinates2 == null) return false;
 
-        return coordinates1.equals(coordinates2);
+        //Check count, not actual values
+        if (coordinates1.size() == coordinates2.size()){
+            if (coordinates1.size() == 1){
+                return coordinates1.get(0).equals(coordinates2.get(0));
+            }
+            return true;
+        } else {
+            return false;
+        }
+
+//        return coordinates1.equals(coordinates2);
     }
 }

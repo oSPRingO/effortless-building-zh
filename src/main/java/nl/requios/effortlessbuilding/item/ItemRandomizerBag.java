@@ -20,6 +20,9 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.buildmode.BuildModes;
+import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
+import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.capability.ItemHandlerCapabilityProvider;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 
@@ -52,6 +55,14 @@ public class ItemRandomizerBag extends Item {
             player.openGui(EffortlessBuilding.instance, EffortlessBuilding.RANDOMIZER_BAG_GUI, world, 0, 0, 0);
         } else {
             if (world.isRemote) return EnumActionResult.SUCCESS;
+
+            //Only place manually if in normal vanilla mode
+            BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
+            ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+            if (buildMode != BuildModes.BuildModeEnum.NORMAL || modifierSettings.doQuickReplace()) {
+                return EnumActionResult.FAIL;
+            }
+
             //Use item
             //Get bag inventory
             ItemStack bag = player.getHeldItem(hand);

@@ -200,7 +200,7 @@ public class EventHandler
         ModifierSettingsManager.handleNewPlayer(player);
         ModeSettingsManager.handleNewPlayer(player);
 
-        UndoRedo.clear(event.player);
+        UndoRedo.clear(player);
         EffortlessBuilding.packetHandler.sendTo(new ClearUndoMessage(), (EntityPlayerMP) player);
     }
 }

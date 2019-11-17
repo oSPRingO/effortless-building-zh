@@ -118,16 +118,13 @@ public class RandomizerBagContainer extends Container {
     /**
      * Callback for when the crafting gui is closed.
      */
-//    @Override
-//    public void onContainerClosed(EntityPlayer player)
-//    {
-//        if(player.inventory.getItemStack() != null)
-//        {
-//            player.entityDropItem(player.inventory.getItemStack(), 0.5f);
-//        }
-//        if(!player.world.isRemote)
-//        {
-//            detectAndSendChanges();
-//        }
-//    }
+    @Override
+    public void onContainerClosed(EntityPlayer player)
+    {
+        super.onContainerClosed(player);
+        if(!player.world.isRemote)
+        {
+            detectAndSendChanges();
+        }
+    }
 }

@@ -352,7 +352,8 @@ public class ClientProxy implements IProxy {
     }
 
     public static void openModifierSettings() {
-        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        Minecraft mc = Minecraft.getMinecraft();
+        EntityPlayerSP player = mc.player;
 
         RadialMenu.instance.setVisibility(0f);
 
@@ -360,8 +361,8 @@ public class ClientProxy implements IProxy {
         if (ReachHelper.getMaxReach(player) == 0) {
             EffortlessBuilding.log(player, "Build modifiers are disabled until your reach has increased. Increase your reach with craftable reach upgrades.");
         } else {
-            if (Minecraft.getMinecraft().currentScreen == null) {
-                Minecraft.getMinecraft().displayGuiScreen(new ModifierSettingsGui());
+            if (mc.currentScreen == null) {
+                mc.displayGuiScreen(new ModifierSettingsGui());
             } else {
                 player.closeScreen();
             }
