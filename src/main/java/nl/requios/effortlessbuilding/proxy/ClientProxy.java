@@ -263,11 +263,12 @@ public class ClientProxy implements IProxy {
                 breakCooldown = 4;
 
                 //Early out if cant break far, coming from own mouse event (not block broken event)
-                //To make breaking blocks in survival possible without breaking instantly
+                //To make breaking blocks in survival possible like array
+                //TODO this causes not being able to cancel placement in survival
+                //  moving it to after buildmodes fixes that, but introduces this bug
                 if (!ReachHelper.canBreakFar(player)) return;
 
                 RayTraceResult lookingAt = getLookingAt(player);
-
                 BuildModes.onBlockBrokenMessage(player, lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
                 EffortlessBuilding.packetHandler.sendToServer(lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
 
