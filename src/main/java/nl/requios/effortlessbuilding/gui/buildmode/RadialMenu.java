@@ -3,11 +3,12 @@ package nl.requios.effortlessbuilding.gui.buildmode;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.util.Direction;
 import net.minecraft.util.text.TextFormatting;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
-import nl.requios.effortlessbuilding.buildmode.ModeOptions;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.apache.commons.lang3.text.WordUtils;
@@ -16,14 +17,11 @@ import org.lwjgl.opengl.GL11;
 import com.google.common.base.Stopwatch;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.util.EnumFacing;
-import net.minecraftforge.client.model.ModelLoader;
 
 import static nl.requios.effortlessbuilding.buildmode.BuildModes.*;
 import static nl.requios.effortlessbuilding.buildmode.ModeOptions.*;
@@ -32,7 +30,7 @@ import static nl.requios.effortlessbuilding.buildmode.ModeOptions.*;
  * From Chisels and Bits by AlgorithmX2
  * https://github.com/AlgorithmX2/Chisels-and-Bits/blob/1.12/src/main/java/mod/chiselsandbits/client/gui/ChiselsAndBitsMenu.java
  */
-public class RadialMenu extends GuiScreen {
+public class RadialMenu extends Screen {
 
     private final float TIME_SCALE = 0.01f;
     public static final RadialMenu instance = new RadialMenu();
@@ -66,8 +64,8 @@ public class RadialMenu extends GuiScreen {
     }
 
     public void configure(final int scaledWidth, final int scaledHeight ) {
-        mc = Minecraft.getInstance();
-        fontRenderer = mc.fontRenderer;
+        Minecraft mc = Minecraft.getInstance();
+        font = mc.fontRenderer;
         width = scaledWidth;
         height = scaledHeight;
     }
@@ -80,10 +78,10 @@ public class RadialMenu extends GuiScreen {
 
         public final ActionEnum action;
         public String name;
-        public EnumFacing textSide;
+        public Direction textSide;
 
         public MenuButton(final String name, final ActionEnum action, final double x, final double y,
-                final EnumFacing textSide) {
+                final Direction textSide) {
             this.name = I18n.format(name);
             this.action = action;
             x1 = x - 10;
@@ -122,7 +120,7 @@ public class RadialMenu extends GuiScreen {
 
         drawGradientRect(0, 0, width, height, startColor, endColor);
 
-        GlStateManager.disableTexture2D();
+        GlStateManager.disableTexture();
         GlStateManager.enableBlend();
         GlStateManager.disableAlphaTest();
         GlStateManager.blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
@@ -158,17 +156,17 @@ public class RadialMenu extends GuiScreen {
         }
 
         //Add actions
-        buttons.add(new MenuButton(ActionEnum.UNDO.name, ActionEnum.UNDO, -buttonDistance - 26, -13, EnumFacing.UP));
-        buttons.add(new MenuButton(ActionEnum.REDO.name, ActionEnum.REDO, -buttonDistance, -13, EnumFacing.UP));
-        buttons.add(new MenuButton(ActionEnum.OPEN_MODIFIER_SETTINGS.name, ActionEnum.OPEN_MODIFIER_SETTINGS, -buttonDistance - 26, 13, EnumFacing.DOWN));
-        buttons.add(new MenuButton(ActionEnum.REPLACE.name, ActionEnum.REPLACE, -buttonDistance, 13, EnumFacing.DOWN));
+        buttons.add(new MenuButton(ActionEnum.UNDO.name, ActionEnum.UNDO, -buttonDistance - 26, -13, Direction.UP));
+        buttons.add(new MenuButton(ActionEnum.REDO.name, ActionEnum.REDO, -buttonDistance, -13, Direction.UP));
+        buttons.add(new MenuButton(ActionEnum.OPEN_MODIFIER_SETTINGS.name, ActionEnum.OPEN_MODIFIER_SETTINGS, -buttonDistance - 26, 13, Direction.DOWN));
+        buttons.add(new MenuButton(ActionEnum.REPLACE.name, ActionEnum.REPLACE, -buttonDistance, 13, Direction.DOWN));
 
         //Add buildmode dependent options
         OptionEnum[] options = currentBuildMode.options;
         for (int i = 0; i < options.length; i++) {
             for (int j = 0; j < options[i].actions.length; j++) {
                 ActionEnum action = options[i].actions[j];
-                buttons.add(new MenuButton(action.name, action, buttonDistance + j * 26, -13 + i * 39, EnumFacing.DOWN));
+                buttons.add(new MenuButton(action.name, action, buttonDistance + j * 26, -13 + i * 39, Direction.DOWN));
             }
         }
 
@@ -345,16 +343,16 @@ public class RadialMenu extends GuiScreen {
         tessellator.draw();
 
         //Draw strings
-        //fontRenderer.drawStringWithShadow("Actions", (int) (middleX - buttonDistance - 13) - fontRenderer.getStringWidth("Actions") * 0.5f, (int) middleY - 38, 0xffffffff);
+        //font.drawStringWithShadow("Actions", (int) (middleX - buttonDistance - 13) - font.getStringWidth("Actions") * 0.5f, (int) middleY - 38, 0xffffffff);
 
         //Draw option strings
         for (int i = 0; i < currentBuildMode.options.length; i++) {
             OptionEnum option = options[i];
-            fontRenderer.drawStringWithShadow(I18n.format(option.name), (int) (middleX + buttonDistance - 9), (int) middleY - 37 + i * 39, 0xeeeeeeff);
+            font.drawStringWithShadow(I18n.format(option.name), (int) (middleX + buttonDistance - 9), (int) middleY - 37 + i * 39, 0xeeeeeeff);
         }
 
         String credits = "Effortless Building";
-        fontRenderer.drawStringWithShadow(credits, width - fontRenderer.getStringWidth(credits) - 4, height - 10, 0x88888888);
+        font.drawStringWithShadow(credits, width - font.getStringWidth(credits) - 4, height - 10, 0x88888888);
 
         //Draw buildmode text
         for (final MenuRegion menuRegion : modes) {
@@ -364,16 +362,16 @@ public class RadialMenu extends GuiScreen {
                 final double y = (menuRegion.y1 + menuRegion.y2) * 0.5;
 
                 int fixed_x = (int) (x * textDistance);
-                final int fixed_y = (int) (y * textDistance) - fontRenderer.FONT_HEIGHT / 2;
+                final int fixed_y = (int) (y * textDistance) - font.FONT_HEIGHT / 2;
                 final String text = I18n.format(menuRegion.mode.name);
 
                 if ( x <= -0.2 ) {
-                    fixed_x -= fontRenderer.getStringWidth(text);
+                    fixed_x -= font.getStringWidth(text);
                 } else if ( -0.2 <= x && x <= 0.2 ) {
-                    fixed_x -= fontRenderer.getStringWidth(text) / 2;
+                    fixed_x -= font.getStringWidth(text) / 2;
                 }
 
-                fontRenderer.drawStringWithShadow(text, (int) middleX + fixed_x, (int) middleY + fixed_y, 0xffffffff);
+                font.drawStringWithShadow(text, (int) middleX + fixed_x, (int) middleY + fixed_y, 0xffffffff);
             }
         }
 
@@ -408,30 +406,30 @@ public class RadialMenu extends GuiScreen {
                 }
                 if (!keybind.isEmpty()) keybindFormatted = TextFormatting.GRAY + "(" + WordUtils.capitalizeFully(keybind) + ")";
 
-                if (button.textSide == EnumFacing.WEST) {
+                if (button.textSide == Direction.WEST) {
 
-                    fontRenderer.drawSplitString( text, (int) (middleX + button.x1 - 8 ) - fontRenderer.getStringWidth(text),
+                    font.drawSplitString( text, (int) (middleX + button.x1 - 8 ) - font.getStringWidth(text),
                             (int) (middleY + button.y1 + 6), wrap, 0xffffffff);
 
-                } else if (button.textSide == EnumFacing.EAST) {
+                } else if (button.textSide == Direction.EAST) {
 
-                    fontRenderer.drawSplitString(text, (int) (middleX + button.x2 + 8),
+                    font.drawSplitString(text, (int) (middleX + button.x2 + 8),
                             (int) (middleY + button.y1 + 6 ), wrap, 0xffffffff);
 
-                } else if (button.textSide == EnumFacing.UP || button.textSide == EnumFacing.NORTH) {
+                } else if (button.textSide == Direction.UP || button.textSide == Direction.NORTH) {
 
-                    fontRenderer.drawSplitString( keybindFormatted, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(keybindFormatted) * 0.5),
+                    font.drawSplitString( keybindFormatted, (int) (middleX + (button.x1 + button.x2) * 0.5 - font.getStringWidth(keybindFormatted) * 0.5),
                             (int) (middleY + button.y1 - 26), wrap,0xffffffff);
 
-                    fontRenderer.drawSplitString( text, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(text) * 0.5),
+                    font.drawSplitString( text, (int) (middleX + (button.x1 + button.x2) * 0.5 - font.getStringWidth(text) * 0.5),
                             (int) (middleY + button.y1 - 14), wrap,0xffffffff);
 
-                } else if (button.textSide == EnumFacing.DOWN || button.textSide == EnumFacing.SOUTH) {
+                } else if (button.textSide == Direction.DOWN || button.textSide == Direction.SOUTH) {
 
-                    fontRenderer.drawSplitString(text, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(text) * 0.5),
+                    font.drawSplitString(text, (int) (middleX + (button.x1 + button.x2) * 0.5 - font.getStringWidth(text) * 0.5),
                             (int) (middleY + button.y1 + 26), wrap, 0xffffffff);
 
-                    fontRenderer.drawSplitString(keybindFormatted, (int) (middleX + (button.x1 + button.x2) * 0.5 - fontRenderer.getStringWidth(keybindFormatted) * 0.5),
+                    font.drawSplitString(keybindFormatted, (int) (middleX + (button.x1 + button.x2) * 0.5 - font.getStringWidth(keybindFormatted) * 0.5),
                             (int) (middleY + button.y1 + 38), wrap, 0xffffffff);
 
                 }

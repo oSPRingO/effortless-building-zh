@@ -1,8 +1,8 @@
 package nl.requios.effortlessbuilding.network;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -20,16 +20,16 @@ import java.util.function.Supplier;
  */
 public class AddUndoMessage {
     private BlockPos coordinate;
-    private IBlockState previousBlockState;
-    private IBlockState newBlockState;
+    private BlockState previousBlockState;
+    private BlockState newBlockState;
 
     public AddUndoMessage() {
-        coordinate = BlockPos.ORIGIN;
+        coordinate = BlockPos.ZERO;
         previousBlockState = null;
         newBlockState = null;
     }
 
-    public AddUndoMessage(BlockPos coordinate, IBlockState previousBlockState, IBlockState newBlockState) {
+    public AddUndoMessage(BlockPos coordinate, BlockState previousBlockState, BlockState newBlockState) {
         this.coordinate = coordinate;
         this.previousBlockState = previousBlockState;
         this.newBlockState = newBlockState;
@@ -39,11 +39,11 @@ public class AddUndoMessage {
         return coordinate;
     }
 
-    public IBlockState getPreviousBlockState() {
+    public BlockState getPreviousBlockState() {
         return previousBlockState;
     }
 
-    public IBlockState getNewBlockState() {
+    public BlockState getNewBlockState() {
         return newBlockState;
     }
 
@@ -57,8 +57,8 @@ public class AddUndoMessage {
 
     public static AddUndoMessage decode(PacketBuffer buf) {
         BlockPos coordinate = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
-        IBlockState previousBlockState = Block.getStateById(buf.readInt());
-        IBlockState newBlockState = Block.getStateById(buf.readInt());
+        BlockState previousBlockState = Block.getStateById(buf.readInt());
+        BlockState newBlockState = Block.getStateById(buf.readInt());
         return new AddUndoMessage(coordinate, previousBlockState, newBlockState);
     }
 
@@ -72,12 +72,12 @@ public class AddUndoMessage {
                 if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
                     //Received clientside
 
-                    EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+                    PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
                     //Add to undo stack clientside
                     UndoRedo.addUndo(ctx.get().getSender(), new BlockSet(
                             new ArrayList<BlockPos>() {{add(message.getCoordinate());}},
-                            new ArrayList<IBlockState>() {{add(message.getPreviousBlockState());}},
-                            new ArrayList<IBlockState>() {{add(message.getNewBlockState());}},
+                            new ArrayList<BlockState>() {{add(message.getPreviousBlockState());}},
+                            new ArrayList<BlockState>() {{add(message.getNewBlockState());}},
                             new Vec3d(0,0,0),
                             message.getCoordinate(), message.getCoordinate()));
                 }

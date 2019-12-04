@@ -1,9 +1,9 @@
 package nl.requios.effortlessbuilding.buildmode;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceFluidMode;
+import net.minecraft.util.math.RayTraceContext;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
@@ -26,8 +26,8 @@ public class BuildModes {
 
     //Static variables are shared between client and server in singleplayer
     //We need them separate
-    public static Dictionary<EntityPlayer, Boolean> currentlyBreakingClient = new Hashtable<>();
-    public static Dictionary<EntityPlayer, Boolean> currentlyBreakingServer = new Hashtable<>();
+    public static Dictionary<PlayerEntity, Boolean> currentlyBreakingClient = new Hashtable<>();
+    public static Dictionary<PlayerEntity, Boolean> currentlyBreakingServer = new Hashtable<>();
 
     public enum BuildModeEnum {
         NORMAL("effortlessbuilding.mode.normal", new Normal()),
@@ -57,10 +57,10 @@ public class BuildModes {
     //Uses a network message to get the previous raytraceresult from the player
     //The server could keep track of all raytraceresults but this might lag with many players
     //Raytraceresult is needed for sideHit and hitVec
-    public static void onBlockPlacedMessage(EntityPlayer player, BlockPlacedMessage message) {
+    public static void onBlockPlacedMessage(PlayerEntity player, BlockPlacedMessage message) {
 
         //Check if not in the middle of breaking
-        Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
+        Dictionary<PlayerEntity, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
         if (currentlyBreaking.get(player) != null && currentlyBreaking.get(player)) {
             //Cancel breaking
             initializeMode(player);
@@ -112,7 +112,7 @@ public class BuildModes {
             coordinates = coordinates.subList(0, limit);
         }
 
-        EnumFacing sideHit = buildMode.instance.getSideHit(player);
+        Direction sideHit = buildMode.instance.getSideHit(player);
         if (sideHit == null) sideHit = message.getSideHit();
 
         Vec3d hitVec = buildMode.instance.getHitVec(player);
@@ -127,15 +127,15 @@ public class BuildModes {
     }
 
     //Use a network message to break blocks in the distance using clientside mouse input
-    public static void onBlockBrokenMessage(EntityPlayer player, BlockBrokenMessage message) {
+    public static void onBlockBrokenMessage(PlayerEntity player, BlockBrokenMessage message) {
         BlockPos startPos = message.isBlockHit() ? message.getBlockPos() : null;
         onBlockBroken(player, startPos, true);
     }
 
-    public static void onBlockBroken(EntityPlayer player, BlockPos startPos, boolean breakStartPos) {
+    public static void onBlockBroken(PlayerEntity player, BlockPos startPos, boolean breakStartPos) {
 
         //Check if not in the middle of placing
-        Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
+        Dictionary<PlayerEntity, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
         if (currentlyBreaking.get(player) != null && !currentlyBreaking.get(player)) {
             //Cancel placing
             initializeMode(player);
@@ -153,7 +153,7 @@ public class BuildModes {
 
         //Get coordinates
         BuildModeEnum buildMode = modeSettings.getBuildMode();
-        List<BlockPos> coordinates = buildMode.instance.onRightClick(player, startPos, EnumFacing.UP, Vec3d.ZERO, true);
+        List<BlockPos> coordinates = buildMode.instance.onRightClick(player, startPos, Direction.UP, Vec3d.ZERO, true);
 
         if (coordinates.isEmpty()) {
             currentlyBreaking.put(player, true);
@@ -168,7 +168,7 @@ public class BuildModes {
         currentlyBreaking.remove(player);
     }
 
-    public static List<BlockPos> findCoordinates(EntityPlayer player, BlockPos startPos, boolean skipRaytrace) {
+    public static List<BlockPos> findCoordinates(PlayerEntity player, BlockPos startPos, boolean skipRaytrace) {
         List<BlockPos> coordinates = new ArrayList<>();
 
         ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
@@ -177,27 +177,27 @@ public class BuildModes {
         return coordinates;
     }
 
-    public static void initializeMode(EntityPlayer player) {
+    public static void initializeMode(PlayerEntity player) {
         //Resetting mode, so not placing or breaking
-        Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
+        Dictionary<PlayerEntity, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
         currentlyBreaking.remove(player);
 
         ModeSettingsManager.getModeSettings(player).getBuildMode().instance.initialize(player);
     }
 
-    public static boolean isCurrentlyPlacing(EntityPlayer player) {
-        Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
+    public static boolean isCurrentlyPlacing(PlayerEntity player) {
+        Dictionary<PlayerEntity, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
         return currentlyBreaking.get(player) != null && !currentlyBreaking.get(player);
     }
 
-    public static boolean isCurrentlyBreaking(EntityPlayer player) {
-        Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
+    public static boolean isCurrentlyBreaking(PlayerEntity player) {
+        Dictionary<PlayerEntity, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
         return currentlyBreaking.get(player) != null && currentlyBreaking.get(player);
     }
 
     //Either placing or breaking
-    public static boolean isActive(EntityPlayer player) {
-        Dictionary<EntityPlayer, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
+    public static boolean isActive(PlayerEntity player) {
+        Dictionary<PlayerEntity, Boolean> currentlyBreaking = player.world.isRemote ? currentlyBreakingClient : currentlyBreakingServer;
         return currentlyBreaking.get(player) != null;
     }
 
@@ -229,13 +229,14 @@ public class BuildModes {
         return new Vec3d(x, y, z);
     }
 
-    public static boolean isCriteriaValid(Vec3d start, Vec3d look, int reach, EntityPlayer player, boolean skipRaytrace, Vec3d lineBound, Vec3d planeBound, double distToPlayerSq) {
+    public static boolean isCriteriaValid(Vec3d start, Vec3d look, int reach, PlayerEntity player, boolean skipRaytrace, Vec3d lineBound, Vec3d planeBound, double distToPlayerSq) {
         boolean intersects = false;
         if (!skipRaytrace) {
             //collision within a 1 block radius to selected is fine
-            RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, lineBound, RayTraceFluidMode.NEVER, true, false);
-            intersects = rayTraceResult != null && rayTraceResult.type == RayTraceResult.Type.BLOCK &&
-                         planeBound.subtract(rayTraceResult.hitVec).lengthSquared() > 4;
+            RayTraceContext rayTraceContext = new RayTraceContext(start, lineBound, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, player);
+            RayTraceResult rayTraceResult = player.world.rayTraceBlocks(rayTraceContext);
+            intersects = rayTraceResult != null && rayTraceResult.getType() == RayTraceResult.Type.BLOCK &&
+                         planeBound.subtract(rayTraceResult.getHitVec()).lengthSquared() > 4;
         }
 
         return planeBound.subtract(start).dotProduct(look) > 0 &&

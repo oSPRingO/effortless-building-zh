@@ -1,10 +1,10 @@
 package nl.requios.effortlessbuilding.buildmodifier;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
@@ -44,7 +44,7 @@ public class RadialMirror {
         }
     }
 
-    public static List<BlockPos> findCoordinates(EntityPlayer player, BlockPos startPos) {
+    public static List<BlockPos> findCoordinates(PlayerEntity player, BlockPos startPos) {
         List<BlockPos> coordinates = new ArrayList<>();
 
         //find radial mirror settings for the player
@@ -77,8 +77,8 @@ public class RadialMirror {
         return coordinates;
     }
 
-    public static List<IBlockState> findBlockStates(EntityPlayer player, BlockPos startPos, IBlockState blockState, ItemStack itemStack, List<ItemStack> itemStacks) {
-        List<IBlockState> blockStates = new ArrayList<>();
+    public static List<BlockState> findBlockStates(PlayerEntity player, BlockPos startPos, BlockState blockState, ItemStack itemStack, List<ItemStack> itemStacks) {
+        List<BlockState> blockStates = new ArrayList<>();
         List<BlockPos> coordinates = new ArrayList<>(); //to keep track of duplicates
 
         //find radial mirror settings for the player that placed the block
@@ -105,7 +105,7 @@ public class RadialMirror {
             bagInventory = ItemRandomizerBag.getBagInventory(itemStack);
         }
 
-        IBlockState newBlockState;
+        BlockState newBlockState;
         for (int i = 1; i < r.slices; i++) {
             newBlockState = blockState;
             double curAngle = sliceAngle * i;
@@ -124,7 +124,7 @@ public class RadialMirror {
             if (bagInventory != null) {
                 itemStack = ItemRandomizerBag.pickRandomStack(bagInventory);
                 newBlockState = BuildModifiers
-                        .getBlockStateFromItem(itemStack, player, startPos, EnumFacing.UP, new Vec3d(0, 0, 0), EnumHand.MAIN_HAND);
+                        .getBlockStateFromItem(itemStack, player, startPos, Direction.UP, new Vec3d(0, 0, 0), Hand.MAIN_HAND);
 
                 newBlockState = rotateOriginalBlockState(startAngleToCenter, newBlockState);
             }
@@ -139,8 +139,8 @@ public class RadialMirror {
         return blockStates;
     }
 
-    private static IBlockState rotateOriginalBlockState(double startAngleToCenter, IBlockState blockState) {
-        IBlockState newBlockState = blockState;
+    private static BlockState rotateOriginalBlockState(double startAngleToCenter, BlockState blockState) {
+        BlockState newBlockState = blockState;
 
         if (startAngleToCenter < -0.751 * Math.PI || startAngleToCenter > 0.749 * Math.PI) {
             newBlockState = blockState.rotate(Rotation.CLOCKWISE_180);
@@ -153,8 +153,8 @@ public class RadialMirror {
         return newBlockState;
     }
 
-    private static IBlockState rotateBlockState(Vec3d relVec, IBlockState blockState, boolean alternate) {
-        IBlockState newBlockState;
+    private static BlockState rotateBlockState(Vec3d relVec, BlockState blockState, boolean alternate) {
+        BlockState newBlockState;
         double angleToCenter = MathHelper.atan2(relVec.x, relVec.z); //between -PI and PI
 
         if (angleToCenter < -0.751 * Math.PI || angleToCenter > 0.749 * Math.PI) {

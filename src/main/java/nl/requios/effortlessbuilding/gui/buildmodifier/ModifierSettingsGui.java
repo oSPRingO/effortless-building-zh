@@ -1,8 +1,8 @@
 package nl.requios.effortlessbuilding.gui.buildmodifier;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.button.Button;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
@@ -15,13 +15,11 @@ import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
 import nl.requios.effortlessbuilding.network.PacketHandler;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
-import java.io.IOException;
-
 @OnlyIn(Dist.CLIENT)
-public class ModifierSettingsGui extends GuiScreen {
+public class ModifierSettingsGui extends Screen {
 
     private GuiScrollPane scrollPane;
-    private GuiButton buttonClose;
+    private Button buttonClose;
 
     private MirrorSettingsGui mirrorSettingsGui;
     private ArraySettingsGui arraySettingsGui;
@@ -32,7 +30,7 @@ public class ModifierSettingsGui extends GuiScreen {
     public void initGui() {
         int id = 0;
 
-        scrollPane = new GuiScrollPane(this, fontRenderer, 8, height - 30);
+        scrollPane = new GuiScrollPane(this, font, 8, height - 30);
 
         mirrorSettingsGui = new MirrorSettingsGui(scrollPane);
         scrollPane.AddListEntry(mirrorSettingsGui);
@@ -47,11 +45,11 @@ public class ModifierSettingsGui extends GuiScreen {
 
         //Close button
         int y = height - 26;
-        buttonClose = new GuiButton(id++, width / 2 - 100, y, "Close") {
+        buttonClose = new Button(width / 2 - 100, y, "Close") {
             @Override
             public void onClick(double mouseX, double mouseY) {
                 super.onClick(mouseX, mouseY);
-                mc.player.closeScreen();
+                Minecraft.getInstance().player.closeScreen();
             }
         };
         buttons.add(buttonClose);
@@ -67,7 +65,7 @@ public class ModifierSettingsGui extends GuiScreen {
     }
 
     @Override
-    //Set colors using GL11, use the fontRendererObj field to display text
+    //Set colors using GL11, use the fontObj field to display text
     //Use drawTexturedModalRect() to transfers areas of a texture resource to the screen
     public void render(int mouseX, int mouseY, float partialTicks) {
         this.drawDefaultBackground();

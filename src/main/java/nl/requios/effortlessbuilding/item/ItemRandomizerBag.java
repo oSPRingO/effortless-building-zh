@@ -1,20 +1,20 @@
 package nl.requios.effortlessbuilding.item;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.*;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.EnumActionResult;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.util.*;
+import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -26,7 +26,6 @@ import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.capability.ItemHandlerCapabilityProvider;
-import nl.requios.effortlessbuilding.gui.RandomizerBagContainer;
 import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 
@@ -49,39 +48,40 @@ public class ItemRandomizerBag extends Item {
     }
 
     @Override
-    public EnumActionResult onItemUse(ItemUseContext ctx) {
-        EntityPlayer player = ctx.getPlayer();
+    public ActionResultType onItemUse(ItemUseContext ctx) {
+        PlayerEntity player = ctx.getPlayer();
         World world = ctx.getWorld();
         BlockPos pos = ctx.getPos();
-        EnumFacing facing = ctx.getFace();
+        Direction facing = ctx.getFace();
         ItemStack item = ctx.getItem();
+        Vec3d hitVec = ctx.getHitVec();
 
-        if (player == null) return EnumActionResult.FAIL;
+        if (player == null) return ActionResultType.FAIL;
 
         if (ctx.isPlacerSneaking()) {
-            if (world.isRemote) return EnumActionResult.SUCCESS;
+            if (world.isRemote) return ActionResultType.SUCCESS;
             //Open inventory
-            NetworkHooks.openGui((EntityPlayerMP) player, new RandomizerBagGuiHandler());
+            NetworkHooks.openGui((ServerPlayerEntity) player, new RandomizerBagGuiHandler());
         } else {
-            if (world.isRemote) return EnumActionResult.SUCCESS;
+            if (world.isRemote) return ActionResultType.SUCCESS;
 
             //Only place manually if in normal vanilla mode
             BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
             ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
             if (buildMode != BuildModes.BuildModeEnum.NORMAL || modifierSettings.doQuickReplace()) {
-                return EnumActionResult.FAIL;
+                return ActionResultType.FAIL;
             }
 
             //Use item
             //Get bag inventory
             //TODO offhand support
-            ItemStack bag = player.getHeldItem(EnumHand.MAIN_HAND);
+            ItemStack bag = player.getHeldItem(Hand.MAIN_HAND);
             IItemHandler bagInventory = getBagInventory(bag);
             if (bagInventory == null)
-                return EnumActionResult.FAIL;
+                return ActionResultType.FAIL;
 
             ItemStack toPlace = pickRandomStack(bagInventory);
-            if (toPlace.isEmpty()) return EnumActionResult.FAIL;
+            if (toPlace.isEmpty()) return ActionResultType.FAIL;
 
             //Previously: use onItemUse to place block (no synergy)
             //bag.setItemDamage(toPlace.getMetadata());
@@ -92,10 +92,10 @@ public class ItemRandomizerBag extends Item {
                 pos = pos.offset(facing);
             }
 
-            BlockItemUseContext blockItemUseContext = new BlockItemUseContext(world, player, item, pos, facing, ctx.getHitX(), ctx.getHitY(), ctx.getHitZ());
-            IBlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(blockItemUseContext);
+            BlockItemUseContext blockItemUseContext = new BlockItemUseContext(new ItemUseContext(player, Hand.MAIN_HAND, new BlockRayTraceResult(hitVec, facing, pos, false)));
+            BlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(blockItemUseContext);
 
-            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, new Vec3d(ctx.getHitX(), ctx.getHitY(), ctx.getHitZ()), false, false, true);
+            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, hitVec, false, false, true);
 
             //Synergy
             //Works without calling
@@ -104,30 +104,30 @@ public class ItemRandomizerBag extends Item {
 //            Mirror.onBlockPlaced(placeEvent);
 //            Array.onBlockPlaced(placeEvent);
         }
-        return EnumActionResult.SUCCESS;
+        return ActionResultType.SUCCESS;
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
         ItemStack bag = player.getHeldItem(hand);
 
         if (player.isSneaking()) {
-            if (world.isRemote) return new ActionResult<>(EnumActionResult.SUCCESS, bag);
+            if (world.isRemote) return new ActionResult<>(ActionResultType.SUCCESS, bag);
             //Open inventory
-            NetworkHooks.openGui((EntityPlayerMP) player, new RandomizerBagGuiHandler());
+            NetworkHooks.openGui((ServerPlayerEntity) player, new RandomizerBagGuiHandler());
         } else {
             //Use item
             //Get bag inventory
             IItemHandler bagInventory = getBagInventory(bag);
             if (bagInventory == null)
-                return new ActionResult<>(EnumActionResult.FAIL, bag);
+                return new ActionResult<>(ActionResultType.FAIL, bag);
 
             ItemStack toUse = pickRandomStack(bagInventory);
-            if (toUse.isEmpty()) return new ActionResult<>(EnumActionResult.FAIL, bag);
+            if (toUse.isEmpty()) return new ActionResult<>(ActionResultType.FAIL, bag);
 
             return toUse.useItemRightClick(world, player, hand);
         }
-        return new ActionResult<>(EnumActionResult.PASS, bag);
+        return new ActionResult<>(ActionResultType.PASS, bag);
     }
 
     /**
@@ -192,14 +192,14 @@ public class ItemRandomizerBag extends Item {
 
     @Nullable
     @Override
-    public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable NBTTagCompound nbt) {
+    public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundNBT nbt) {
         return new ItemHandlerCapabilityProvider();
     }
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-        tooltip.add(new TextComponentString(TextFormatting.BLUE + "Rightclick" + TextFormatting.GRAY + " to place a random block"));
-        tooltip.add(new TextComponentString(TextFormatting.BLUE + "Sneak + rightclick" + TextFormatting.GRAY + " to open inventory"));
+        tooltip.add(new StringTextComponent(TextFormatting.BLUE + "Rightclick" + TextFormatting.GRAY + " to place a random block"));
+        tooltip.add(new StringTextComponent(TextFormatting.BLUE + "Sneak + rightclick" + TextFormatting.GRAY + " to open inventory"));
     }
 
     @Override

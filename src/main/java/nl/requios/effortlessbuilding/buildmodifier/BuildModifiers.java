@@ -1,18 +1,19 @@
 package nl.requios.effortlessbuilding.buildmodifier;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.block.Blocks;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
+import net.minecraft.item.ItemUseContext;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.InventoryHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
@@ -24,7 +25,7 @@ import java.util.*;
 public class BuildModifiers {
 
     //Called from BuildModes
-    public static void onBlockPlaced(EntityPlayer player, List<BlockPos> startCoordinates, EnumFacing sideHit, Vec3d hitVec, boolean placeStartPos) {
+    public static void onBlockPlaced(PlayerEntity player, List<BlockPos> startCoordinates, Direction sideHit, Vec3d hitVec, boolean placeStartPos) {
         World world = player.world;
         ItemRandomizerBag.renewRandomness();
 
@@ -34,14 +35,14 @@ public class BuildModifiers {
         //find coordinates and blockstates
         List<BlockPos> coordinates = findCoordinates(player, startCoordinates);
         List<ItemStack> itemStacks = new ArrayList<>();
-        List<IBlockState> blockStates = findBlockStates(player, startCoordinates, hitVec, sideHit, itemStacks);
+        List<BlockState> blockStates = findBlockStates(player, startCoordinates, hitVec, sideHit, itemStacks);
 
         //check if valid blockstates
         if (blockStates.size() == 0 || coordinates.size() != blockStates.size()) return;
 
         //remember previous blockstates for undo
-        List<IBlockState> previousBlockStates = new ArrayList<>(coordinates.size());
-        List<IBlockState> newBlockStates = new ArrayList<>(coordinates.size());
+        List<BlockState> previousBlockStates = new ArrayList<>(coordinates.size());
+        List<BlockState> newBlockStates = new ArrayList<>(coordinates.size());
         for (BlockPos coordinate : coordinates) {
             previousBlockStates.add(world.getBlockState(coordinate));
         }
@@ -57,17 +58,17 @@ public class BuildModifiers {
             //place blocks
             for (int i = placeStartPos ? 0 : 1; i < coordinates.size(); i++) {
                 BlockPos blockPos = coordinates.get(i);
-                IBlockState blockState = blockStates.get(i);
+                BlockState blockState = blockStates.get(i);
                 ItemStack itemStack = itemStacks.get(i);
 
-                if (world.isBlockLoaded(blockPos, true)) {
+                if (world.isBlockPresent(blockPos)) {
                     //check itemstack empty
                     if (itemStack.isEmpty()) {
                         //try to find new stack, otherwise continue
                         itemStack = InventoryHelper.findItemStackInInventory(player, blockState.getBlock());
                         if (itemStack.isEmpty()) continue;
                     }
-                    SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, EnumFacing.UP, hitVec, false, false, false);
+                    SurvivalHelper.placeBlock(world, player, blockPos, blockState, itemStack, Direction.UP, hitVec, false, false, false);
                 }
             }
 
@@ -91,7 +92,7 @@ public class BuildModifiers {
         }
     }
 
-    public static void onBlockBroken(EntityPlayer player, List<BlockPos> startCoordinates, boolean breakStartPos) {
+    public static void onBlockBroken(PlayerEntity player, List<BlockPos> startCoordinates, boolean breakStartPos) {
         World world = player.world;
 
         List<BlockPos> coordinates = findCoordinates(player, startCoordinates);
@@ -99,8 +100,8 @@ public class BuildModifiers {
         if (coordinates.isEmpty()) return;
 
         //remember previous blockstates for undo
-        List<IBlockState> previousBlockStates = new ArrayList<>(coordinates.size());
-        List<IBlockState> newBlockStates = new ArrayList<>(coordinates.size());
+        List<BlockState> previousBlockStates = new ArrayList<>(coordinates.size());
+        List<BlockState> newBlockStates = new ArrayList<>(coordinates.size());
         for (BlockPos coordinate : coordinates) {
             previousBlockStates.add(world.getBlockState(coordinate));
         }
@@ -122,7 +123,7 @@ public class BuildModifiers {
             //break all those blocks
             for (int i = breakStartPos ? 0 : 1; i < coordinates.size(); i++) {
                 BlockPos coordinate = coordinates.get(i);
-                if (world.isBlockLoaded(coordinate, false)) {
+                if (world.isBlockPresent(coordinate) && !world.isAirBlock(coordinate)) {
                     if (!onlyInstaBreaking || world.getBlockState(coordinate).getBlockHardness(world, coordinate) == 0f) {
                         SurvivalHelper.breakBlock(world, player, coordinate, false);
                     }
@@ -147,7 +148,7 @@ public class BuildModifiers {
 
     }
 
-    public static List<BlockPos> findCoordinates(EntityPlayer player, List<BlockPos> posList) {
+    public static List<BlockPos> findCoordinates(PlayerEntity player, List<BlockPos> posList) {
         List<BlockPos> coordinates = new ArrayList<>();
         //Add current blocks being placed too
         coordinates.addAll(posList);
@@ -168,18 +169,18 @@ public class BuildModifiers {
         return coordinates;
     }
 
-    public static List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos) {
+    public static List<BlockPos> findCoordinates(PlayerEntity player, BlockPos blockPos) {
         return findCoordinates(player, new ArrayList<>(Arrays.asList(blockPos)));
     }
 
-    public static List<IBlockState> findBlockStates(EntityPlayer player, List<BlockPos> posList, Vec3d hitVec, EnumFacing facing, List<ItemStack> itemStacks) {
-        List<IBlockState> blockStates = new ArrayList<>();
+    public static List<BlockState> findBlockStates(PlayerEntity player, List<BlockPos> posList, Vec3d hitVec, Direction facing, List<ItemStack> itemStacks) {
+        List<BlockState> blockStates = new ArrayList<>();
         itemStacks.clear();
 
         //Get itemstack
-        ItemStack itemStack = player.getHeldItem(EnumHand.MAIN_HAND);
+        ItemStack itemStack = player.getHeldItem(Hand.MAIN_HAND);
         if (itemStack.isEmpty() || !CompatHelper.isItemBlockProxy(itemStack)) {
-            itemStack = player.getHeldItem(EnumHand.OFF_HAND);
+            itemStack = player.getHeldItem(Hand.OFF_HAND);
         }
         if (itemStack.isEmpty() || !CompatHelper.isItemBlockProxy(itemStack)) {
             return blockStates;
@@ -187,22 +188,22 @@ public class BuildModifiers {
 
         //Get ItemBlock stack
         ItemStack itemBlock = ItemStack.EMPTY;
-        if (itemStack.getItem() instanceof ItemBlock) itemBlock = itemStack;
+        if (itemStack.getItem() instanceof BlockItem) itemBlock = itemStack;
         else itemBlock = CompatHelper.getItemBlockFromStack(itemStack);
         ItemRandomizerBag.resetRandomness();
 
         //Add blocks in posList first
         for (BlockPos blockPos : posList) {
-            if (!(itemStack.getItem() instanceof ItemBlock)) itemBlock = CompatHelper.getItemBlockFromStack(itemStack);
-            IBlockState blockState = getBlockStateFromItem(itemBlock, player, blockPos, facing, hitVec, EnumHand.MAIN_HAND);
+            if (!(itemStack.getItem() instanceof BlockItem)) itemBlock = CompatHelper.getItemBlockFromStack(itemStack);
+            BlockState blockState = getBlockStateFromItem(itemBlock, player, blockPos, facing, hitVec, Hand.MAIN_HAND);
             blockStates.add(blockState);
             itemStacks.add(itemBlock);
         }
 
         for (BlockPos blockPos : posList) {
-            IBlockState blockState = getBlockStateFromItem(itemBlock, player, blockPos, facing, hitVec, EnumHand.MAIN_HAND);
+            BlockState blockState = getBlockStateFromItem(itemBlock, player, blockPos, facing, hitVec, Hand.MAIN_HAND);
 
-            List<IBlockState> arrayBlockStates = Array.findBlockStates(player, blockPos, blockState, itemStack, itemStacks);
+            List<BlockState> arrayBlockStates = Array.findBlockStates(player, blockPos, blockState, itemStack, itemStacks);
             blockStates.addAll(arrayBlockStates);
             blockStates.addAll(Mirror.findBlockStates(player, blockPos, blockState, itemStack, itemStacks));
             blockStates.addAll(RadialMirror.findBlockStates(player, blockPos, blockState, itemStack, itemStacks));
@@ -210,7 +211,7 @@ public class BuildModifiers {
             List<BlockPos> arrayCoordinates = Array.findCoordinates(player, blockPos);
             for (int i = 0; i < arrayCoordinates.size(); i++) {
                 BlockPos coordinate = arrayCoordinates.get(i);
-                IBlockState blockState1 = arrayBlockStates.get(i);
+                BlockState blockState1 = arrayBlockStates.get(i);
                 blockStates.addAll(Mirror.findBlockStates(player, coordinate, blockState1, itemStack, itemStacks));
                 blockStates.addAll(RadialMirror.findBlockStates(player, coordinate, blockState1, itemStack, itemStacks));
             }
@@ -235,9 +236,8 @@ public class BuildModifiers {
                modifierSettings.doQuickReplace();
     }
 
-    public static IBlockState getBlockStateFromItem(ItemStack itemStack, EntityPlayer player, BlockPos blockPos, EnumFacing facing, Vec3d hitVec, EnumHand hand) {
-        return Block.getBlockFromItem(itemStack.getItem()).getStateForPlacement(new BlockItemUseContext(player.world, player, itemStack, blockPos, facing,
-                ((float) hitVec.x), ((float) hitVec.y), ((float) hitVec.z)));
+    public static BlockState getBlockStateFromItem(ItemStack itemStack, PlayerEntity player, BlockPos blockPos, Direction facing, Vec3d hitVec, Hand hand) {
+        return Block.getBlockFromItem(itemStack.getItem()).getStateForPlacement(new BlockItemUseContext(new ItemUseContext(player, hand, new BlockRayTraceResult(hitVec, facing, blockPos, false))));
     }
 
     //Returns true if equal (or both null)

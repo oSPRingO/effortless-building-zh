@@ -1,39 +1,36 @@
 package nl.requios.effortlessbuilding.proxy;
 
+import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.KeyboardListener;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemBlock;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
+import net.minecraft.util.Hand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceFluidMode;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.*;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.client.settings.KeyModifier;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -58,8 +55,8 @@ import java.util.function.Supplier;
 @Mod.EventBusSubscriber(value = {Dist.CLIENT})
 public class ClientProxy implements IProxy {
     public static KeyBinding[] keyBindings;
-    public static RayTraceResult previousLookAt;
-    public static RayTraceResult currentLookAt;
+    public static BlockRayTraceResult previousLookAt;
+    public static BlockRayTraceResult currentLookAt;
     private static int placeCooldown = 0;
     private static int breakCooldown = 0;
     private static boolean shadersInitialized = false;
@@ -104,7 +101,7 @@ public class ClientProxy implements IProxy {
 
     }
 
-    public EntityPlayer getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx){
+    public PlayerEntity getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx){
         return (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT ? Minecraft.getInstance().player : ctx.get().getSender());
     }
 
@@ -118,7 +115,7 @@ public class ClientProxy implements IProxy {
     @SubscribeEvent
     public static void onTextureStitch(final TextureStitchEvent.Pre event) {
         //register icon textures
-        final TextureMap map = event.getMap();
+        final AtlasTexture map = event.getMap();
 
         for ( final BuildModes.BuildModeEnum mode : BuildModes.BuildModeEnum.values() )
         {
@@ -160,12 +157,12 @@ public class ClientProxy implements IProxy {
                 return;
             }
 
-            if (objectMouseOver.type == RayTraceResult.Type.BLOCK) {
-                if (currentLookAt.type != RayTraceResult.Type.BLOCK) {
+            if (objectMouseOver.getType() == RayTraceResult.Type.BLOCK) {
+                if (currentLookAt.getType() != RayTraceResult.Type.BLOCK) {
                     currentLookAt = objectMouseOver;
                     previousLookAt = objectMouseOver;
                 } else {
-                    if (currentLookAt.getBlockPos() != objectMouseOver.getBlockPos()) {
+                    if (currentLookAt.getPos() != objectMouseOver.getPos()) {
                         previousLookAt = currentLookAt;
                         currentLookAt = objectMouseOver;
                     }
@@ -173,8 +170,8 @@ public class ClientProxy implements IProxy {
             }
 
         } else if (event.phase == TickEvent.Phase.END){
-            GuiScreen gui = Minecraft.getInstance().currentScreen;
-            if(gui == null || !gui.doesGuiPauseGame()) {
+            Screen gui = Minecraft.getInstance().currentScreen;
+            if(gui == null || !gui.isPauseScreen()) {
                 ticksInGame++;
             }
 
@@ -189,7 +186,7 @@ public class ClientProxy implements IProxy {
 
     private static void onMouseInput() {
         Minecraft mc = Minecraft.getInstance();
-        EntityPlayerSP player = mc.player;
+        ClientPlayerEntity player = mc.player;
         if (player == null) return;
         BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
 
@@ -206,28 +203,28 @@ public class ClientProxy implements IProxy {
             if (placeCooldown <= 0) {
                 placeCooldown = 4;
 
-                ItemStack currentItemStack = player.getHeldItem(EnumHand.MAIN_HAND);
-                if (currentItemStack.getItem() instanceof ItemBlock ||
+                ItemStack currentItemStack = player.getHeldItem(Hand.MAIN_HAND);
+                if (currentItemStack.getItem() instanceof BlockItem ||
                     (CompatHelper.isItemBlockProxy(currentItemStack) && !player.isSneaking())) {
 
                     ItemStack itemStack = CompatHelper.getItemBlockFromStack(currentItemStack);
 
                     //find position in distance
-                    RayTraceResult lookingAt = getLookingAt(player);
+                    BlockRayTraceResult lookingAt = getLookingAt(player);
                     BuildModes.onBlockPlacedMessage(player, lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt, true));
                     PacketHandler.INSTANCE.sendToServer(lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt, true));
 
                     //play sound if further than normal
-                    if (lookingAt != null && lookingAt.type == RayTraceResult.Type.BLOCK &&
-                        (lookingAt.hitVec.subtract(player.getEyePosition(1f))).lengthSquared() > 25f &&
-                        itemStack.getItem() instanceof ItemBlock) {
+                    if (lookingAt != null && lookingAt.getType() == RayTraceResult.Type.BLOCK &&
+                        (lookingAt.getHitVec().subtract(player.getEyePosition(1f))).lengthSquared() > 25f &&
+                        itemStack.getItem() instanceof BlockItem) {
 
-                        IBlockState state = ((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
-                        BlockPos blockPos = lookingAt.getBlockPos();
+                        BlockState state = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
+                        BlockPos blockPos = lookingAt.getPos();
                         SoundType soundType = state.getBlock().getSoundType(state, player.world, blockPos, player);
                         player.world.playSound(player, player.getPosition(), soundType.getPlaceSound(), SoundCategory.BLOCKS,
                                 0.4f, soundType.getPitch() * 1f);
-                        player.swingArm(EnumHand.MAIN_HAND);
+                        player.swingArm(Hand.MAIN_HAND);
                     }
                 }
             }
@@ -251,20 +248,20 @@ public class ClientProxy implements IProxy {
                 //  moving it to after buildmodes fixes that, but introduces this bug
                 if (!ReachHelper.canBreakFar(player)) return;
 
-                RayTraceResult lookingAt = getLookingAt(player);
+                BlockRayTraceResult lookingAt = getLookingAt(player);
                 BuildModes.onBlockBrokenMessage(player, lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
                 PacketHandler.INSTANCE.sendToServer(lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
 
                 //play sound if further than normal
-                if (lookingAt != null && lookingAt.type == RayTraceResult.Type.BLOCK &&
-                    (lookingAt.hitVec.subtract(player.getEyePosition(1f))).lengthSquared() > 25f) {
+                if (lookingAt != null && lookingAt.getType() == RayTraceResult.Type.BLOCK &&
+                    (lookingAt.getHitVec().subtract(player.getEyePosition(1f))).lengthSquared() > 25f) {
 
-                    BlockPos blockPos = lookingAt.getBlockPos();
-                    IBlockState state = player.world.getBlockState(blockPos);
+                    BlockPos blockPos = lookingAt.getPos();
+                    BlockState state = player.world.getBlockState(blockPos);
                     SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
                     player.world.playSound(player, player.getPosition(), soundtype.getBreakSound(), SoundCategory.BLOCKS,
                             0.4f, soundtype.getPitch() * 1f);
-                    player.swingArm(EnumHand.MAIN_HAND);
+                    player.swingArm(Hand.MAIN_HAND);
                 }
             }
             else if (buildMode == BuildModes.BuildModeEnum.NORMAL_PLUS) {
@@ -281,7 +278,7 @@ public class ClientProxy implements IProxy {
 
     @SubscribeEvent(receiveCanceled = true)
     public static void onKeyPress(InputEvent.KeyInputEvent event) {
-        EntityPlayerSP player = Minecraft.getInstance().player;
+        ClientPlayerEntity player = Minecraft.getInstance().player;
 
         //Remember to send packet to server if necessary
         //Show Modifier Settings GUI
@@ -349,7 +346,7 @@ public class ClientProxy implements IProxy {
 
     public static void openModifierSettings() {
         Minecraft mc = Minecraft.getInstance();
-        EntityPlayerSP player = mc.player;
+        ClientPlayerEntity player = mc.player;
 
         RadialMenu.instance.setVisibility(0f);
 
@@ -367,24 +364,25 @@ public class ClientProxy implements IProxy {
 
     @SubscribeEvent
     public static void onGuiOpen(GuiOpenEvent event) {
-        EntityPlayer player = Minecraft.getInstance().player;
+        PlayerEntity player = Minecraft.getInstance().player;
         if (player != null) {
             BuildModes.initializeMode(player);
         }
     }
 
     @Nullable
-    public static RayTraceResult getLookingAt(EntityPlayer player) {
-//        World world = player.world;
+    public static BlockRayTraceResult getLookingAt(PlayerEntity player) {
+        World world = player.world;
 
         //base distance off of player ability (config)
         float raytraceRange = ReachHelper.getPlacementReach(player);
 
-//        Vec3d look = player.getLookVec();
-//        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
-//        Vec3d end = new Vec3d(player.posX + look.x * raytraceRange, player.posY + player.getEyeHeight() + look.y * raytraceRange, player.posZ + look.z * raytraceRange);
-        return player.rayTrace(raytraceRange, 1f, RayTraceFluidMode.NEVER);
-//        return world.rayTraceBlocks(start, end, false, false, false);
+        Vec3d look = player.getLookVec();
+        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+        Vec3d end = new Vec3d(player.posX + look.x * raytraceRange, player.posY + player.getEyeHeight() + look.y * raytraceRange, player.posZ + look.z * raytraceRange);
+//        return player.rayTrace(raytraceRange, 1f, RayTraceFluidMode.NEVER);
+        //TODO 1.14 check if correct, make sure it is a blockraytraceresult
+        return world.rayTraceBlocks(new RayTraceContext(start, end, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, player));
     }
 
     public static void logTranslate(String key) {

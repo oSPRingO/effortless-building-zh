@@ -1,7 +1,10 @@
 package nl.requios.effortlessbuilding.gui.elements;
 
-import net.minecraft.client.MouseHelper;
+import com.mojang.blaze3d.platform.GlStateManager;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -13,31 +16,27 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import org.lwjgl.glfw.GLFW;
-import sun.security.ssl.Debug;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
-public class GuiScrollPane extends GuiSlot {
+public class GuiScrollPane extends SlotGui {
 
-    public GuiScreen parent;
-    public FontRenderer fontRenderer;
+    public Screen parent;
+    public FontRenderer font;
     private List<IScrollEntry> listEntries;
     private float scrollMultiplier = 1f;
 
     private int mouseX;
     private int mouseY;
 
-    public GuiScrollPane(GuiScreen parent, FontRenderer fontRenderer, int top, int bottom) {
-        super(parent.mc, parent.width, parent.height, top, bottom, 100);
+    public GuiScrollPane(Screen parent, FontRenderer font, int top, int bottom) {
+        super(Minecraft.getInstance(), parent.width, parent.height, top, bottom, 100);
         this.parent = parent;
-        this.fontRenderer = fontRenderer;
-        this.setShowSelectionBox(false);
+        this.font = font;
+        this.renderSelection = false;
         listEntries = new ArrayList<>();
         MinecraftForge.EVENT_BUS.register(this);
     }
@@ -443,7 +442,7 @@ public class GuiScrollPane extends GuiSlot {
     }
 
     //PASSTHROUGHS
-    public int initGui(int id, List<GuiButton> buttonList) {
+    public int initGui(int id, List<Button> buttonList) {
         for (IScrollEntry entry : this.listEntries) {
             id = entry.initGui(id, buttonList);
         }
@@ -455,7 +454,7 @@ public class GuiScrollPane extends GuiSlot {
             entry.updateScreen();
     }
 
-    public void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY) {
+    public void drawTooltip(Screen guiScreen, int mouseX, int mouseY) {
         for (IScrollEntry entry : this.listEntries)
             entry.drawTooltip(guiScreen, mouseX, mouseY);
     }
@@ -473,11 +472,11 @@ public class GuiScrollPane extends GuiSlot {
     }
 
     public interface IScrollEntry {
-        int initGui(int id, List<GuiButton> buttonList);
+        int initGui(int id, List<Button> buttonList);
 
         void updateScreen();
 
-        void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY);
+        void drawTooltip(Screen guiScreen, int mouseX, int mouseY);
 
         boolean charTyped(char eventChar, int eventKey);
 

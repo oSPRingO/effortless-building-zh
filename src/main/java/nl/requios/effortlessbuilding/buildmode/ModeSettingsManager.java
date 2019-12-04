@@ -1,7 +1,7 @@
 package nl.requios.effortlessbuilding.buildmode;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.network.PacketDistributor;
@@ -19,7 +19,7 @@ public class ModeSettingsManager {
     //Retrieves the buildsettings of a player through the modifierCapability capability
     //Never returns null
     @Nonnull
-    public static ModeSettings getModeSettings(EntityPlayer player) {
+    public static ModeSettings getModeSettings(PlayerEntity player) {
         LazyOptional<ModeCapabilityManager.IModeCapability> modeCapability =
                 player.getCapability(ModeCapabilityManager.modeCapability, null);
 
@@ -37,7 +37,7 @@ public class ModeSettingsManager {
 //        throw new IllegalArgumentException("Player does not have modeCapability capability");
     }
 
-    public static void setModeSettings(EntityPlayer player, ModeSettings modeSettings) {
+    public static void setModeSettings(PlayerEntity player, ModeSettings modeSettings) {
         if (player == null) {
             EffortlessBuilding.log("Cannot set buildmode settings, player is null");
             return;
@@ -56,7 +56,7 @@ public class ModeSettingsManager {
         }
     }
 
-    public static String sanitize(ModeSettings modeSettings, EntityPlayer player) {
+    public static String sanitize(ModeSettings modeSettings, PlayerEntity player) {
         int maxReach = ReachHelper.getMaxReach(player);
         String error = "";
 
@@ -84,7 +84,7 @@ public class ModeSettingsManager {
         }
     }
 
-    public static void handleNewPlayer(EntityPlayer player){
+    public static void handleNewPlayer(PlayerEntity player){
         //Makes sure player has mode settings (if it doesnt it will create it)
         getModeSettings(player);
 
@@ -92,7 +92,7 @@ public class ModeSettingsManager {
         if (!player.world.isRemote) {
             //Send to client
             ModeSettingsMessage msg = new ModeSettingsMessage(getModeSettings(player));
-            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (EntityPlayerMP) player), msg);
+            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), msg);
         }
     }
 }

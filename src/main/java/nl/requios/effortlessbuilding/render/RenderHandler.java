@@ -1,26 +1,22 @@
 package nl.requios.effortlessbuilding.render;
 
-import net.minecraft.block.state.IBlockState;
+import com.mojang.blaze3d.platform.GlStateManager;
+import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SimpleSound;
-import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.particles.IParticleData;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.SoundEvent;
+import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorldEventListener;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
@@ -29,11 +25,9 @@ import net.minecraftforge.fml.common.Mod;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.ModeOptions;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
-import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
-import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.ModeActionMessage;
 import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
 import nl.requios.effortlessbuilding.network.PacketHandler;
@@ -41,18 +35,15 @@ import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
-import javax.annotation.Nullable;
-import java.util.List;
-
 /***
  * Main render class for Effortless Building
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
-public class RenderHandler implements IWorldEventListener {
+public class RenderHandler {
 
     @SubscribeEvent
     public static void onRender(RenderWorldLastEvent event) {
-        EntityPlayer player = Minecraft.getInstance().player;
+        PlayerEntity player = Minecraft.getInstance().player;
         ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
 
@@ -71,7 +62,7 @@ public class RenderHandler implements IWorldEventListener {
     //Display Radial Menu
     public static void onRenderGameOverlay(final RenderGameOverlayEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        EntityPlayerSP player = mc.player;
+        ClientPlayerEntity player = mc.player;
 
         //check if chisel and bits tool in hand (and has menu)
 //        final boolean hasChiselInHand = CompatHelper.chiselsAndBitsProxy.isHoldingChiselTool(EnumHand.MAIN_HAND);
@@ -150,14 +141,15 @@ public class RenderHandler implements IWorldEventListener {
     }
 
     private static void begin(float partialTicks) {
-        EntityPlayer player = Minecraft.getInstance().player;
-        double playerX = player.prevPosX + (player.posX - player.prevPosX) * partialTicks;
-        double playerY = player.prevPosY + (player.posY - player.prevPosY) * partialTicks;
-        double playerZ = player.prevPosZ + (player.posZ - player.prevPosZ) * partialTicks;
-        Vec3d playerPos = new Vec3d(playerX, playerY, playerZ);
+//        PlayerEntity player = Minecraft.getInstance().player;
+//        double playerX = player.prevPosX + (player.posX - player.prevPosX) * partialTicks;
+//        double playerY = player.prevPosY + (player.posY - player.prevPosY) * partialTicks;
+//        double playerZ = player.prevPosZ + (player.posZ - player.prevPosZ) * partialTicks;
+//        Vec3d playerPos = new Vec3d(playerX, playerY, playerZ);
 
         GL11.glPushMatrix();
-        GL11.glTranslated(-playerPos.x, -playerPos.y, -playerPos.z);
+//        GL11.glTranslated(-playerPos.x, -playerPos.y, -playerPos.z);
+        GlStateManager.translated(-TileEntityRendererDispatcher.staticPlayerX, -TileEntityRendererDispatcher.staticPlayerY, -TileEntityRendererDispatcher.staticPlayerZ);
 
         GL11.glDepthMask(false);
     }
@@ -202,7 +194,7 @@ public class RenderHandler implements IWorldEventListener {
         GL11.glPopMatrix();
     }
 
-    protected static void renderBlockPreview(BlockRendererDispatcher dispatcher, BlockPos blockPos, IBlockState blockState) {
+    protected static void renderBlockPreview(BlockRendererDispatcher dispatcher, BlockPos blockPos, BlockState blockState) {
         GlStateManager.pushMatrix();
         GlStateManager.translatef(blockPos.getX(), blockPos.getY(), blockPos.getZ());
         GlStateManager.rotatef(-90.0F, 0.0F, 1.0F, 0.0F);
@@ -250,80 +242,24 @@ public class RenderHandler implements IWorldEventListener {
         WorldRenderer.drawShape(collisionShape, pos.getX(), pos.getY(), pos.getZ(), (float) color.x, (float) color.y, (float) color.z, 0.4f);
     }
 
-    //IWORLDEVENTLISTENER IMPLEMENTATION
-    @Override
-    public void notifyBlockUpdate(IBlockReader worldIn, BlockPos pos, IBlockState oldState, IBlockState newState, int flags) {
-
-    }
-
-    @Override
-    public void notifyLightSet(BlockPos pos) {
-
-    }
-
-    @Override
-    public void markBlockRangeForRenderUpdate(int x1, int y1, int z1, int x2, int y2, int z2) {
-
-    }
-
-    @Override
-    public void playSoundToAllNearExcept(@Nullable EntityPlayer player, SoundEvent soundIn, SoundCategory category,
-                                         double x, double y, double z, float volume, float pitch) {
-
-    }
-
-    @Override
-    public void playRecord(SoundEvent soundIn, BlockPos pos) {
-
-    }
-
-    @Override
-    public void addParticle(IParticleData particleData, boolean alwaysRender, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-
-    }
-
-    @Override
-    public void addParticle(IParticleData particleData, boolean ignoreRange, boolean minimizeLevel, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-
-    }
-
-    @Override
-    public void onEntityAdded(Entity entityIn) {
-
-    }
-
-    @Override
-    public void onEntityRemoved(Entity entityIn) {
-
-    }
-
-    @Override
-    public void broadcastSound(int soundID, BlockPos pos, int data) {
-
-    }
-
-    @Override
-    public void playEvent(EntityPlayer player, int type, BlockPos blockPosIn, int data) {
-
-    }
-
+    //TODO 1.14
     //Sends breaking progress for all coordinates to renderglobal, so all blocks get visually broken
-    @Override
-    public void sendBlockBreakProgress(int breakerId, BlockPos pos, int progress) {
-        Minecraft mc = Minecraft.getInstance();
-
-        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
-        if (!BuildModifiers.isEnabled(modifierSettings, pos)) return;
-
-        List<BlockPos> coordinates = BuildModifiers.findCoordinates(mc.player, pos);
-        for (int i = 1; i < coordinates.size(); i++) {
-            BlockPos coordinate = coordinates.get(i);
-            if (SurvivalHelper.canBreak(mc.world, mc.player, coordinate)) {
-                //Send i as entity id because only one block can be broken per id
-                //Unless i happens to be the player id, then take something else
-                int fakeId = mc.player.getEntityId() != i ? i : coordinates.size();
-                mc.renderGlobal.sendBlockBreakProgress(fakeId, coordinate, progress);
-            }
-        }
-    }
+//    @Override
+//    public void sendBlockBreakProgress(int breakerId, BlockPos pos, int progress) {
+//        Minecraft mc = Minecraft.getInstance();
+//
+//        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
+//        if (!BuildModifiers.isEnabled(modifierSettings, pos)) return;
+//
+//        List<BlockPos> coordinates = BuildModifiers.findCoordinates(mc.player, pos);
+//        for (int i = 1; i < coordinates.size(); i++) {
+//            BlockPos coordinate = coordinates.get(i);
+//            if (SurvivalHelper.canBreak(mc.world, mc.player, coordinate)) {
+//                //Send i as entity id because only one block can be broken per id
+//                //Unless i happens to be the player id, then take something else
+//                int fakeId = mc.player.getEntityId() != i ? i : coordinates.size();
+//                mc.renderGlobal.sendBlockBreakProgress(fakeId, coordinate, progress);
+//            }
+//        }
+//    }
 }

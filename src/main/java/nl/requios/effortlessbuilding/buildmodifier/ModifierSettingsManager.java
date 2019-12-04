@@ -1,7 +1,7 @@
 package nl.requios.effortlessbuilding.buildmodifier;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.network.PacketDistributor;
@@ -13,8 +13,6 @@ import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
 import nl.requios.effortlessbuilding.network.PacketHandler;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.UUID;
 
 @Mod.EventBusSubscriber
 public class ModifierSettingsManager {
@@ -22,7 +20,7 @@ public class ModifierSettingsManager {
     //Retrieves the buildsettings of a player through the modifierCapability capability
     //Never returns null
     @Nonnull
-    public static ModifierSettings getModifierSettings(EntityPlayer player){
+    public static ModifierSettings getModifierSettings(PlayerEntity player){
         LazyOptional<ModifierCapabilityManager.IModifierCapability> modifierCapability =
                 player.getCapability(ModifierCapabilityManager.modifierCapability, null);
 
@@ -40,7 +38,7 @@ public class ModifierSettingsManager {
 //        throw new IllegalArgumentException("Player does not have modifierCapability capability");
     }
 
-    public static void setModifierSettings(EntityPlayer player, ModifierSettings modifierSettings) {
+    public static void setModifierSettings(PlayerEntity player, ModifierSettings modifierSettings) {
         if (player == null) {
             EffortlessBuilding.log("Cannot set buildsettings, player is null");
             return;
@@ -58,7 +56,7 @@ public class ModifierSettingsManager {
         }
     }
 
-    public static String sanitize(ModifierSettings modifierSettings, EntityPlayer player) {
+    public static String sanitize(ModifierSettings modifierSettings, PlayerEntity player) {
         int maxReach = ReachHelper.getMaxReach(player);
         String error = "";
 
@@ -194,7 +192,7 @@ public class ModifierSettingsManager {
         }
     }
 
-    public static void handleNewPlayer(EntityPlayer player){
+    public static void handleNewPlayer(PlayerEntity player){
         //Makes sure player has modifier settings (if it doesnt it will create it)
         getModifierSettings(player);
 
@@ -202,7 +200,7 @@ public class ModifierSettingsManager {
         if (!player.world.isRemote) {
             //Send to client
             ModifierSettingsMessage msg = new ModifierSettingsMessage(getModifierSettings(player));
-            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (EntityPlayerMP) player), msg);
+            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), msg);
         }
     }
 }

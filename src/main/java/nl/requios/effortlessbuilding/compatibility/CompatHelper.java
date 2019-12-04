@@ -1,11 +1,10 @@
 package nl.requios.effortlessbuilding.compatibility;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -39,7 +38,7 @@ public class CompatHelper {
     // /dank/null, or plain old blocks.
     public static boolean isItemBlockProxy(ItemStack stack) {
         Item item = stack.getItem();
-        if (item instanceof ItemBlock)
+        if (item instanceof BlockItem)
             return true;
         if ((item instanceof ItemRandomizerBag))
             return true;
@@ -54,13 +53,13 @@ public class CompatHelper {
     public static ItemStack getItemBlockFromStack(ItemStack proxy) {
         Item proxyItem = proxy.getItem();
 
-        if (proxyItem instanceof ItemBlock)
+        if (proxyItem instanceof BlockItem)
             return proxy;
 
         //Randomizer Bag
         if (proxyItem instanceof ItemRandomizerBag) {
             ItemStack itemStack = proxy;
-            while (!(itemStack.getItem() instanceof ItemBlock || itemStack.isEmpty())) {
+            while (!(itemStack.getItem() instanceof BlockItem || itemStack.isEmpty())) {
                 if (itemStack.getItem() instanceof ItemRandomizerBag)
                     itemStack = ItemRandomizerBag.pickRandomStack(ItemRandomizerBag.getBagInventory(itemStack));
             }
@@ -79,11 +78,11 @@ public class CompatHelper {
         return ItemStack.EMPTY;
     }
 
-    public static ItemStack getItemBlockByState(ItemStack stack, IBlockState state) {
+    public static ItemStack getItemBlockByState(ItemStack stack, BlockState state) {
         if (state == null) return ItemStack.EMPTY;
 
         Item blockItem = Item.getItemFromBlock(state.getBlock());
-        if (stack.getItem() instanceof ItemBlock)
+        if (stack.getItem() instanceof BlockItem)
             return stack;
         else if (stack.getItem() instanceof ItemRandomizerBag) {
             IItemHandler bagInventory = ItemRandomizerBag.getBagInventory(stack);
@@ -100,7 +99,7 @@ public class CompatHelper {
 
     // Handle IItemHandler slot stacks not being modifiable. We must call IItemHandler#extractItem,
     // because the ItemStack returned by IItemHandler#getStackInSlot isn't modifiable.
-    public static void shrinkStack(ItemStack origStack, ItemStack curStack, EntityPlayer player) {
+    public static void shrinkStack(ItemStack origStack, ItemStack curStack, PlayerEntity player) {
         //TODO 1.13 compatibility, offhand support
         //Hacky way to get the origstack, because given origStack is itemblock stack and never proxy
 //        origStack = player.getHeldItem(EnumHand.MAIN_HAND);
@@ -123,7 +122,7 @@ public class CompatHelper {
 
         for (int i = 0; i < handler.getSlots(); i++) {
             ItemStack ref = handler.getStackInSlot(i);
-            if (ref.getItem() instanceof ItemBlock)
+            if (ref.getItem() instanceof BlockItem)
                 if (ref.getItem() == blockItem)
                     return i;
         }

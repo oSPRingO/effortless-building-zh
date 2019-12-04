@@ -1,12 +1,13 @@
 package nl.requios.effortlessbuilding.gui.elements;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -14,40 +15,40 @@ import java.util.Arrays;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
-public class GuiNumberField extends Gui {
+public class GuiNumberField extends AbstractGui {
 
     public int x, y, width, height;
     public int buttonWidth = 10;
 
-    protected GuiTextField textField;
-    protected GuiButton minusButton, plusButton;
+    protected TextFieldWidget textField;
+    protected Button minusButton, plusButton;
 
     List<String> tooltip = new ArrayList<>();
 
-    public GuiNumberField(int id1, int id2, int id3, FontRenderer fontRenderer,
-                          List<GuiButton> buttonList, int x, int y, int width, int height) {
+    public GuiNumberField(int id1, int id2, int id3, FontRenderer font,
+                          List<Button> buttonList, int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
 
-        textField = new GuiTextField(id1, fontRenderer, x + buttonWidth + 1, y + 1, width - 2 * buttonWidth - 2, height - 2);
-        minusButton = new GuiButton(id2, x, y - 1, buttonWidth, height + 2, "-") {
+        textField = new TextFieldWidget(id1, font, x + buttonWidth + 1, y + 1, width - 2 * buttonWidth - 2, height - 2);
+        minusButton = new Button(id2, x, y - 1, buttonWidth, height + 2, "-") {
             @Override
             public void onClick(double mouseX, double mouseY) {
                 float valueChanged = 1f;
-                if (GuiScreen.isCtrlKeyDown()) valueChanged = 5f;
-                if (GuiScreen.isShiftKeyDown()) valueChanged = 10f;
+                if (Screen.isCtrlKeyDown()) valueChanged = 5f;
+                if (Screen.isShiftKeyDown()) valueChanged = 10f;
 
                 setNumber(getNumber() - valueChanged);
             }
         };
-        plusButton  = new GuiButton(id3, x + width - buttonWidth, y - 1, buttonWidth, height + 2, "+") {
+        plusButton  = new Button(id3, x + width - buttonWidth, y - 1, buttonWidth, height + 2, "+") {
             @Override
             public void onClick(double mouseX, double mouseY) {
                 float valueChanged = 1f;
-                if (GuiScreen.isCtrlKeyDown()) valueChanged = 5f;
-                if (GuiScreen.isShiftKeyDown()) valueChanged = 10f;
+                if (Screen.isCtrlKeyDown()) valueChanged = 5f;
+                if (Screen.isShiftKeyDown()) valueChanged = 10f;
 
                 setNumber(getNumber() + valueChanged);
             }
@@ -104,7 +105,7 @@ public class GuiNumberField extends Gui {
         plusButton.render(mouseX, mouseY, partialTicks);
     }
 
-    public void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY) {
+    public void drawTooltip(Screen guiScreen, int mouseX, int mouseY) {
         boolean insideTextField = mouseX >= x + buttonWidth && mouseX < x + width - buttonWidth && mouseY >= y && mouseY < y + height;
         boolean insideMinusButton = mouseX >= x && mouseX < x + buttonWidth && mouseY >= y && mouseY < y + height;
         boolean insidePlusButton = mouseX >= x + width - buttonWidth && mouseX < x + width && mouseY >= y && mouseY < y + height;

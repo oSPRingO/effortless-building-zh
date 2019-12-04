@@ -1,8 +1,8 @@
 package nl.requios.effortlessbuilding.gui.elements;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
-public class GuiIconButton extends GuiButton {
+public class GuiIconButton extends Button {
 
     private final ResourceLocation resourceLocation;
     private final int iconX, iconY, iconWidth, iconHeight, iconAltX, iconAltY;
@@ -66,7 +66,7 @@ public class GuiIconButton extends GuiButton {
         }
     }
 
-    public void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY) {
+    public void drawTooltip(Screen guiScreen, int mouseX, int mouseY) {
         boolean flag = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
 
         if (flag) {

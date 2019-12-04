@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.buildmode.buildmodes;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import nl.requios.effortlessbuilding.buildmode.TwoClicksBuildMode;
@@ -11,16 +11,16 @@ import java.util.*;
 public class Circle extends TwoClicksBuildMode {
 
     @Override
-    protected BlockPos findSecondPos(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
+    protected BlockPos findSecondPos(PlayerEntity player, BlockPos firstPos, boolean skipRaytrace) {
         return Floor.findFloor(player, firstPos, skipRaytrace);
     }
 
     @Override
-    protected List<BlockPos> getAllBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2) {
+    protected List<BlockPos> getAllBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2) {
         return getCircleBlocks(player, x1, y1, z1, x2, y2, z2);
     }
 
-    public static List<BlockPos> getCircleBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2) {
+    public static List<BlockPos> getCircleBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2) {
         List<BlockPos> list = new ArrayList<>();
 
         float centerX = x1;

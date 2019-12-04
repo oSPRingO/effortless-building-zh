@@ -1,8 +1,8 @@
 package nl.requios.effortlessbuilding.capability;
 
-import net.minecraft.nbt.INBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.capabilities.Capability;
@@ -12,15 +12,12 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Array;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-
-import java.util.concurrent.Callable;
 
 import static nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.*;
 
@@ -52,57 +49,57 @@ public class ModifierCapabilityManager {
 
     public static class Storage implements Capability.IStorage<IModifierCapability> {
         @Override
-        public INBTBase writeNBT(Capability<IModifierCapability> capability, IModifierCapability instance, EnumFacing side) {
-            NBTTagCompound compound = new NBTTagCompound();
+        public INBT writeNBT(Capability<IModifierCapability> capability, IModifierCapability instance, Direction side) {
+            CompoundNBT compound = new CompoundNBT();
             ModifierSettings modifierSettings = instance.getModifierData();
             if (modifierSettings == null) modifierSettings = new ModifierSettings();
 
             //MIRROR
             Mirror.MirrorSettings m = modifierSettings.getMirrorSettings();
             if (m == null) m = new Mirror.MirrorSettings();
-            compound.setBoolean("mirrorEnabled", m.enabled);
-            compound.setDouble("mirrorPosX", m.position.x);
-            compound.setDouble("mirrorPosY", m.position.y);
-            compound.setDouble("mirrorPosZ", m.position.z);
-            compound.setBoolean("mirrorX", m.mirrorX);
-            compound.setBoolean("mirrorY", m.mirrorY);
-            compound.setBoolean("mirrorZ", m.mirrorZ);
-            compound.setInt("mirrorRadius", m.radius);
-            compound.setBoolean("mirrorDrawLines", m.drawLines);
-            compound.setBoolean("mirrorDrawPlanes", m.drawPlanes);
+            compound.putBoolean("mirrorEnabled", m.enabled);
+            compound.putDouble("mirrorPosX", m.position.x);
+            compound.putDouble("mirrorPosY", m.position.y);
+            compound.putDouble("mirrorPosZ", m.position.z);
+            compound.putBoolean("mirrorX", m.mirrorX);
+            compound.putBoolean("mirrorY", m.mirrorY);
+            compound.putBoolean("mirrorZ", m.mirrorZ);
+            compound.putInt("mirrorRadius", m.radius);
+            compound.putBoolean("mirrorDrawLines", m.drawLines);
+            compound.putBoolean("mirrorDrawPlanes", m.drawPlanes);
 
             //ARRAY
             Array.ArraySettings a = modifierSettings.getArraySettings();
             if (a == null) a = new Array.ArraySettings();
-            compound.setBoolean("arrayEnabled", a.enabled);
-            compound.setInt("arrayOffsetX", a.offset.getX());
-            compound.setInt("arrayOffsetY", a.offset.getY());
-            compound.setInt("arrayOffsetZ", a.offset.getZ());
-            compound.setInt("arrayCount", a.count);
+            compound.putBoolean("arrayEnabled", a.enabled);
+            compound.putInt("arrayOffsetX", a.offset.getX());
+            compound.putInt("arrayOffsetY", a.offset.getY());
+            compound.putInt("arrayOffsetZ", a.offset.getZ());
+            compound.putInt("arrayCount", a.count);
 
-            compound.setInt("reachUpgrade", modifierSettings.getReachUpgrade());
+            compound.putInt("reachUpgrade", modifierSettings.getReachUpgrade());
 
-            //compound.setBoolean("quickReplace", buildSettings.doQuickReplace()); dont save quickreplace
+            //compound.putBoolean("quickReplace", buildSettings.doQuickReplace()); dont save quickreplace
 
             //RADIAL MIRROR
             RadialMirror.RadialMirrorSettings r = modifierSettings.getRadialMirrorSettings();
             if (r == null) r = new RadialMirror.RadialMirrorSettings();
-            compound.setBoolean("radialMirrorEnabled", r.enabled);
-            compound.setDouble("radialMirrorPosX", r.position.x);
-            compound.setDouble("radialMirrorPosY", r.position.y);
-            compound.setDouble("radialMirrorPosZ", r.position.z);
-            compound.setInt("radialMirrorSlices", r.slices);
-            compound.setBoolean("radialMirrorAlternate", r.alternate);
-            compound.setInt("radialMirrorRadius", r.radius);
-            compound.setBoolean("radialMirrorDrawLines", r.drawLines);
-            compound.setBoolean("radialMirrorDrawPlanes", r.drawPlanes);
+            compound.putBoolean("radialMirrorEnabled", r.enabled);
+            compound.putDouble("radialMirrorPosX", r.position.x);
+            compound.putDouble("radialMirrorPosY", r.position.y);
+            compound.putDouble("radialMirrorPosZ", r.position.z);
+            compound.putInt("radialMirrorSlices", r.slices);
+            compound.putBoolean("radialMirrorAlternate", r.alternate);
+            compound.putInt("radialMirrorRadius", r.radius);
+            compound.putBoolean("radialMirrorDrawLines", r.drawLines);
+            compound.putBoolean("radialMirrorDrawPlanes", r.drawPlanes);
 
             return compound;
         }
 
         @Override
-        public void readNBT(Capability<IModifierCapability> capability, IModifierCapability instance, EnumFacing side, INBTBase nbt) {
-            NBTTagCompound compound = (NBTTagCompound) nbt;
+        public void readNBT(Capability<IModifierCapability> capability, IModifierCapability instance, Direction side, INBT nbt) {
+            CompoundNBT compound = (CompoundNBT) nbt;
 
             //MIRROR
             boolean mirrorEnabled = compound.getBoolean("mirrorEnabled");
@@ -150,23 +147,23 @@ public class ModifierCapabilityManager {
         }
     }
 
-    public static class Provider implements ICapabilitySerializable<INBTBase> {
+    public static class Provider implements ICapabilitySerializable<INBT> {
 
         IModifierCapability inst = modifierCapability.getDefaultInstance();
 
         @Nonnull
         @Override
-        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable EnumFacing side) {
+        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
             return modifierCapability.orEmpty(cap, LazyOptional.of(() -> inst));
         }
 
         @Override
-        public INBTBase serializeNBT() {
+        public INBT serializeNBT() {
             return modifierCapability.getStorage().writeNBT(modifierCapability, inst, null);
         }
 
         @Override
-        public void deserializeNBT(INBTBase nbt) {
+        public void deserializeNBT(INBT nbt) {
             modifierCapability.getStorage().readNBT(modifierCapability, inst, null, nbt);
         }
 

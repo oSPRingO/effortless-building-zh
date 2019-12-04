@@ -4,14 +4,13 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.network.PacketDistributor;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
 import nl.requios.effortlessbuilding.network.PacketHandler;
-import nl.requios.effortlessbuilding.network.RequestLookAtMessage;
 
 public class CommandReach {
 
@@ -23,19 +22,19 @@ public class CommandReach {
         }))));
     }
 
-    private static int setReachLevel(EntityPlayerMP player, int level){
+    private static int setReachLevel(ServerPlayerEntity player, int level){
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         modifierSettings.setReachUpgrade(level);
         ModifierSettingsManager.setModifierSettings(player, modifierSettings);
         //Send to client
         PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ModifierSettingsMessage(modifierSettings));
 
-        player.sendMessage(new TextComponentString("Reach level of " + player.getName().getString() + " set to " + modifierSettings.getReachUpgrade()));
+        player.sendMessage(new StringTextComponent("Reach level of " + player.getName().getString() + " set to " + modifierSettings.getReachUpgrade()));
 
         return 1;
     }
 
-    private static int getReachLevel(EntityPlayerMP player){
+    private static int getReachLevel(ServerPlayerEntity player){
         int reachUpgrade = ModifierSettingsManager.getModifierSettings(player).getReachUpgrade();
         EffortlessBuilding.log(player, "Current reach: level "+reachUpgrade);
 

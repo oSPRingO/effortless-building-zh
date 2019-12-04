@@ -1,13 +1,13 @@
 package nl.requios.effortlessbuilding.item;
 
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.*;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import nl.requios.effortlessbuilding.BuildConfig;
@@ -26,11 +26,11 @@ public class ItemReachUpgrade1 extends Item {
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, EnumHand hand) {
+    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
         if (player.isCreative()) {
             if (world.isRemote) EffortlessBuilding.log(player, "Reach upgrades are not necessary in creative.");
             if (world.isRemote) EffortlessBuilding.log(player, "Still want increased reach? Use the config.");
-            return new ActionResult<>(EnumActionResult.PASS, player.getHeldItem(hand));
+            return new ActionResult<>(ActionResultType.PASS, player.getHeldItem(hand));
         }
 
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
@@ -50,12 +50,12 @@ public class ItemReachUpgrade1 extends Item {
             SoundEvent soundEvent = new SoundEvent(new ResourceLocation("item.armor.equip_leather"));
             player.playSound(soundEvent, 1f, 1f);
         }
-        return new ActionResult<>(EnumActionResult.PASS, player.getHeldItem(hand));
+        return new ActionResult<>(ActionResultType.PASS, player.getHeldItem(hand));
     }
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-        tooltip.add(new TextComponentString(TextFormatting.GRAY + "Consume to increase reach to " + TextFormatting.BLUE + BuildConfig.reach.maxReachLevel1.get()));
+        tooltip.add(new StringTextComponent(TextFormatting.GRAY + "Consume to increase reach to " + TextFormatting.BLUE + BuildConfig.reach.maxReachLevel1.get()));
     }
 
     @Override

@@ -2,20 +2,19 @@ package nl.requios.effortlessbuilding.gui.elements;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.IGuiEventListener;
+import net.minecraft.client.gui.font;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import java.io.IOException;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScrollEntry {
 
     public GuiScrollPane scrollPane;
-    protected FontRenderer fontRenderer;
+    protected FontRenderer font;
     protected Minecraft mc;
 
     protected boolean isCollapsed = true;
@@ -23,12 +22,12 @@ public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScroll
 
     public GuiCollapsibleScrollEntry(GuiScrollPane scrollPane) {
         this.scrollPane = scrollPane;
-        this.fontRenderer = scrollPane.fontRenderer;
-        this.mc = scrollPane.parent.mc;
+        this.font = scrollPane.font;
+        this.mc = Minecraft.getInstance();
     }
 
     @Override
-    public int initGui(int id, List<GuiButton> buttonList) {
+    public int initGui(int id, List<Button> buttonList) {
 
         left = scrollPane.width / 2 - 140;
         right = scrollPane.width / 2 + 140;
@@ -43,7 +42,7 @@ public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScroll
     }
 
     @Override
-    public void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY) {
+    public void drawTooltip(Screen guiScreen, int mouseX, int mouseY) {
     }
 
     @Override

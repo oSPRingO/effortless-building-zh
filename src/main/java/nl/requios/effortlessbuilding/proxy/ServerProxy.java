@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.proxy;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -17,7 +17,7 @@ public class ServerProxy implements IProxy {
     @Override
     public void clientSetup(FMLClientSetupEvent event) {}
 
-    public EntityPlayer getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx){
+    public PlayerEntity getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx){
         return ctx.get().getSender();
     }
 }

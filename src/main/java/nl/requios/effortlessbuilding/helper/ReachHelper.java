@@ -1,12 +1,12 @@
 package nl.requios.effortlessbuilding.helper;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 
 public class ReachHelper {
-    public static int getMaxReach(EntityPlayer player) {
+    public static int getMaxReach(PlayerEntity player) {
         if (player.isCreative()) return BuildConfig.reach.maxReachCreative.get();
 
         if (!BuildConfig.reach.enableReachUpgrades.get()) return BuildConfig.reach.maxReachLevel3.get();
@@ -22,11 +22,11 @@ public class ReachHelper {
         return BuildConfig.reach.maxReachLevel0.get();
     }
 
-    public static int getPlacementReach(EntityPlayer player) {
+    public static int getPlacementReach(PlayerEntity player) {
         return getMaxReach(player) / 4;
     }
 
-    public static int getMaxBlocksPlacedAtOnce(EntityPlayer player) {
+    public static int getMaxBlocksPlacedAtOnce(PlayerEntity player) {
         if (player.isCreative()) return 1000000;
         return MathHelper.ceil(Math.pow(getMaxReach(player), 1.6));
         //Level 0: 121
@@ -35,7 +35,7 @@ public class ReachHelper {
         //Level 3: 4805
     }
 
-    public static int getMaxBlocksPerAxis(EntityPlayer player) {
+    public static int getMaxBlocksPerAxis(PlayerEntity player) {
         if (player.isCreative()) return 2000;
         return MathHelper.ceil(getMaxReach(player) * 0.3);
         //Level 0: 6
@@ -44,7 +44,7 @@ public class ReachHelper {
         //Level 3: 60
     }
 
-    public static boolean canBreakFar(EntityPlayer player) {
+    public static boolean canBreakFar(PlayerEntity player) {
         return player.isCreative() || BuildConfig.survivalBalancers.breakFar.get();
     }
 }

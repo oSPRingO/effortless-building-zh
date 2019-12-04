@@ -12,7 +12,6 @@
  */
 package nl.requios.effortlessbuilding.render;
 
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.ResourceLocation;
 import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
@@ -74,7 +73,15 @@ public final class ShaderHandler {
     }
 
     public static boolean doUseShaders() {
-        return BuildConfig.visuals.useShaders.get() && OpenGlHelper.shadersSupported;
+        //Extracted from OpenGLHelper in 1.13 and earlier
+        //Can probably be simplified
+        GLCapabilities glcapabilities = GL.getCapabilities();
+        boolean openGL14 = glcapabilities.OpenGL14 || glcapabilities.GL_EXT_blend_func_separate;
+        boolean openGL21 = glcapabilities.OpenGL21;
+        boolean framebufferSupported = openGL14 && (glcapabilities.GL_ARB_framebuffer_object || glcapabilities.GL_EXT_framebuffer_object || glcapabilities.OpenGL30);
+        boolean shadersAvailable = openGL21 || glcapabilities.GL_ARB_vertex_shader && glcapabilities.GL_ARB_fragment_shader && glcapabilities.GL_ARB_shader_objects;
+        boolean shadersSupported = framebufferSupported && shadersAvailable;
+        return BuildConfig.visuals.useShaders.get() && shadersSupported;
     }
 
     private static int createProgram(String s, int sides) {

@@ -1,7 +1,7 @@
 package nl.requios.effortlessbuilding.buildmode.buildmodes;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import nl.requios.effortlessbuilding.buildmode.IBuildMode;
@@ -11,31 +11,31 @@ import java.util.List;
 
 public class NormalPlus implements IBuildMode {
     @Override
-    public void initialize(EntityPlayer player) {
+    public void initialize(PlayerEntity player) {
 
     }
 
     @Override
-    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean skipRaytrace) {
+    public List<BlockPos> onRightClick(PlayerEntity player, BlockPos blockPos, Direction sideHit, Vec3d hitVec, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
         if (blockPos != null) list.add(blockPos);
         return list;
     }
 
     @Override
-    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos, boolean skipRaytrace) {
+    public List<BlockPos> findCoordinates(PlayerEntity player, BlockPos blockPos, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
         if (blockPos != null) list.add(blockPos);
         return list;
     }
 
     @Override
-    public EnumFacing getSideHit(EntityPlayer player) {
+    public Direction getSideHit(PlayerEntity player) {
         return null;
     }
 
     @Override
-    public Vec3d getHitVec(EntityPlayer player) {
+    public Vec3d getHitVec(PlayerEntity player) {
         return null;
     }
 }

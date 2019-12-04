@@ -1,7 +1,7 @@
 package nl.requios.effortlessbuilding.gui.buildmodifier;
 
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,7 +15,6 @@ import nl.requios.effortlessbuilding.gui.elements.GuiNumberField;
 import nl.requios.effortlessbuilding.gui.elements.GuiScrollPane;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,11 +31,11 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
     }
 
     @Override
-    public int initGui(int id, List<GuiButton> buttons) {
+    public int initGui(int id, List<Button> buttons) {
         id = super.initGui(id, buttons);
 
         int y = top;
-        buttonArrayEnabled = new GuiCheckBox(id++, left - 15 + 8, y, "", false) {
+        buttonArrayEnabled = new GuiCheckBox(left - 15 + 8, y, "", false) {
             @Override
             public void onClick(double mouseX, double mouseY) {
                 super.onClick(mouseX, mouseY);
@@ -46,23 +45,23 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         buttons.add(buttonArrayEnabled);
 
         y = top + 20;
-        textArrayOffsetX = new GuiNumberField(id++, id++, id++, fontRenderer, buttons, left + 70, y, 50, 18);
+        textArrayOffsetX = new GuiNumberField(id++, id++, id++, font, buttons, left + 70, y, 50, 18);
         textArrayOffsetX.setNumber(0);
         textArrayOffsetX.setTooltip("How much each copy is shifted.");
         arrayNumberFieldList.add(textArrayOffsetX);
 
-        textArrayOffsetY = new GuiNumberField(id++, id++, id++, fontRenderer, buttons, left + 140, y, 50, 18);
+        textArrayOffsetY = new GuiNumberField(id++, id++, id++, font, buttons, left + 140, y, 50, 18);
         textArrayOffsetY.setNumber(0);
         textArrayOffsetY.setTooltip("How much each copy is shifted.");
         arrayNumberFieldList.add(textArrayOffsetY);
 
-        textArrayOffsetZ = new GuiNumberField(id++, id++, id++, fontRenderer, buttons, left + 210, y, 50, 18);
+        textArrayOffsetZ = new GuiNumberField(id++, id++, id++, font, buttons, left + 210, y, 50, 18);
         textArrayOffsetZ.setNumber(0);
         textArrayOffsetZ.setTooltip("How much each copy is shifted.");
         arrayNumberFieldList.add(textArrayOffsetZ);
 
         y = top + 50;
-        textArrayCount = new GuiNumberField(id++, id++, id++, fontRenderer, buttons, left + 55, y, 50, 18);
+        textArrayCount = new GuiNumberField(id++, id++, id++, font, buttons, left + 55, y, 50, 18);
         textArrayCount.setNumber(5);
         textArrayCount.setTooltip("How many copies should be made.");
         arrayNumberFieldList.add(textArrayCount);
@@ -95,36 +94,36 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         buttonArrayEnabled.render(mouseX, mouseY, partialTicks);
         if (buttonArrayEnabled.isChecked()) {
             buttonArrayEnabled.y = yy;
-            fontRenderer.drawString("Array enabled", left + offset, yy + 2, 0xFFFFFF);
+            font.drawString("Array enabled", left + offset, yy + 2, 0xFFFFFF);
 
             yy = y + 20;
-            fontRenderer.drawString("Offset", left + offset, yy + 5, 0xFFFFFF);
-            fontRenderer.drawString("X", left + 50 + offset, yy + 5, 0xFFFFFF);
+            font.drawString("Offset", left + offset, yy + 5, 0xFFFFFF);
+            font.drawString("X", left + 50 + offset, yy + 5, 0xFFFFFF);
             textArrayOffsetX.y = yy;
-            fontRenderer.drawString("Y", left + 120 + offset, yy + 5, 0xFFFFFF);
+            font.drawString("Y", left + 120 + offset, yy + 5, 0xFFFFFF);
             textArrayOffsetY.y = yy;
-            fontRenderer.drawString("Z", left + 190 + offset, yy + 5, 0xFFFFFF);
+            font.drawString("Z", left + 190 + offset, yy + 5, 0xFFFFFF);
             textArrayOffsetZ.y = yy;
 
             yy = y + 50;
-            fontRenderer.drawString("Count", left + offset, yy + 5, 0xFFFFFF);
+            font.drawString("Count", left + offset, yy + 5, 0xFFFFFF);
             textArrayCount.y = yy;
 
             int currentReach = Math.max(-1, getArrayReach());
             int maxReach = ReachHelper.getMaxReach(mc.player);
             TextFormatting reachColor = isCurrentReachValid(currentReach, maxReach) ? TextFormatting.GRAY : TextFormatting.RED;
             String reachText = "Reach: " + reachColor + currentReach + TextFormatting.GRAY + "/" + TextFormatting.GRAY + maxReach;
-            fontRenderer.drawString(reachText, left + 176 + offset, yy + 5, 0xFFFFFF);
+            font.drawString(reachText, left + 176 + offset, yy + 5, 0xFFFFFF);
 
             arrayNumberFieldList.forEach(numberField -> numberField.drawNumberField(mouseX, mouseY, partialTicks));
         } else {
             buttonArrayEnabled.y = yy;
-            fontRenderer.drawString("Array disabled", left + offset, yy + 2, 0x999999);
+            font.drawString("Array disabled", left + offset, yy + 2, 0x999999);
         }
 
     }
 
-    public void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY) {
+    public void drawTooltip(Screen guiScreen, int mouseX, int mouseY) {
         //Draw tooltips last
         if (buttonArrayEnabled.isChecked())
         {
@@ -148,7 +147,7 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         boolean insideArrayEnabledLabel = mouseX >= left && mouseX < right && relativeY >= -2 && relativeY < 12;
 
         if (insideArrayEnabledLabel) {
-            buttonArrayEnabled.playPressSound(this.mc.getSoundHandler());
+            buttonArrayEnabled.playDownSound(this.mc.getSoundHandler());
             buttonArrayEnabled.onClick(mouseX, mouseY);
         }
 

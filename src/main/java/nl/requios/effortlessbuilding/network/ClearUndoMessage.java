@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.network;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
@@ -34,7 +34,7 @@ public class ClearUndoMessage {
 
                 if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
                     //Received clientside
-                    EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+                    PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                     //Add to undo stack clientside
                     UndoRedo.clear(player);

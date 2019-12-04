@@ -1,12 +1,12 @@
 package nl.requios.effortlessbuilding.gui;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.ClickType;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.Slot;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.container.ClickType;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumHand;
+import net.minecraft.util.Hand;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.SlotItemHandler;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
@@ -19,7 +19,7 @@ public class RandomizerBagContainer extends Container {
     private static final int INV_START = ItemRandomizerBag.INV_SIZE, INV_END = INV_START + 26,
             HOTBAR_START = INV_END + 1, HOTBAR_END = HOTBAR_START + 8;
 
-    public RandomizerBagContainer(InventoryPlayer parInventoryPlayer, IItemHandler parIInventory) {
+    public RandomizerBagContainer(PlayerInventory parInventoryPlayer, IItemHandler parIInventory) {
         bagInventory = parIInventory;
         sizeInventory = bagInventory.getSlots();
         for (int i = 0; i < sizeInventory; ++i) {
@@ -41,7 +41,7 @@ public class RandomizerBagContainer extends Container {
     }
 
     @Override
-    public boolean canInteractWith(EntityPlayer playerIn) {
+    public boolean canInteractWith(PlayerEntity playerIn) {
         return true;
     }
 
@@ -54,7 +54,7 @@ public class RandomizerBagContainer extends Container {
     }
 
     @Override
-    public ItemStack transferStackInSlot(EntityPlayer playerIn, int slotIndex) {
+    public ItemStack transferStackInSlot(PlayerEntity playerIn, int slotIndex) {
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = this.inventorySlots.get(slotIndex);
 
@@ -107,9 +107,9 @@ public class RandomizerBagContainer extends Container {
      * be able to save properly
      */
     @Override
-    public ItemStack slotClick(int slot, int dragType, ClickType clickTypeIn, EntityPlayer player) {
+    public ItemStack slotClick(int slot, int dragType, ClickType clickTypeIn, PlayerEntity player) {
         // this will prevent the player from interacting with the item that opened the inventory:
-        if (slot >= 0 && getSlot(slot) != null && getSlot(slot).getStack().equals(player.getHeldItem(EnumHand.MAIN_HAND))) {
+        if (slot >= 0 && getSlot(slot) != null && getSlot(slot).getStack().equals(player.getHeldItem(Hand.MAIN_HAND))) {
             return ItemStack.EMPTY;
         }
         return super.slotClick(slot, dragType, clickTypeIn, player);
@@ -119,7 +119,7 @@ public class RandomizerBagContainer extends Container {
      * Callback for when the crafting gui is closed.
      */
     @Override
-    public void onContainerClosed(EntityPlayer player)
+    public void onContainerClosed(PlayerEntity player)
     {
         super.onContainerClosed(player);
         if(!player.world.isRemote)

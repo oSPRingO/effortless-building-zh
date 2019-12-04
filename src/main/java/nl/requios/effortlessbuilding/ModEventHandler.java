@@ -2,7 +2,7 @@ package nl.requios.effortlessbuilding;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
+import net.minecraft.item.BlockItem;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -24,7 +24,7 @@ public class ModEventHandler {
 
         for (Block block : EffortlessBuilding.BLOCKS)
         {
-            event.getRegistry().register(new ItemBlock(block, new Item.Properties()).setRegistryName(block.getRegistryName()));
+            event.getRegistry().register(new BlockItem(block, new Item.Properties()).setRegistryName(block.getRegistryName()));
         }
     }
 }

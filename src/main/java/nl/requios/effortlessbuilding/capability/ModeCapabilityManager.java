@@ -1,8 +1,8 @@
 package nl.requios.effortlessbuilding.capability;
 
-import net.minecraft.nbt.INBTBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.util.Direction;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
@@ -45,12 +45,12 @@ public class ModeCapabilityManager {
 
     public static class Storage implements Capability.IStorage<IModeCapability> {
         @Override
-        public INBTBase writeNBT(Capability<IModeCapability> capability, IModeCapability instance, EnumFacing side) {
-            NBTTagCompound compound = new NBTTagCompound();
+        public INBT writeNBT(Capability<IModeCapability> capability, IModeCapability instance, Direction side) {
+            CompoundNBT compound = new CompoundNBT();
             ModeSettings modeSettings = instance.getModeData();
             if (modeSettings == null) modeSettings = new ModeSettings();
 
-            //compound.setInteger("buildMode", modeSettings.getBuildMode().ordinal());
+            //compound.putInteger("buildMode", modeSettings.getBuildMode().ordinal());
 
             //TODO add mode settings
 
@@ -58,8 +58,8 @@ public class ModeCapabilityManager {
         }
 
         @Override
-        public void readNBT(Capability<IModeCapability> capability, IModeCapability instance, EnumFacing side, INBTBase nbt) {
-            NBTTagCompound compound = (NBTTagCompound) nbt;
+        public void readNBT(Capability<IModeCapability> capability, IModeCapability instance, Direction side, INBT nbt) {
+            CompoundNBT compound = (CompoundNBT) nbt;
 
             //BuildModes.BuildModeEnum buildMode = BuildModes.BuildModeEnum.values()[compound.getInteger("buildMode")];
 
@@ -70,22 +70,22 @@ public class ModeCapabilityManager {
         }
     }
 
-    public static class Provider implements ICapabilitySerializable<INBTBase> {
+    public static class Provider implements ICapabilitySerializable<INBT> {
         IModeCapability inst = modeCapability.getDefaultInstance();
 
         @Nonnull
         @Override
-        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable EnumFacing side) {
+        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
             return modeCapability.orEmpty(cap, LazyOptional.of(() -> inst));
         }
 
         @Override
-        public INBTBase serializeNBT() {
+        public INBT serializeNBT() {
             return modeCapability.getStorage().writeNBT(modeCapability, inst, null);
         }
 
         @Override
-        public void deserializeNBT(INBTBase nbt) {
+        public void deserializeNBT(INBT nbt) {
             modeCapability.getStorage().readNBT(modeCapability, inst, null, nbt);
         }
 

@@ -1,19 +1,12 @@
 package nl.requios.effortlessbuilding.network;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
-import nl.requios.effortlessbuilding.buildmodifier.BlockSet;
-import nl.requios.effortlessbuilding.buildmodifier.UndoRedo;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
-import java.util.ArrayList;
 import java.util.function.Supplier;
 
 /***
@@ -54,7 +47,7 @@ public class RequestLookAtMessage {
                 if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
                     //Received clientside
                     //Send back your info
-                    EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+                    PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                     //Prevent double placing in normal mode with placeStartPos false
                     //Unless QuickReplace is on, then we do need to place start pos.

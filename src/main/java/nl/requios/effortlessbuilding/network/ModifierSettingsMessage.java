@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.network;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
@@ -131,7 +131,7 @@ public class ModifierSettingsMessage {
             ctx.get().enqueueWork(() -> {
                 EffortlessBuilding.log("ModifierSettingsMessage");
 
-                EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+                PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 // Sanitize
                 ModifierSettingsManager.sanitize(message.modifierSettings, player);

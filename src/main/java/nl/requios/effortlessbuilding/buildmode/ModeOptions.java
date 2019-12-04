@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.buildmode;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.text.TextFormatting;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
@@ -110,7 +110,7 @@ public class ModeOptions {
     }
 
     //Called on both client and server
-    public static void performAction(EntityPlayer player, ActionEnum action) {
+    public static void performAction(PlayerEntity player, ActionEnum action) {
         if (action == null) return;
 
         switch (action) {

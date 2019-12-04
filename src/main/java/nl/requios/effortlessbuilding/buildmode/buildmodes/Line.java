@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.buildmode.buildmodes;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
@@ -47,7 +47,7 @@ public class Line extends TwoClicksBuildMode {
 
         //check if its not behind the player and its not too close and not too far
         //also check if raytrace from player to block does not intersect blocks
-        public boolean isValid(Vec3d start, Vec3d look, int reach, EntityPlayer player, boolean skipRaytrace) {
+        public boolean isValid(Vec3d start, Vec3d look, int reach, PlayerEntity player, boolean skipRaytrace) {
 
             return BuildModes.isCriteriaValid(start, look, reach, player, skipRaytrace, lineBound, planeBound, distToPlayerSq);
         }
@@ -55,11 +55,11 @@ public class Line extends TwoClicksBuildMode {
     }
 
     @Override
-    protected BlockPos findSecondPos(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
+    protected BlockPos findSecondPos(PlayerEntity player, BlockPos firstPos, boolean skipRaytrace) {
         return findLine(player, firstPos, skipRaytrace);
     }
 
-    public static BlockPos findLine(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
+    public static BlockPos findLine(PlayerEntity player, BlockPos firstPos, boolean skipRaytrace) {
         Vec3d look = player.getLookVec();
         Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
 
@@ -109,11 +109,11 @@ public class Line extends TwoClicksBuildMode {
     }
 
     @Override
-    protected List<BlockPos> getAllBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2) {
+    protected List<BlockPos> getAllBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2) {
         return getLineBlocks(player, x1, y1, z1, x2, y2, z2);
     }
 
-    public static List<BlockPos> getLineBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2) {
+    public static List<BlockPos> getLineBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2) {
         List<BlockPos> list = new ArrayList<>();
 
         if (x1 != x2) {

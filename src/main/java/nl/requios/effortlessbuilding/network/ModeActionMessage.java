@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.network;
 
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraftforge.fml.network.NetworkEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
@@ -38,7 +38,7 @@ public class ModeActionMessage {
             ctx.get().enqueueWork(() -> {
                 EffortlessBuilding.log("ModeActionMessage");
 
-                EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+                PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 ModeOptions.performAction(player, message.action);
             });

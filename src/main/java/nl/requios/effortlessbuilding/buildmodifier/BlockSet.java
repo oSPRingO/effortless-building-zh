@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.buildmodifier;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 
@@ -8,13 +8,13 @@ import java.util.List;
 
 public class BlockSet {
     private List<BlockPos> coordinates;
-    private List<IBlockState> previousBlockStates;
-    private List<IBlockState> newBlockStates;
+    private List<BlockState> previousBlockStates;
+    private List<BlockState> newBlockStates;
     private Vec3d hitVec;
     private BlockPos firstPos;
     private BlockPos secondPos;
 
-    public BlockSet(List<BlockPos> coordinates, List<IBlockState> previousBlockStates,  List<IBlockState> newBlockStates, Vec3d hitVec,
+    public BlockSet(List<BlockPos> coordinates, List<BlockState> previousBlockStates, List<BlockState> newBlockStates, Vec3d hitVec,
                     BlockPos firstPos, BlockPos secondPos) {
         this.coordinates = coordinates;
         this.previousBlockStates = previousBlockStates;
@@ -28,11 +28,11 @@ public class BlockSet {
         return coordinates;
     }
 
-    public List<IBlockState> getPreviousBlockStates() {
+    public List<BlockState> getPreviousBlockStates() {
         return previousBlockStates;
     }
 
-    public List<IBlockState> getNewBlockStates() {
+    public List<BlockState> getNewBlockStates() {
         return newBlockStates;
     }
 

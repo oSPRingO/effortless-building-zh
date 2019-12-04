@@ -1,9 +1,7 @@
 package nl.requios.effortlessbuilding.network;
 
-import io.netty.buffer.ByteBuf;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.IThreadListener;
 import net.minecraftforge.fml.network.NetworkEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
@@ -43,7 +41,7 @@ public class ModeSettingsMessage {
             ctx.get().enqueueWork(() -> {
                 EffortlessBuilding.log("ModeSettingsMessage");
 
-                EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+                PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 // Sanitize
                 ModeSettingsManager.sanitize(message.modeSettings, player);

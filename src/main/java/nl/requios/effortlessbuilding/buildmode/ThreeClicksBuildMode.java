@@ -1,11 +1,9 @@
 package nl.requios.effortlessbuilding.buildmode;
 
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import nl.requios.effortlessbuilding.buildmode.buildmodes.DiagonalLine;
-import nl.requios.effortlessbuilding.buildmode.buildmodes.Floor;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.*;
@@ -34,20 +32,20 @@ public abstract class ThreeClicksBuildMode extends BaseBuildMode {
 
         //check if its not behind the player and its not too close and not too far
         //also check if raytrace from player to block does not intersect blocks
-        public boolean isValid(Vec3d start, Vec3d look, int reach, EntityPlayer player, boolean skipRaytrace) {
+        public boolean isValid(Vec3d start, Vec3d look, int reach, PlayerEntity player, boolean skipRaytrace) {
 
             return BuildModes.isCriteriaValid(start, look, reach, player, skipRaytrace, lineBound, planeBound, distToPlayerSq);
         }
     }
 
     @Override
-    public void initialize(EntityPlayer player) {
+    public void initialize(PlayerEntity player) {
         super.initialize(player);
-        secondPosTable.put(player.getUniqueID(), BlockPos.ORIGIN);
+        secondPosTable.put(player.getUniqueID(), BlockPos.ZERO);
     }
 
     @Override
-    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean skipRaytrace) {
+    public List<BlockPos> onRightClick(PlayerEntity player, BlockPos blockPos, Direction sideHit, Vec3d hitVec, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
 
         Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
@@ -89,7 +87,7 @@ public abstract class ThreeClicksBuildMode extends BaseBuildMode {
     }
 
     @Override
-    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos, boolean skipRaytrace) {
+    public List<BlockPos> findCoordinates(PlayerEntity player, BlockPos blockPos, boolean skipRaytrace) {
         List<BlockPos> list = new ArrayList<>();
         Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
         int rightClickNr = rightClickTable.get(player.getUniqueID());
@@ -158,19 +156,19 @@ public abstract class ThreeClicksBuildMode extends BaseBuildMode {
     }
 
     //Finds the place of the second block pos
-    protected abstract BlockPos findSecondPos(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace);
+    protected abstract BlockPos findSecondPos(PlayerEntity player, BlockPos firstPos, boolean skipRaytrace);
 
     //Finds the place of the third block pos
-    protected abstract BlockPos findThirdPos(EntityPlayer player, BlockPos firstPos, BlockPos secondPos, boolean skipRaytrace);
+    protected abstract BlockPos findThirdPos(PlayerEntity player, BlockPos firstPos, BlockPos secondPos, boolean skipRaytrace);
 
     //After first and second pos are known, we want to visualize the blocks in a way (like floor for cube)
-    protected abstract List<BlockPos> getIntermediateBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2);
+    protected abstract List<BlockPos> getIntermediateBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2);
 
     //After first, second and third pos are known, we want all the blocks
-    protected abstract List<BlockPos> getFinalBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3);
+    protected abstract List<BlockPos> getFinalBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3);
 
     //Finds height after floor has been chosen in buildmodes with 3 clicks
-    public static BlockPos findHeight(EntityPlayer player, BlockPos secondPos, boolean skipRaytrace) {
+    public static BlockPos findHeight(PlayerEntity player, BlockPos secondPos, boolean skipRaytrace) {
         Vec3d look = player.getLookVec();
         Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
 

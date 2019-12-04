@@ -1,10 +1,10 @@
 package nl.requios.effortlessbuilding;
 
 import net.minecraft.block.Block;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.common.crafting.CraftingHelper;
@@ -20,7 +20,6 @@ import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.network.NetworkRegistry;
 import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.command.CommandReach;
@@ -35,7 +34,6 @@ import nl.requios.effortlessbuilding.network.PacketHandler;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import nl.requios.effortlessbuilding.proxy.IProxy;
 import nl.requios.effortlessbuilding.proxy.ServerProxy;
-import nl.requios.effortlessbuilding.render.ShaderHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -104,7 +102,8 @@ public class EffortlessBuilding
         //TODO 1.13 config
 //        ConfigManager.sync(MODID, Config.Type.INSTANCE);
 
-        ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.GUIFACTORY, () -> RandomizerBagGuiHandler::openGui);
+        //TODO 1.14 GUI
+//        ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.GUIFACTORY, () -> RandomizerBagGuiHandler::openGui);
 
         proxy.setup(event);
 
@@ -143,11 +142,11 @@ public class EffortlessBuilding
         logger.info(msg);
     }
 
-    public static void log(EntityPlayer player, String msg){
+    public static void log(PlayerEntity player, String msg){
         log(player, msg, false);
     }
 
-    public static void log(EntityPlayer player, String msg, boolean actionBar){
-        player.sendStatusMessage(new TextComponentString(msg), actionBar);
+    public static void log(PlayerEntity player, String msg, boolean actionBar){
+        player.sendStatusMessage(new StringTextComponent(msg), actionBar);
     }
 }

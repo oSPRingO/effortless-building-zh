@@ -1,7 +1,7 @@
 package nl.requios.effortlessbuilding.gui.buildmodifier;
 
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
@@ -17,7 +17,6 @@ import nl.requios.effortlessbuilding.gui.elements.GuiNumberField;
 import nl.requios.effortlessbuilding.gui.elements.GuiScrollPane;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +27,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
 
     protected static final ResourceLocation BUILDING_ICONS = new ResourceLocation(EffortlessBuilding.MODID, "textures/gui/building_icons.png");
 
-    protected List<GuiButton> mirrorButtonList = new ArrayList<>();
+    protected List<Button> mirrorButtonList = new ArrayList<>();
     protected List<GuiIconButton> mirrorIconButtonList = new ArrayList<>();
     protected List<GuiNumberField> mirrorNumberFieldList = new ArrayList<>();
 
@@ -42,11 +41,11 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
     }
 
     @Override
-    public int initGui(int id, List<GuiButton> buttonList) {
+    public int initGui(int id, List<Button> buttonList) {
         id = super.initGui(id, buttonList);
 
         int y = top - 2;
-        buttonMirrorEnabled = new GuiCheckBox(id++, left - 15 + 8, y, "", false) {
+        buttonMirrorEnabled = new GuiCheckBox(left - 15 + 8, y, "", false) {
             @Override
             public void onClick(double mouseX, double mouseY) {
                 super.onClick(mouseX, mouseY);
@@ -56,34 +55,34 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonList.add(buttonMirrorEnabled);
 
         y = top + 18;
-        textMirrorPosX = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 58, y, 62, 18);
+        textMirrorPosX = new GuiNumberField(id++, id++, id++, font, buttonList, left + 58, y, 62, 18);
         textMirrorPosX.setNumber(0);
         textMirrorPosX.setTooltip(
                 Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         mirrorNumberFieldList.add(textMirrorPosX);
 
-        textMirrorPosY = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 138, y, 62, 18);
+        textMirrorPosY = new GuiNumberField(id++, id++, id++, font, buttonList, left + 138, y, 62, 18);
         textMirrorPosY.setNumber(64);
         textMirrorPosY.setTooltip(Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         mirrorNumberFieldList.add(textMirrorPosY);
 
-        textMirrorPosZ = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 218, y, 62, 18);
+        textMirrorPosZ = new GuiNumberField(id++, id++, id++, font, buttonList, left + 218, y, 62, 18);
         textMirrorPosZ.setNumber(0);
         textMirrorPosZ.setTooltip(Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         mirrorNumberFieldList.add(textMirrorPosZ);
 
         y = top + 50;
-        buttonMirrorX = new GuiCheckBox(id++, left + 60, y, " X", true);
+        buttonMirrorX = new GuiCheckBox(left + 60, y, " X", true);
         mirrorButtonList.add(buttonMirrorX);
 
-        buttonMirrorY = new GuiCheckBox(id++, left + 100, y, " Y", false);
+        buttonMirrorY = new GuiCheckBox(left + 100, y, " Y", false);
         mirrorButtonList.add(buttonMirrorY);
 
-        buttonMirrorZ = new GuiCheckBox(id++, left + 140, y, " Z", false);
+        buttonMirrorZ = new GuiCheckBox(left + 140, y, " Z", false);
         mirrorButtonList.add(buttonMirrorZ);
 
         y = top + 47;
-        textMirrorRadius = new GuiNumberField(id++, id++, id++, fontRenderer, buttonList, left + 218, y, 62, 18);
+        textMirrorRadius = new GuiNumberField(id++, id++, id++, font, buttonList, left + 218, y, 62, 18);
         textMirrorRadius.setNumber(50);
         //TODO change to diameter (remove /2)
         textMirrorRadius.setTooltip(Arrays.asList("How far the mirror reaches in any direction.",
@@ -202,23 +201,23 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonMirrorEnabled.render(mouseX, mouseY, partialTicks);
         if (buttonMirrorEnabled.isChecked()) {
             buttonMirrorEnabled.y = yy;
-            fontRenderer.drawString("Mirror enabled", left + offset, yy + 2, 0xFFFFFF);
+            font.drawString("Mirror enabled", left + offset, yy + 2, 0xFFFFFF);
 
             yy = y + 18;
-            fontRenderer.drawString("Position", left + offset, yy + 5, 0xFFFFFF);
-            fontRenderer.drawString("X", left + 40 + offset, yy + 5, 0xFFFFFF);
+            font.drawString("Position", left + offset, yy + 5, 0xFFFFFF);
+            font.drawString("X", left + 40 + offset, yy + 5, 0xFFFFFF);
             textMirrorPosX.y = yy;
-            fontRenderer.drawString("Y", left + 120 + offset, yy + 5, 0xFFFFFF);
+            font.drawString("Y", left + 120 + offset, yy + 5, 0xFFFFFF);
             textMirrorPosY.y = yy;
-            fontRenderer.drawString("Z", left + 200 + offset, yy + 5, 0xFFFFFF);
+            font.drawString("Z", left + 200 + offset, yy + 5, 0xFFFFFF);
             textMirrorPosZ.y = yy;
 
             yy = y + 50;
-            fontRenderer.drawString("Direction", left + offset, yy + 2, 0xFFFFFF);
+            font.drawString("Direction", left + offset, yy + 2, 0xFFFFFF);
             buttonMirrorX.y = yy;
             buttonMirrorY.y = yy;
             buttonMirrorZ.y = yy;
-            fontRenderer.drawString("Radius", left + 176 + offset, yy + 2, 0xFFFFFF);
+            font.drawString("Radius", left + 176 + offset, yy + 2, 0xFFFFFF);
             textMirrorRadius.y = yy - 3;
 
             yy = y + 72;
@@ -232,12 +231,12 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
             mirrorNumberFieldList.forEach(numberField -> numberField.drawNumberField(mouseX, mouseY, partialTicks));
         } else {
             buttonMirrorEnabled.y = yy;
-            fontRenderer.drawString("Mirror disabled", left + offset, yy + 2, 0x999999);
+            font.drawString("Mirror disabled", left + offset, yy + 2, 0x999999);
         }
 
     }
 
-    public void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY) {
+    public void drawTooltip(Screen guiScreen, int mouseX, int mouseY) {
         //Draw tooltips last
         if (buttonMirrorEnabled.isChecked())
         {
@@ -262,7 +261,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         boolean insideMirrorEnabledLabel = mouseX >= left && mouseX < right && relativeY >= -2 && relativeY < 12;
 
         if (insideMirrorEnabledLabel) {
-            buttonMirrorEnabled.playPressSound(this.mc.getSoundHandler());
+            buttonMirrorEnabled.playDownSound(this.mc.getSoundHandler());
             buttonMirrorEnabled.onClick(mouseX, mouseY);
         }
 
