@@ -54,7 +54,7 @@ public class Circle extends TwoClicksBuildMode {
 
                 float distance = distance(l, n, centerX, centerZ);
                 float radius = calculateEllipseRadius(centerX, centerZ, radiusX, radiusZ, l, n);
-                if (distance < radius + 0.5f)
+                if (distance < radius + 0.4f)
                     list.add(new BlockPos(l, y1, n));
             }
         }
@@ -75,7 +75,7 @@ public class Circle extends TwoClicksBuildMode {
     }
 
     private static float distance(float x1, float z1, float x2, float z2) {
-        return MathHelper.sqrt((z2 - z1) * (z2 - z1) + (x2 - x1) * (x2 - x1));
+        return MathHelper.sqrt((x2 - x1) * (x2 - x1) + (z2 - z1) * (z2 - z1));
     }
 
     public static float calculateEllipseRadius(float centerX, float centerZ, float radiusX, float radiusZ, int x, int z) {

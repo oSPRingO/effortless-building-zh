@@ -32,8 +32,8 @@ public class ModeOptions {
         THICKNESS_3("effortlessbuilding.action.thickness_3"),
         THICKNESS_5("effortlessbuilding.action.thickness_5"),
 
-        CIRCLE_START_CENTER("effortlessbuilding.action.start_center"),
-        CIRCLE_START_CORNER("effortlessbuilding.action.start_corner");
+        CIRCLE_START_CORNER("effortlessbuilding.action.start_corner"),
+        CIRCLE_START_CENTER("effortlessbuilding.action.start_center");
 
         public String name;
 
@@ -48,7 +48,7 @@ public class ModeOptions {
         CUBE_FILL("effortlessbuilding.action.filling", ActionEnum.CUBE_FULL, ActionEnum.CUBE_HOLLOW, ActionEnum.CUBE_SKELETON),
         RAISED_EDGE("effortlessbuilding.action.raised_edge", ActionEnum.SHORT_EDGE, ActionEnum.LONG_EDGE),
         LINE_THICKNESS("effortlessbuilding.action.thickness", ActionEnum.THICKNESS_1, ActionEnum.THICKNESS_3, ActionEnum.THICKNESS_5),
-        CIRCLE_START("effortlessbuilding.action.circle_start", ActionEnum.CIRCLE_START_CENTER, ActionEnum.CIRCLE_START_CORNER);
+        CIRCLE_START("effortlessbuilding.action.circle_start", ActionEnum.CIRCLE_START_CORNER, ActionEnum.CIRCLE_START_CENTER);
 
         public String name;
         public ActionEnum[] actions;
@@ -64,7 +64,7 @@ public class ModeOptions {
     private static ActionEnum cubeFill = ActionEnum.CUBE_FULL;
     private static ActionEnum raisedEdge = ActionEnum.SHORT_EDGE;
     private static ActionEnum lineThickness = ActionEnum.THICKNESS_1;
-    private static ActionEnum circleStart = ActionEnum.CIRCLE_START_CENTER;
+    private static ActionEnum circleStart = ActionEnum.CIRCLE_START_CORNER;
 
     public static ActionEnum getOptionSetting(OptionEnum option) {
         switch (option) {
