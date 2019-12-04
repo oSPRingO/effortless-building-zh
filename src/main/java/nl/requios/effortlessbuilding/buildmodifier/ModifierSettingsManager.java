@@ -2,28 +2,42 @@ package nl.requios.effortlessbuilding.buildmodifier;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.network.PacketDistributor;
 import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
+import nl.requios.effortlessbuilding.network.PacketHandler;
+
+import javax.annotation.Nonnull;
+import java.util.HashMap;
+import java.util.UUID;
 
 @Mod.EventBusSubscriber
 public class ModifierSettingsManager {
 
     //Retrieves the buildsettings of a player through the modifierCapability capability
     //Never returns null
+    @Nonnull
     public static ModifierSettings getModifierSettings(EntityPlayer player){
-        if (player.hasCapability(ModifierCapabilityManager.modifierCapability, null)) {
-            ModifierCapabilityManager.IModifierCapability capability = player.getCapability(
-                    ModifierCapabilityManager.modifierCapability, null);
+        LazyOptional<ModifierCapabilityManager.IModifierCapability> modifierCapability =
+                player.getCapability(ModifierCapabilityManager.modifierCapability, null);
+
+        if (modifierCapability.isPresent()) {
+            ModifierCapabilityManager.IModifierCapability capability = modifierCapability.orElse(null);
             if (capability.getModifierData() == null) {
                 capability.setModifierData(new ModifierSettings());
             }
             return capability.getModifierData();
         }
-        throw new IllegalArgumentException("Player does not have modifierCapability capability");
+
+        //Player does not have modifierCapability capability
+        //Return dummy settings
+        return new ModifierSettings();
+//        throw new IllegalArgumentException("Player does not have modifierCapability capability");
     }
 
     public static void setModifierSettings(EntityPlayer player, ModifierSettings modifierSettings) {
@@ -31,11 +45,15 @@ public class ModifierSettingsManager {
             EffortlessBuilding.log("Cannot set buildsettings, player is null");
             return;
         }
-        if (player.hasCapability(ModifierCapabilityManager.modifierCapability, null)) {
-            ModifierCapabilityManager.IModifierCapability capability = player.getCapability(
-                    ModifierCapabilityManager.modifierCapability, null);
+
+        LazyOptional<ModifierCapabilityManager.IModifierCapability> modifierCapability =
+                player.getCapability(ModifierCapabilityManager.modifierCapability, null);
+
+        modifierCapability.ifPresent((capability) -> {
             capability.setModifierData(modifierSettings);
-        } else {
+        });
+
+        if (!modifierCapability.isPresent()) {
             EffortlessBuilding.log(player, "Saving buildsettings failed.");
         }
     }
@@ -163,33 +181,28 @@ public class ModifierSettingsManager {
             //Set mirror radius to max
             int reach = 10;
             switch (reachUpgrade) {
-                case 0: reach = BuildConfig.reach.maxReachLevel0; break;
-                case 1: reach =  BuildConfig.reach.maxReachLevel1; break;
-                case 2: reach =  BuildConfig.reach.maxReachLevel2; break;
-                case 3: reach =  BuildConfig.reach.maxReachLevel3; break;
+                case 0: reach = BuildConfig.reach.maxReachLevel0.get(); break;
+                case 1: reach =  BuildConfig.reach.maxReachLevel1.get(); break;
+                case 2: reach =  BuildConfig.reach.maxReachLevel2.get(); break;
+                case 3: reach =  BuildConfig.reach.maxReachLevel3.get(); break;
             }
-
-            EffortlessBuilding.log("before "+this.mirrorSettings.radius);
 
             if (this.mirrorSettings != null)
                 this.mirrorSettings.radius = reach / 2;
             if (this.radialMirrorSettings != null)
                 this.radialMirrorSettings.radius = reach / 2;
-
-            EffortlessBuilding.log("after "+this.mirrorSettings.radius);
         }
     }
 
     public static void handleNewPlayer(EntityPlayer player){
-        if (getModifierSettings(player) == null) {
-            setModifierSettings(player, new ModifierSettings());
-        }
+        //Makes sure player has modifier settings (if it doesnt it will create it)
+        getModifierSettings(player);
 
         //Only on server
         if (!player.world.isRemote) {
             //Send to client
             ModifierSettingsMessage msg = new ModifierSettingsMessage(getModifierSettings(player));
-            EffortlessBuilding.packetHandler.sendTo(msg, (EntityPlayerMP) player);
+            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (EntityPlayerMP) player), msg);
         }
     }
 }

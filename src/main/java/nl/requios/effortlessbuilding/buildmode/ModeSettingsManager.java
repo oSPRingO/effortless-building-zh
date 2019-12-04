@@ -2,44 +2,57 @@ package nl.requios.effortlessbuilding.buildmode;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.network.PacketDistributor;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
+import nl.requios.effortlessbuilding.network.PacketHandler;
+
+import javax.annotation.Nonnull;
 
 @Mod.EventBusSubscriber
 public class ModeSettingsManager {
 
     //Retrieves the buildsettings of a player through the modifierCapability capability
     //Never returns null
+    @Nonnull
     public static ModeSettings getModeSettings(EntityPlayer player) {
-        if (player.hasCapability(ModeCapabilityManager.modeCapability, null)) {
-            ModeCapabilityManager.IModeCapability capability = player.getCapability(
-                    ModeCapabilityManager.modeCapability, null);
+        LazyOptional<ModeCapabilityManager.IModeCapability> modeCapability =
+                player.getCapability(ModeCapabilityManager.modeCapability, null);
+
+        if (modeCapability.isPresent()) {
+            ModeCapabilityManager.IModeCapability capability = modeCapability.orElse(null);
             if (capability.getModeData() == null) {
                 capability.setModeData(new ModeSettings());
             }
             return capability.getModeData();
         }
-        throw new IllegalArgumentException("Player does not have modeCapability capability");
+
+        //Player does not have modeCapability capability
+        //Return dummy settings
+        return new ModeSettings();
+//        throw new IllegalArgumentException("Player does not have modeCapability capability");
     }
 
     public static void setModeSettings(EntityPlayer player, ModeSettings modeSettings) {
         if (player == null) {
-            EffortlessBuilding.log("Cannot set buildsettings, player is null");
+            EffortlessBuilding.log("Cannot set buildmode settings, player is null");
             return;
         }
-        if (player.hasCapability(ModeCapabilityManager.modeCapability, null)) {
-            ModeCapabilityManager.IModeCapability capability = player.getCapability(
-                    ModeCapabilityManager.modeCapability, null);
+        LazyOptional<ModeCapabilityManager.IModeCapability> modeCapability =
+                player.getCapability(ModeCapabilityManager.modeCapability, null);
 
+        modeCapability.ifPresent((capability) -> {
             capability.setModeData(modeSettings);
 
-            //Initialize new mode
             BuildModes.initializeMode(player);
-        } else {
-            EffortlessBuilding.log(player, "Saving buildsettings failed.");
+        });
+
+        if (!modeCapability.isPresent()) {
+            EffortlessBuilding.log(player, "Saving buildmode settings failed.");
         }
     }
 
@@ -72,15 +85,14 @@ public class ModeSettingsManager {
     }
 
     public static void handleNewPlayer(EntityPlayer player){
-        if (getModeSettings(player) == null) {
-            setModeSettings(player, new ModeSettings());
-        }
+        //Makes sure player has mode settings (if it doesnt it will create it)
+        getModeSettings(player);
 
         //Only on server
         if (!player.world.isRemote) {
             //Send to client
             ModeSettingsMessage msg = new ModeSettingsMessage(getModeSettings(player));
-            EffortlessBuilding.packetHandler.sendTo(msg, (EntityPlayerMP) player);
+            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (EntityPlayerMP) player), msg);
         }
     }
 }

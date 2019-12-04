@@ -1,14 +1,15 @@
-package nl.requios.effortlessbuilding.buildmode;
+package nl.requios.effortlessbuilding.buildmode.buildmodes;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import nl.requios.effortlessbuilding.buildmode.IBuildMode;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Normal implements IBuildMode {
+public class NormalPlus implements IBuildMode {
     @Override
     public void initialize(EntityPlayer player) {
 

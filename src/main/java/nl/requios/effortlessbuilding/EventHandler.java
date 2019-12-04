@@ -1,29 +1,24 @@
 package nl.requios.effortlessbuilding;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
+import net.minecraft.stats.Stat;
+import net.minecraft.stats.StatList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
-import net.minecraftforge.common.config.Config;
-import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.network.PacketDistributor;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
-import nl.requios.effortlessbuilding.buildmodifier.BlockSet;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.UndoRedo;
@@ -32,12 +27,10 @@ import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.AddUndoMessage;
-import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
 import nl.requios.effortlessbuilding.network.ClearUndoMessage;
+import nl.requios.effortlessbuilding.network.PacketHandler;
 import nl.requios.effortlessbuilding.network.RequestLookAtMessage;
-import scala.actors.threadpool.Arrays;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static net.minecraftforge.fml.common.gameevent.PlayerEvent.*;
@@ -47,38 +40,22 @@ public class EventHandler
 {
 
     @SubscribeEvent
-    public static void registerBlocks(RegistryEvent.Register<Block> event)
-    {
-        event.getRegistry().registerAll(EffortlessBuilding.BLOCKS);
-    }
-
-    @SubscribeEvent
-    public static void registerItems(RegistryEvent.Register<Item> event)
-    {
-        event.getRegistry().registerAll(EffortlessBuilding.ITEMS);
-
-        for (Block block : EffortlessBuilding.BLOCKS)
-        {
-            event.getRegistry().register(new ItemBlock(block).setRegistryName(block.getRegistryName()));
-        }
-    }
-
-    @SubscribeEvent
     public static void attachCapabilities(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof EntityPlayer) {
-            event.addCapability(new ResourceLocation(EffortlessBuilding.MODID, "BuildModifier"), new ModifierCapabilityManager.Provider());
-            event.addCapability(new ResourceLocation(EffortlessBuilding.MODID, "BuildMode"), new ModeCapabilityManager.Provider());
+            event.addCapability(new ResourceLocation(EffortlessBuilding.MODID, "build_modifier"), new ModifierCapabilityManager.Provider());
+            event.addCapability(new ResourceLocation(EffortlessBuilding.MODID, "build_mode"), new ModeCapabilityManager.Provider());
         }
     }
 
-    @SubscribeEvent
-    public static void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event)
-    {
-        if (event.getModID().equals(EffortlessBuilding.MODID))
-        {
-            ConfigManager.sync(EffortlessBuilding.MODID, Config.Type.INSTANCE);
-        }
-    }
+    //TODO 1.13 config
+//    @SubscribeEvent
+//    public static void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event)
+//    {
+//        if (event.getModID().equals(EffortlessBuilding.MODID))
+//        {
+//            ConfigManager.sync(EffortlessBuilding.MODID, Config.Type.INSTANCE);
+//        }
+//    }
 
 //    @SubscribeEvent
 //    public static void onServerTick(TickEvent.ServerTickEvent event) {
@@ -87,11 +64,13 @@ public class EventHandler
 
     @SubscribeEvent
     //Only called serverside (except with lilypads...)
-    public static void onBlockPlaced(BlockEvent.PlaceEvent event) {
-        if (event.getWorld().isRemote) return;
+    public static void onBlockPlaced(BlockEvent.EntityPlaceEvent event) {
+        if (event.getWorld().isRemote()) return;
+
+        if (!(event.getEntity() instanceof EntityPlayer)) return;
 
         //Cancel event if necessary
-        EntityPlayer player = event.getPlayer();
+        EntityPlayerMP player = ((EntityPlayerMP) event.getEntity());
         BuildModes.BuildModeEnum buildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
 
@@ -100,21 +79,26 @@ public class EventHandler
         } else if (modifierSettings.doQuickReplace()) {
             //Cancel event and send message if QuickReplace
             event.setCanceled(true);
-            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(true), (EntityPlayerMP) player);
-            EffortlessBuilding.packetHandler.sendTo(new AddUndoMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState()), (EntityPlayerMP) player);
+            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new RequestLookAtMessage(true));
+            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new AddUndoMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState()));
         } else {
             //NORMAL mode, let vanilla handle block placing
             //But modifiers should still work
 
             //Send message to client, which sends message back with raytrace info
-            EffortlessBuilding.packetHandler.sendTo(new RequestLookAtMessage(false), (EntityPlayerMP) player);
-            EffortlessBuilding.packetHandler.sendTo(new AddUndoMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState()), (EntityPlayerMP) player);
+            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new RequestLookAtMessage(false));
+            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new AddUndoMessage(event.getPos(), event.getBlockSnapshot().getReplacedBlock(), event.getState()));
         }
+
+//        Stat<ResourceLocation> blocksPlacedStat = StatList.CUSTOM.get(new ResourceLocation(EffortlessBuilding.MODID, "blocks_placed"));
+//        player.getStats().increment(player, blocksPlacedStat, 1);
+//
+//        System.out.println(player.getStats().getValue(blocksPlacedStat));
     }
 
     @SubscribeEvent
     public static void onBlockBroken(BlockEvent.BreakEvent event) {
-        if (event.getWorld().isRemote) return;
+        if (event.getWorld().isRemote()) return;
 
         //Cancel event if necessary
         //If cant break far then dont cancel event ever
@@ -123,19 +107,19 @@ public class EventHandler
             event.setCanceled(true);
         } else {
             //NORMAL mode, let vanilla handle block breaking
-            //But modifiers should still work
+            //But modifiers and QuickReplace should still work
             //Dont break the original block yourself, otherwise Tinkers Hammer and Veinminer won't work
             BuildModes.onBlockBroken(event.getPlayer(), event.getPos(), false);
 
             //Add to undo stack in client
-            EffortlessBuilding.packetHandler.sendTo(new AddUndoMessage(event.getPos(), event.getState(), Blocks.AIR.getDefaultState()), (EntityPlayerMP) event.getPlayer());
+            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (EntityPlayerMP) event.getPlayer()), new AddUndoMessage(event.getPos(), event.getState(), Blocks.AIR.getDefaultState()));
         }
     }
 
     @SubscribeEvent
     public static void breakSpeed(PlayerEvent.BreakSpeed event) {
         //Disable if config says so
-        if (!BuildConfig.survivalBalancers.increasedMiningTime) return;
+        if (!BuildConfig.survivalBalancers.increasedMiningTime.get()) return;
 
         EntityPlayer player = event.getEntityPlayer();
         World world = player.world;
@@ -158,7 +142,7 @@ public class EventHandler
         }
 
         //Grabbing percentage from config
-        float percentage = (float) BuildConfig.survivalBalancers.miningTimePercentage / 100;
+        float percentage = (float) BuildConfig.survivalBalancers.miningTimePercentage.get() / 100;
         totalBlockHardness *= percentage;
         totalBlockHardness += originalBlockHardness;
 
@@ -171,36 +155,59 @@ public class EventHandler
 
     @SubscribeEvent
     public static void onPlayerLoggedIn(PlayerLoggedInEvent event) {
-        EntityPlayer player = event.player;
+        EntityPlayer player = event.getPlayer();
         ModifierSettingsManager.handleNewPlayer(player);
         ModeSettingsManager.handleNewPlayer(player);
     }
 
     @SubscribeEvent
     public static void onPlayerLoggedOut(PlayerLoggedOutEvent event) {
-        EntityPlayer player = event.player;
+        EntityPlayer player = event.getPlayer();
         if (player.getEntityWorld().isRemote) return;
 
         UndoRedo.clear(player);
-        EffortlessBuilding.packetHandler.sendTo(new ClearUndoMessage(), (EntityPlayerMP) player);
+        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (EntityPlayerMP) player), new ClearUndoMessage());
     }
 
     @SubscribeEvent
     public static void onPlayerRespawn(PlayerRespawnEvent event) {
-        EntityPlayer player = event.player;
+        EntityPlayer player = event.getPlayer();
         ModifierSettingsManager.handleNewPlayer(player);
         ModeSettingsManager.handleNewPlayer(player);
     }
 
     @SubscribeEvent
     public static void onPlayerChangedDimension(PlayerChangedDimensionEvent event) {
-        EntityPlayer player = event.player;
+        EntityPlayer player = event.getPlayer();
         if (player.getEntityWorld().isRemote) return;
+
+        //Set build mode to normal
+        ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+        modeSettings.setBuildMode(BuildModes.BuildModeEnum.NORMAL);
+        ModeSettingsManager.setModeSettings(player, modeSettings);
+
+        //Disable modifiers
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+        modifierSettings.getMirrorSettings().enabled = false;
+        modifierSettings.getRadialMirrorSettings().enabled = false;
+        modifierSettings.getArraySettings().enabled = false;
+        ModifierSettingsManager.setModifierSettings(player, modifierSettings);
 
         ModifierSettingsManager.handleNewPlayer(player);
         ModeSettingsManager.handleNewPlayer(player);
 
         UndoRedo.clear(player);
-        EffortlessBuilding.packetHandler.sendTo(new ClearUndoMessage(), (EntityPlayerMP) player);
+        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (EntityPlayerMP) player), new ClearUndoMessage());
+    }
+
+    @SubscribeEvent
+    public static void onPlayerClone(PlayerEvent.Clone event) {
+        //Attach capabilities on death, otherwise crash
+        EntityPlayer oldPlayer = event.getOriginal();
+        oldPlayer.revive();
+
+        EntityPlayer newPlayer = event.getEntityPlayer();
+        ModifierSettingsManager.setModifierSettings(newPlayer, ModifierSettingsManager.getModifierSettings(oldPlayer));
+        ModeSettingsManager.setModeSettings(newPlayer, ModeSettingsManager.getModeSettings(oldPlayer));
     }
 }

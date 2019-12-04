@@ -4,10 +4,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.IGuiEventListener;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.io.IOException;
 import java.util.List;
 
+@OnlyIn(Dist.CLIENT)
 public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScrollEntry {
 
     public GuiScrollPane scrollPane;
@@ -36,18 +40,10 @@ public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScroll
 
     @Override
     public void updateScreen() {
-
-    }
-
-    @Override
-    public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY,
-                          boolean isSelected, float partialTicks) {
-
     }
 
     @Override
     public void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY) {
-
     }
 
     @Override
@@ -56,8 +52,8 @@ public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScroll
     }
 
     @Override
-    public void keyTyped(char eventChar, int eventKey) throws IOException {
-
+    public boolean charTyped(char eventChar, int eventKey) {
+        return false;
     }
 
     @Override
@@ -71,13 +67,7 @@ public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScroll
     }
 
     @Override
-    public void actionPerformed(GuiButton button) {
-
-    }
-
-    @Override
     public void onGuiClosed() {
-
     }
 
     @Override

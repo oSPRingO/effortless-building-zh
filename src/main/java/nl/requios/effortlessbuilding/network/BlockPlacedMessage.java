@@ -1,25 +1,23 @@
 package nl.requios.effortlessbuilding.network;
 
-import io.netty.buffer.ByteBuf;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraft.network.PacketBuffer;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.network.NetworkEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
-import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
-import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import nl.requios.effortlessbuilding.render.BlockPreviewRenderer;
+
+import java.util.function.Supplier;
 
 /***
  * Sends a message to the server indicating that a player wants to place a block.
  * Received clientside: server has placed blocks and its letting the client know.
  */
-public class BlockPlacedMessage implements IMessage {
+public class BlockPlacedMessage {
 
     private boolean blockHit;
     private BlockPos blockPos;
@@ -36,10 +34,18 @@ public class BlockPlacedMessage implements IMessage {
     }
 
     public BlockPlacedMessage(RayTraceResult result, boolean placeStartPos) {
-        this.blockHit = result.typeOfHit == RayTraceResult.Type.BLOCK;
+        this.blockHit = result.type == RayTraceResult.Type.BLOCK;
         this.blockPos = result.getBlockPos();
         this.sideHit = result.sideHit;
         this.hitVec = result.hitVec;
+        this.placeStartPos = placeStartPos;
+    }
+
+    public BlockPlacedMessage(boolean blockHit, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean placeStartPos) {
+        this.blockHit = blockHit;
+        this.blockPos = blockPos;
+        this.sideHit = sideHit;
+        this.hitVec = hitVec;
         this.placeStartPos = placeStartPos;
     }
 
@@ -63,51 +69,44 @@ public class BlockPlacedMessage implements IMessage {
         return placeStartPos;
     }
 
-    @Override
-    public void toBytes(ByteBuf buf) {
-        buf.writeBoolean(blockHit);
-        buf.writeInt(blockPos.getX());
-        buf.writeInt(blockPos.getY());
-        buf.writeInt(blockPos.getZ());
-        buf.writeInt(sideHit.getIndex());
-        buf.writeDouble(hitVec.x);
-        buf.writeDouble(hitVec.y);
-        buf.writeDouble(hitVec.z);
-        buf.writeBoolean(placeStartPos);
+    public static void encode(BlockPlacedMessage message, PacketBuffer buf) {
+        buf.writeBoolean(message.blockHit);
+        buf.writeInt(message.blockPos.getX());
+        buf.writeInt(message.blockPos.getY());
+        buf.writeInt(message.blockPos.getZ());
+        buf.writeInt(message.sideHit.getIndex());
+        buf.writeDouble(message.hitVec.x);
+        buf.writeDouble(message.hitVec.y);
+        buf.writeDouble(message.hitVec.z);
+        buf.writeBoolean(message.placeStartPos);
     }
 
-    @Override
-    public void fromBytes(ByteBuf buf) {
-        blockHit = buf.readBoolean();
-        blockPos = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
-        sideHit = EnumFacing.byIndex(buf.readInt());
-        hitVec = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
-        placeStartPos = buf.readBoolean();
+    public static BlockPlacedMessage decode(PacketBuffer buf) {
+        boolean blockHit = buf.readBoolean();
+        BlockPos blockPos = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
+        EnumFacing sideHit = EnumFacing.byIndex(buf.readInt());
+        Vec3d hitVec = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+        boolean placeStartPos = buf.readBoolean();
+        return new BlockPlacedMessage(blockHit, blockPos, sideHit, hitVec, placeStartPos);
     }
 
-    // The params of the IMessageHandler are <REQ, REPLY>
-    public static class MessageHandler implements IMessageHandler<BlockPlacedMessage, IMessage> {
-        // Do note that the default constructor is required, but implicitly defined in this case
+    public static class Handler
+    {
+        public static void handle(BlockPlacedMessage message, Supplier<NetworkEvent.Context> ctx)
+        {
+            ctx.get().enqueueWork(() -> {
+                EffortlessBuilding.log("BlockPlacedMessage");
 
-        @Override
-        public IMessage onMessage(BlockPlacedMessage message, MessageContext ctx) {
-            //EffortlessBuilding.log("message received on " + ctx.side + " side");
-
-            if (ctx.side == Side.CLIENT){
-                //Received clientside
-                EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {
+                if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
+                    //Received clientside
                     //Nod RenderHandler to do the dissolve shader effect
                     BlockPreviewRenderer.onBlocksPlaced();
-                });
-                return null;
-            } else {
-                //Received serverside
-                EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {
-                    BuildModes.onBlockPlacedMessage(ctx.getServerHandler().player, message);
-                });
-                // No response packet
-                return null;
-            }
+                } else {
+                    //Received serverside
+                    BuildModes.onBlockPlacedMessage(ctx.get().getSender(), message);
+                }
+            });
+            ctx.get().setPacketHandled(true);
         }
     }
 }

@@ -1,7 +1,10 @@
 package nl.requios.effortlessbuilding.gui.buildmodifier;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Array;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
@@ -9,10 +12,12 @@ import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 import nl.requios.effortlessbuilding.gui.elements.GuiScrollPane;
 import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
+import nl.requios.effortlessbuilding.network.PacketHandler;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
 import java.io.IOException;
 
+@OnlyIn(Dist.CLIENT)
 public class ModifierSettingsGui extends GuiScreen {
 
     private GuiScrollPane scrollPane;
@@ -30,83 +35,85 @@ public class ModifierSettingsGui extends GuiScreen {
         scrollPane = new GuiScrollPane(this, fontRenderer, 8, height - 30);
 
         mirrorSettingsGui = new MirrorSettingsGui(scrollPane);
-        scrollPane.listEntries.add(mirrorSettingsGui);
+        scrollPane.AddListEntry(mirrorSettingsGui);
 
         arraySettingsGui = new ArraySettingsGui(scrollPane);
-        scrollPane.listEntries.add(arraySettingsGui);
+        scrollPane.AddListEntry(arraySettingsGui);
 
         radialMirrorSettingsGui = new RadialMirrorSettingsGui(scrollPane);
-        scrollPane.listEntries.add(radialMirrorSettingsGui);
+        scrollPane.AddListEntry(radialMirrorSettingsGui);
 
-        id = scrollPane.initGui(id, buttonList);
+        id = scrollPane.initGui(id, buttons);
 
         //Close button
         int y = height - 26;
-        buttonClose = new GuiButton(id++, width / 2 - 100, y, "Close");
-        buttonList.add(buttonClose);
+        buttonClose = new GuiButton(id++, width / 2 - 100, y, "Close") {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                super.onClick(mouseX, mouseY);
+                mc.player.closeScreen();
+            }
+        };
+        buttons.add(buttonClose);
 
     }
 
     @Override
     //Process general logic, i.e. hide buttons
-    public void updateScreen() {
+    public void tick() {
         scrollPane.updateScreen();
+
+        handleMouseInput();
     }
 
     @Override
     //Set colors using GL11, use the fontRendererObj field to display text
     //Use drawTexturedModalRect() to transfers areas of a texture resource to the screen
-    public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+    public void render(int mouseX, int mouseY, float partialTicks) {
         this.drawDefaultBackground();
 
         scrollPane.drawScreen(mouseX, mouseY, partialTicks);
 
-        buttonClose.drawButton(this.mc, mouseX, mouseY, partialTicks);
+        buttonClose.render(mouseX, mouseY, partialTicks);
 
         scrollPane.drawTooltip(this, mouseX, mouseY);
     }
 
+
     @Override
-    protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        super.keyTyped(typedChar, keyCode);
-        scrollPane.keyTyped(typedChar, keyCode);
-        if (keyCode == ClientProxy.keyBindings[0].getKeyCode()) {
+    public boolean charTyped(char typedChar, int keyCode) {
+        super.charTyped(typedChar, keyCode);
+        scrollPane.charTyped(typedChar, keyCode);
+        if (keyCode == ClientProxy.keyBindings[0].getKey().getKeyCode()) {
             mc.player.closeScreen();
         }
+        return false;
     }
 
     @Override
-    protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         super.mouseClicked(mouseX, mouseY, mouseButton);
-        scrollPane.mouseClicked(mouseX, mouseY, mouseButton);
+        buttons.forEach(button -> button.mouseClicked(mouseX, mouseY, mouseButton));
+        return scrollPane.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     @Override
-    protected void mouseReleased(int mouseX, int mouseY, int state) {
+    public boolean mouseReleased(double mouseX, double mouseY, int state) {
         if (state != 0 || !scrollPane.mouseReleased(mouseX, mouseY, state))
         {
-            super.mouseReleased(mouseX, mouseY, state);
+            return super.mouseReleased(mouseX, mouseY, state);
         }
+        return false;
     }
 
-    @Override
-    public void handleMouseInput() throws IOException {
-        super.handleMouseInput();
+    public void handleMouseInput() {
+        //super.handleMouseInput();
         scrollPane.handleMouseInput();
 
         //Scrolling numbers
 //        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
 //        int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
 //        numberFieldList.forEach(numberField -> numberField.handleMouseInput(mouseX, mouseY));
-    }
-
-    @Override
-    protected void actionPerformed(GuiButton button) {
-        //check what button and action type (left/right click)
-        if (button == buttonClose) {
-            mc.player.closeScreen();
-        }
-        scrollPane.actionPerformed(button);
     }
 
     @Override
@@ -131,7 +138,10 @@ public class ModifierSettingsGui extends GuiScreen {
         ModifierSettingsManager.setModifierSettings(mc.player, modifierSettings);
 
         //Send to server
-        EffortlessBuilding.packetHandler.sendToServer(new ModifierSettingsMessage(modifierSettings));
+        PacketHandler.INSTANCE.sendToServer(new ModifierSettingsMessage(modifierSettings));
+
+        //TODO fix not being able to scroll after this gui has opened
+        Minecraft.getInstance().mouseHelper.grabMouse();
     }
 
 }

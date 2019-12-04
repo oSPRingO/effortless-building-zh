@@ -3,13 +3,17 @@ package nl.requios.effortlessbuilding.gui.elements;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@OnlyIn(Dist.CLIENT)
 public class GuiNumberField extends Gui {
 
     public int x, y, width, height;
@@ -28,21 +32,42 @@ public class GuiNumberField extends Gui {
         this.height = height;
 
         textField = new GuiTextField(id1, fontRenderer, x + buttonWidth + 1, y + 1, width - 2 * buttonWidth - 2, height - 2);
-        minusButton = new GuiButton(id2, x, y - 1, buttonWidth, height + 2, "-");
-        plusButton  = new GuiButton(id3, x + width - buttonWidth, y - 1, buttonWidth, height + 2, "+");
+        minusButton = new GuiButton(id2, x, y - 1, buttonWidth, height + 2, "-") {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                float valueChanged = 1f;
+                if (GuiScreen.isCtrlKeyDown()) valueChanged = 5f;
+                if (GuiScreen.isShiftKeyDown()) valueChanged = 10f;
+
+                setNumber(getNumber() - valueChanged);
+            }
+        };
+        plusButton  = new GuiButton(id3, x + width - buttonWidth, y - 1, buttonWidth, height + 2, "+") {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                float valueChanged = 1f;
+                if (GuiScreen.isCtrlKeyDown()) valueChanged = 5f;
+                if (GuiScreen.isShiftKeyDown()) valueChanged = 10f;
+
+                setNumber(getNumber() + valueChanged);
+            }
+        };
 
         buttonList.add(minusButton);
         buttonList.add(plusButton);
     }
 
     public void setNumber(double number) {
-        DecimalFormat format = new DecimalFormat("0.#");
-        textField.setText(format.format(number));
+        textField.setText(DecimalFormat.getInstance().format(number));
     }
 
     public double getNumber() {
         if (textField.getText().isEmpty()) return 0;
-        return Double.parseDouble(textField.getText());
+        try {
+            return DecimalFormat.getInstance().parse(textField.getText()).doubleValue();
+        } catch (ParseException e) {
+            return 0;
+        }
     }
 
     public void setTooltip(String tooltip) {
@@ -53,7 +78,7 @@ public class GuiNumberField extends Gui {
         this.tooltip = tooltip;
     }
 
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseButton) {
+    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         boolean result = textField.mouseClicked(mouseX, mouseY, mouseButton);
 
         //Check if clicked inside textfield
@@ -69,14 +94,14 @@ public class GuiNumberField extends Gui {
         return result;
     }
 
-    public void drawNumberField(Minecraft mc, int mouseX, int mouseY, float partialTicks) {
+    public void drawNumberField(int mouseX, int mouseY, float partialTicks) {
         textField.y = y + 1;
         minusButton.y = y - 1;
         plusButton.y = y - 1;
 
-        textField.drawTextBox();
-        minusButton.drawButton(mc, mouseX, mouseY, partialTicks);
-        plusButton.drawButton(mc, mouseX, mouseY, partialTicks);
+        textField.drawTextField(mouseX, mouseY, partialTicks);
+        minusButton.render(mouseX, mouseY, partialTicks);
+        plusButton.render(mouseX, mouseY, partialTicks);
     }
 
     public void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY) {
@@ -106,33 +131,21 @@ public class GuiNumberField extends Gui {
 
     }
 
-    public void actionPerformed(GuiButton button) {
-        float valueChanged = 1f;
-        if (GuiScreen.isCtrlKeyDown()) valueChanged = 5f;
-        if (GuiScreen.isShiftKeyDown()) valueChanged = 10f;
-
-        if (button == minusButton) {
-            setNumber(getNumber() - valueChanged);
-        }
-        if (button == plusButton) {
-            setNumber(getNumber() + valueChanged);
-        }
-    }
-
     public void update() {
-        textField.updateCursorCounter();
+        textField.tick();
     }
 
-    public void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (!textField.isFocused()) return;
+    public boolean charTyped(char typedChar, int keyCode) {
+        if (!textField.isFocused()) return false;
 //        if (Character.isDigit(typedChar) || typedChar == '.' || typedChar == '-' || keyCode == Keyboard.KEY_BACK
 //            || keyCode == Keyboard.KEY_DELETE || keyCode == Keyboard.KEY_LEFT || keyCode == Keyboard.KEY_RIGHT
 //            || keyCode == Keyboard.KEY_UP || keyCode == Keyboard.KEY_DOWN) {
-            textField.textboxKeyTyped(typedChar, keyCode);
+            return textField.charTyped(typedChar, keyCode);
 //        }
     }
 
     //Scroll inside textfield to change number
+    //Disabled because entire screen can be scrolled
 //    public void handleMouseInput(int mouseX, int mouseY) {
 //        boolean insideTextField = mouseX >= x + buttonWidth && mouseX < x + width - buttonWidth && mouseY >= y && mouseY < y + height;
 //

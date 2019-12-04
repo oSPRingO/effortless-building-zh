@@ -4,55 +4,55 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.SoundEvent;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.config.Config;
-import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.common.crafting.CraftingHelper;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
+import net.minecraftforge.fml.ExtensionPoint;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.network.NetworkRegistry;
-import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
-import net.minecraftforge.fml.relauncher.Side;
-import nl.requios.effortlessbuilding.buildmode.BuildModes;
+import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
+import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.network.NetworkRegistry;
 import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.command.CommandReach;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
+import nl.requios.effortlessbuilding.helper.ReachConditionFactory;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade1;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade2;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade3;
-import nl.requios.effortlessbuilding.network.*;
+import nl.requios.effortlessbuilding.network.PacketHandler;
+import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import nl.requios.effortlessbuilding.proxy.IProxy;
+import nl.requios.effortlessbuilding.proxy.ServerProxy;
+import nl.requios.effortlessbuilding.render.ShaderHandler;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(modid = EffortlessBuilding.MODID, name = EffortlessBuilding.NAME, version = EffortlessBuilding.VERSION)
-@Mod.EventBusSubscriber
+// The value here should match an entry in the META-INF/mods.toml file
+@Mod(EffortlessBuilding.MODID)
+@Mod.EventBusSubscriber(bus=Mod.EventBusSubscriber.Bus.MOD)
 public class EffortlessBuilding
 {
     public static final String MODID = "effortlessbuilding";
     public static final String NAME = "Effortless Building";
-    public static final String VERSION = "1.12.2-2.15";
+    public static final String VERSION = "1.13.2-2.15";
 
-    @Mod.Instance(EffortlessBuilding.MODID)
     public static EffortlessBuilding instance;
 
-    public static Logger logger;
+    public static final Logger logger = LogManager.getLogger();
 
-    @SidedProxy(
-        clientSide="nl.requios.effortlessbuilding.proxy.ClientProxy",
-        serverSide="nl.requios.effortlessbuilding.proxy.ServerProxy"
-    )
-    public static IProxy proxy;
-
-    public static final SimpleNetworkWrapper packetHandler = NetworkRegistry.INSTANCE.newSimpleChannel(EffortlessBuilding.MODID);
+    public static IProxy proxy = DistExecutor.runForDist(() -> ClientProxy::new, () -> ServerProxy::new);
 
     public static final ItemRandomizerBag ITEM_RANDOMIZER_BAG = new ItemRandomizerBag();
     public static final ItemReachUpgrade1 ITEM_REACH_UPGRADE_1 = new ItemReachUpgrade1();
@@ -69,72 +69,75 @@ public class EffortlessBuilding
             ITEM_REACH_UPGRADE_3
     };
 
-    public static final int RANDOMIZER_BAG_GUI = 0;
+    public static final ResourceLocation RANDOMIZER_BAG_GUI = new ResourceLocation(EffortlessBuilding.MODID, "randomizer_bag");
 
-    @EventHandler
-    // preInit "Run before anything else. Read your config, create blocks, items, etc, and register them with the GameRegistry."
-    public void preInit(FMLPreInitializationEvent event)
-    {
-        logger = event.getModLog();
+    public EffortlessBuilding() {
+        instance = this;
 
-        CapabilityManager.INSTANCE.register(ModifierCapabilityManager.IModifierCapability.class, new ModifierCapabilityManager.Storage(), ModifierCapabilityManager.ModifierCapability.class);
-        CapabilityManager.INSTANCE.register(ModeCapabilityManager.IModeCapability.class, new ModeCapabilityManager.Storage(), ModeCapabilityManager.ModeCapability.class);
+        // Register the setup method for modloading
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+        // Register the enqueueIMC method for modloading
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::enqueueIMC);
+        // Register the processIMC method for modloading
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::processIMC);
+        // Register the clientSetup method for modloading
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::clientSetup);
 
-        EffortlessBuilding.packetHandler.registerMessage(ModifierSettingsMessage.MessageHandler.class, ModifierSettingsMessage.class, 0, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(ModifierSettingsMessage.MessageHandler.class, ModifierSettingsMessage.class, 0, Side.CLIENT);
+        //Register config
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, BuildConfig.spec);
 
-        EffortlessBuilding.packetHandler.registerMessage(ModeSettingsMessage.MessageHandler.class, ModeSettingsMessage.class, 1, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(ModeSettingsMessage.MessageHandler.class, ModeSettingsMessage.class, 1, Side.CLIENT);
-
-        EffortlessBuilding.packetHandler.registerMessage(ModeActionMessage.MessageHandler.class, ModeActionMessage.class, 2, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(ModeActionMessage.MessageHandler.class, ModeActionMessage.class, 2, Side.CLIENT);
-
-        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 3, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(BlockPlacedMessage.MessageHandler.class, BlockPlacedMessage.class, 3, Side.CLIENT);
-
-        EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 4, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(BlockBrokenMessage.MessageHandler.class, BlockBrokenMessage.class, 4, Side.CLIENT);
-
-        EffortlessBuilding.packetHandler.registerMessage(CancelModeMessage.MessageHandler.class, CancelModeMessage.class, 5, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(CancelModeMessage.MessageHandler.class, CancelModeMessage.class, 5, Side.CLIENT);
-
-        EffortlessBuilding.packetHandler.registerMessage(RequestLookAtMessage.MessageHandler.class, RequestLookAtMessage.class, 6, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(RequestLookAtMessage.MessageHandler.class, RequestLookAtMessage.class, 6, Side.CLIENT);
-
-        EffortlessBuilding.packetHandler.registerMessage(AddUndoMessage.MessageHandler.class, AddUndoMessage.class, 7, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(AddUndoMessage.MessageHandler.class, AddUndoMessage.class, 7, Side.CLIENT);
-
-        EffortlessBuilding.packetHandler.registerMessage(ClearUndoMessage.MessageHandler.class, ClearUndoMessage.class, 8, Side.SERVER);
-        EffortlessBuilding.packetHandler.registerMessage(ClearUndoMessage.MessageHandler.class, ClearUndoMessage.class, 8, Side.CLIENT);
-
-        proxy.preInit(event);
+        // Register ourselves for server and other game events we are interested in
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
-    @EventHandler
-    // Do your mod setup. Build whatever data structures you care about.
-    // Register network handlers
-    public void init(FMLInitializationEvent event)
+    @SubscribeEvent
+    public void setup(final FMLCommonSetupEvent event)
     {
-        ConfigManager.sync(MODID, Config.Type.INSTANCE);
-        NetworkRegistry.INSTANCE.registerGuiHandler(EffortlessBuilding.instance, new RandomizerBagGuiHandler());
+        CapabilityManager.INSTANCE.register(ModifierCapabilityManager.IModifierCapability.class, new ModifierCapabilityManager.Storage(), ModifierCapabilityManager.ModifierCapability::new);
+        CapabilityManager.INSTANCE.register(ModeCapabilityManager.IModeCapability.class, new ModeCapabilityManager.Storage(), ModeCapabilityManager.ModeCapability::new);
 
-        proxy.init(event);
+        PacketHandler.register();
+
+        //Register recipe condition
+        CraftingHelper.register(new ResourceLocation(MODID, "enable_reach_upgrades"), new ReachConditionFactory());
+
+        //TODO 1.13 config
+//        ConfigManager.sync(MODID, Config.Type.INSTANCE);
+
+        ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.GUIFACTORY, () -> RandomizerBagGuiHandler::openGui);
+
+        proxy.setup(event);
+
+        CompatHelper.setup();
     }
 
-    @EventHandler
-    // postInit "Handle interaction with other mods, complete your setup based on this."
-    public void postInit(FMLPostInitializationEvent event)
-    {
-        proxy.postInit(event);
-        CompatHelper.postInit();
+    @SubscribeEvent
+    public void clientSetup(final FMLClientSetupEvent event) {
+
+        proxy.clientSetup(event);
     }
 
-    @EventHandler
-    public void serverStarting(FMLServerStartingEvent event)
-    {
-        event.registerServerCommand(new CommandReach());
-        proxy.serverStarting(event);
+    @SubscribeEvent
+    public void enqueueIMC(final InterModEnqueueEvent event) {
+
+        // some example code to dispatch IMC to another mod
+//        InterModComms.sendTo("examplemod", "helloworld", () -> { logger.info("Hello world from the MDK"); return "Hello world";});
     }
+
+    @SubscribeEvent
+    public void processIMC(final InterModProcessEvent event) {
+
+        // some example code to receive and process InterModComms from other mods
+//        logger.info("Got IMC {}", event.getIMCStream().
+//                map(m->m.getMessageSupplier().get()).
+//                collect(Collectors.toList()));
+    }
+
+    @SubscribeEvent
+    public void onServerStarting(FMLServerStartingEvent event) {
+        CommandReach.register(event.getCommandDispatcher());
+    }
+
 
     public static void log(String msg){
         logger.info(msg);

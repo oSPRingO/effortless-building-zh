@@ -34,7 +34,7 @@ public class UndoRedo {
 
         //Assert coordinates is as long as previous and new blockstate lists
         if (blockSet.getCoordinates().size() != blockSet.getPreviousBlockStates().size() ||
-            blockSet.getCoordinates().size() != blockSet.getNewBlockStates().size()) {
+                blockSet.getCoordinates().size() != blockSet.getNewBlockStates().size()) {
             EffortlessBuilding.logger.error("Coordinates and blockstate lists are not equal length. Coordinates: {}. Previous blockstates: {}. New blockstates: {}.",
                     blockSet.getCoordinates().size(), blockSet.getPreviousBlockStates().size(), blockSet.getNewBlockStates().size());
         }
@@ -50,9 +50,8 @@ public class UndoRedo {
 
         //If no stack exists, make one
         if (!undoStacks.containsKey(player.getUniqueID())) {
-            undoStacks.put(player.getUniqueID(), new FixedStack<>(new BlockSet[BuildConfig.survivalBalancers.undoStackSize]));
+            undoStacks.put(player.getUniqueID(), new FixedStack<>(new BlockSet[BuildConfig.survivalBalancers.undoStackSize.get()]));
         }
-
 
         undoStacks.get(player.getUniqueID()).push(blockSet);
     }
@@ -64,7 +63,7 @@ public class UndoRedo {
 
         //If no stack exists, make one
         if (!redoStacks.containsKey(player.getUniqueID())) {
-            redoStacks.put(player.getUniqueID(), new FixedStack<>(new BlockSet[BuildConfig.survivalBalancers.undoStackSize]));
+            redoStacks.put(player.getUniqueID(), new FixedStack<>(new BlockSet[BuildConfig.survivalBalancers.undoStackSize.get()]));
         }
 
         redoStacks.get(player.getUniqueID()).push(blockSet);
@@ -214,7 +213,7 @@ public class UndoRedo {
 
         //then anything it drops
         if (itemStack.isEmpty()) {
-            Item itemDropped = blockState.getBlock().getItemDropped(blockState, player.world.rand, 10);
+            Item itemDropped = blockState.getBlock().getItemDropped(blockState, player.world, BlockPos.ORIGIN, 10).asItem();
             if (itemDropped instanceof ItemBlock) {
                 Block block = ((ItemBlock) itemDropped).getBlock();
                 itemStack = InventoryHelper.findItemStackInInventory(player, block);

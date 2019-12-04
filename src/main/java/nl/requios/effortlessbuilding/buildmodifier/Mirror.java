@@ -7,6 +7,8 @@ import net.minecraft.block.BlockStairs;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.state.properties.Half;
+import net.minecraft.state.properties.SlabType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
@@ -118,7 +120,7 @@ public class Mirror {
         }
 
         //Find blockstate
-        IBlockState newBlockState = oldBlockState == null ? null : oldBlockState.withMirror(net.minecraft.util.Mirror.FRONT_BACK);
+        IBlockState newBlockState = oldBlockState == null ? null : oldBlockState.mirror(net.minecraft.util.Mirror.FRONT_BACK);
 
         //Store blockstate and itemstack
         blockStates.add(newBlockState);
@@ -163,7 +165,7 @@ public class Mirror {
         }
 
         //Find blockstate
-        IBlockState newBlockState = oldBlockState == null ? null : oldBlockState.withMirror(net.minecraft.util.Mirror.LEFT_RIGHT);
+        IBlockState newBlockState = oldBlockState == null ? null : oldBlockState.mirror(net.minecraft.util.Mirror.LEFT_RIGHT);
 
         //Store blockstate and itemstack
         blockStates.add(newBlockState);
@@ -185,38 +187,39 @@ public class Mirror {
     private static IBlockState getVerticalMirror(IBlockState blockState) {
         //Stairs
         if (blockState.getBlock() instanceof BlockStairs) {
-            if (blockState.getValue(BlockStairs.HALF) == BlockStairs.EnumHalf.BOTTOM) {
-                return blockState.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.TOP);
+            if (blockState.get(BlockStairs.HALF) == Half.BOTTOM) {
+                return blockState.with(BlockStairs.HALF, Half.TOP);
             } else {
-                return blockState.withProperty(BlockStairs.HALF, BlockStairs.EnumHalf.BOTTOM);
+                return blockState.with(BlockStairs.HALF, Half.BOTTOM);
             }
         }
 
         //Slabs
         if (blockState.getBlock() instanceof BlockSlab) {
-            if (((BlockSlab) blockState.getBlock()).isDouble()) return blockState;
-            if (blockState.getValue(BlockSlab.HALF) == BlockSlab.EnumBlockHalf.BOTTOM) {
-                return blockState.withProperty(BlockSlab.HALF, BlockSlab.EnumBlockHalf.TOP);
+            if (blockState.get(BlockSlab.TYPE) == SlabType.DOUBLE) {
+                return blockState;
+            } else if (blockState.get(BlockSlab.TYPE) == SlabType.BOTTOM) {
+                return blockState.with(BlockSlab.TYPE, SlabType.TOP);
             } else {
-                return blockState.withProperty(BlockSlab.HALF, BlockSlab.EnumBlockHalf.BOTTOM);
+                return blockState.with(BlockSlab.TYPE, SlabType.BOTTOM);
             }
         }
 
         //Buttons, endrod, observer, piston
         if (blockState.getBlock() instanceof BlockDirectional) {
-            if (blockState.getValue(BlockDirectional.FACING) == EnumFacing.DOWN) {
-                return blockState.withProperty(BlockDirectional.FACING, EnumFacing.UP);
-            } else if (blockState.getValue(BlockDirectional.FACING) == EnumFacing.UP) {
-                return blockState.withProperty(BlockDirectional.FACING, EnumFacing.DOWN);
+            if (blockState.get(BlockDirectional.FACING) == EnumFacing.DOWN) {
+                return blockState.with(BlockDirectional.FACING, EnumFacing.UP);
+            } else if (blockState.get(BlockDirectional.FACING) == EnumFacing.UP) {
+                return blockState.with(BlockDirectional.FACING, EnumFacing.DOWN);
             }
         }
 
         //Dispenser, dropper
         if (blockState.getBlock() instanceof BlockDispenser) {
-            if (blockState.getValue(BlockDispenser.FACING) == EnumFacing.DOWN) {
-                return blockState.withProperty(BlockDispenser.FACING, EnumFacing.UP);
-            } else if (blockState.getValue(BlockDispenser.FACING) == EnumFacing.UP) {
-                return blockState.withProperty(BlockDispenser.FACING, EnumFacing.DOWN);
+            if (blockState.get(BlockDispenser.FACING) == EnumFacing.DOWN) {
+                return blockState.with(BlockDispenser.FACING, EnumFacing.UP);
+            } else if (blockState.get(BlockDispenser.FACING) == EnumFacing.UP) {
+                return blockState.with(BlockDispenser.FACING, EnumFacing.DOWN);
             }
         }
 

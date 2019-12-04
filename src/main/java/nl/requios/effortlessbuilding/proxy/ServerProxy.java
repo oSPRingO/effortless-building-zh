@@ -1,45 +1,23 @@
 package nl.requios.effortlessbuilding.proxy;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.IThreadListener;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.network.NetworkEvent;
 
-public class ServerProxy implements IProxy
-{
+import java.util.function.Supplier;
+
+public class ServerProxy implements IProxy {
     //Only physical server! Singleplayer server is seen as clientproxy
     @Override
-    public void preInit(FMLPreInitializationEvent event)
-    {
+    public void setup(FMLCommonSetupEvent event) {
+
     }
 
     @Override
-    public void init(FMLInitializationEvent event)
-    {
-    }
+    public void clientSetup(FMLClientSetupEvent event) {}
 
-    @Override
-    public void postInit(FMLPostInitializationEvent event)
-    {
-    }
-
-    @Override
-    public void serverStarting(FMLServerStartingEvent event)
-    {
-    }
-
-    @Override
-    public EntityPlayer getPlayerEntityFromContext(MessageContext ctx)
-    {
-        return ctx.getServerHandler().player;
-    }
-
-    @Override
-    public IThreadListener getThreadListenerFromContext(MessageContext ctx) {
-        return ((EntityPlayerMP) getPlayerEntityFromContext(ctx)).getServerWorld();
+    public EntityPlayer getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx){
+        return ctx.get().getSender();
     }
 }

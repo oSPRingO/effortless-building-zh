@@ -1,20 +1,21 @@
 package nl.requios.effortlessbuilding.capability;
 
-import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.INBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import static nl.requios.effortlessbuilding.buildmode.ModeSettingsManager.*;
+import static nl.requios.effortlessbuilding.buildmode.ModeSettingsManager.ModeSettings;
 
 @Mod.EventBusSubscriber
 public class ModeCapabilityManager {
@@ -44,7 +45,7 @@ public class ModeCapabilityManager {
 
     public static class Storage implements Capability.IStorage<IModeCapability> {
         @Override
-        public NBTBase writeNBT(Capability<IModeCapability> capability, IModeCapability instance, EnumFacing side) {
+        public INBTBase writeNBT(Capability<IModeCapability> capability, IModeCapability instance, EnumFacing side) {
             NBTTagCompound compound = new NBTTagCompound();
             ModeSettings modeSettings = instance.getModeData();
             if (modeSettings == null) modeSettings = new ModeSettings();
@@ -57,7 +58,7 @@ public class ModeCapabilityManager {
         }
 
         @Override
-        public void readNBT(Capability<IModeCapability> capability, IModeCapability instance, EnumFacing side, NBTBase nbt) {
+        public void readNBT(Capability<IModeCapability> capability, IModeCapability instance, EnumFacing side, INBTBase nbt) {
             NBTTagCompound compound = (NBTTagCompound) nbt;
 
             //BuildModes.BuildModeEnum buildMode = BuildModes.BuildModeEnum.values()[compound.getInteger("buildMode")];
@@ -69,36 +70,34 @@ public class ModeCapabilityManager {
         }
     }
 
-    public static class Provider implements ICapabilitySerializable<NBTBase> {
+    public static class Provider implements ICapabilitySerializable<INBTBase> {
         IModeCapability inst = modeCapability.getDefaultInstance();
 
+        @Nonnull
         @Override
-        public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
-            return capability == modeCapability;
+        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable EnumFacing side) {
+            return modeCapability.orEmpty(cap, LazyOptional.of(() -> inst));
         }
 
         @Override
-        public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-            if (capability == modeCapability) return modeCapability.<T>cast(inst);
-            return null;
-        }
-
-        @Override
-        public NBTBase serializeNBT() {
+        public INBTBase serializeNBT() {
             return modeCapability.getStorage().writeNBT(modeCapability, inst, null);
         }
 
         @Override
-        public void deserializeNBT(NBTBase nbt) {
+        public void deserializeNBT(INBTBase nbt) {
             modeCapability.getStorage().readNBT(modeCapability, inst, null, nbt);
         }
+
     }
 
     // Allows for the capability to persist after death.
     @SubscribeEvent
     public static void clonePlayer(PlayerEvent.Clone event) {
-        IModeCapability original = event.getOriginal().getCapability(modeCapability, null);
-        IModeCapability clone = event.getEntity().getCapability(modeCapability, null);
-        clone.setModeData(original.getModeData());
+        LazyOptional<IModeCapability> original = event.getOriginal().getCapability(modeCapability, null);
+        LazyOptional<IModeCapability> clone = event.getEntity().getCapability(modeCapability, null);
+        clone.ifPresent(cloneModeCapability ->
+                original.ifPresent(originalModeCapability ->
+                        cloneModeCapability.setModeData(originalModeCapability.getModeData())));
     }
 }

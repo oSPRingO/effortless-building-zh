@@ -6,31 +6,33 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
-import net.minecraftforge.fml.common.Loader;
-import net.minecraftforge.fml.common.registry.GameRegistry;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 public class CompatHelper {
-    // Get a handle to the dank null item instance. This will remain null if the mod doesn't load
-    // and all checks will fail, so it works.
-    @GameRegistry.ObjectHolder("danknull:dank_null")
-    public static final Item dankNullItem = null;
-
-    public static IChiselsAndBitsProxy chiselsAndBitsProxy;
-
-    public static void postInit() {
-        if (Loader.isModLoaded("chiselsandbits")) {
-            // reflection to avoid hard dependency
-            try {
-                chiselsAndBitsProxy = Class.forName("nl.requios.effortlessbuilding.compatibility.ActiveChiselsAndBitsProxy").asSubclass(ActiveChiselsAndBitsProxy.class).newInstance();
-            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        } else {
-            chiselsAndBitsProxy = new DummyChiselsAndBitsProxy();
-        }
+    //TODO 1.13 compatibility
+//    // Get a handle to the dank null item instance. This will remain null if the mod doesn't load
+//    // and all checks will fail, so it works.
+//    @GameRegistry.ObjectHolder("danknull:dank_null")
+//    public static final Item dankNullItem = null;
+//
+//    public static IChiselsAndBitsProxy chiselsAndBitsProxy;
+//
+    public static void setup() {
+        //TODO 1.13 compatibility
+//        if (Loader.isModLoaded("chiselsandbits")) {
+//            // reflection to avoid hard dependency
+//            try {
+//                chiselsAndBitsProxy = Class.forName("nl.requios.effortlessbuilding.compatibility.ActiveChiselsAndBitsProxy").asSubclass(ActiveChiselsAndBitsProxy.class).newInstance();
+//            } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+//                e.printStackTrace();
+//            }
+//        } else {
+//            chiselsAndBitsProxy = new DummyChiselsAndBitsProxy();
+//        }
     }
 
     // Check if the item given is a proxy for blocks. For now, we check for the randomizer bag,
@@ -41,8 +43,9 @@ public class CompatHelper {
             return true;
         if ((item instanceof ItemRandomizerBag))
             return true;
-        if (item == dankNullItem)
-            return true;
+        //TODO 1.13 compatibility
+//        if (item == dankNullItem)
+//            return true;
         return false;
     }
 
@@ -64,47 +67,60 @@ public class CompatHelper {
             return itemStack;
         }
 
+        //TODO 1.13 compatibility
         //Dank Null
-        if (proxyItem == dankNullItem) {
-            int index = 0;
-            if (proxy.hasTagCompound() && proxy.getTagCompound().hasKey("selectedIndex"))
-                index = proxy.getTagCompound().getInteger("selectedIndex");
-            return proxy.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).getStackInSlot(index);
-        }
+//        if (proxyItem == dankNullItem) {
+//            int index = 0;
+//            if (proxy.hasTagCompound() && proxy.getTagCompound().hasKey("selectedIndex"))
+//                index = proxy.getTagCompound().getInteger("selectedIndex");
+//            return proxy.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).getStackInSlot(index);
+//        }
 
         return ItemStack.EMPTY;
     }
 
     public static ItemStack getItemBlockByState(ItemStack stack, IBlockState state) {
+        if (state == null) return ItemStack.EMPTY;
+
         Item blockItem = Item.getItemFromBlock(state.getBlock());
         if (stack.getItem() instanceof ItemBlock)
             return stack;
         else if (stack.getItem() instanceof ItemRandomizerBag) {
             IItemHandler bagInventory = ItemRandomizerBag.getBagInventory(stack);
             return ItemRandomizerBag.findStack(bagInventory, blockItem);
-        } else if (stack.getItem() == dankNullItem) {
-            int index = itemHandlerSlotForItem(stack, blockItem);
-            if (index >= 0)
-                return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).getStackInSlot(index);
         }
+        //TODO 1.13 compatibility
+//        else if (stack.getItem() == dankNullItem) {
+//            int index = itemHandlerSlotForItem(stack, blockItem);
+//            if (index >= 0)
+//                return stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).getStackInSlot(index);
+//        }
         return ItemStack.EMPTY;
     }
 
     // Handle IItemHandler slot stacks not being modifiable. We must call IItemHandler#extractItem,
     // because the ItemStack returned by IItemHandler#getStackInSlot isn't modifiable.
     public static void shrinkStack(ItemStack origStack, ItemStack curStack, EntityPlayer player) {
-        //Hacky way to get the origstack, because given origStack is itemblock stack and never a proxy
-        origStack = player.getHeldItem(EnumHand.MAIN_HAND);
+        //TODO 1.13 compatibility, offhand support
+        //Hacky way to get the origstack, because given origStack is itemblock stack and never proxy
+//        origStack = player.getHeldItem(EnumHand.MAIN_HAND);
 
-        if (origStack.getItem() == dankNullItem) {
-            int index = itemHandlerSlotForItem(origStack, curStack.getItem());
-            origStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).extractItem(index, 1, false);
-        } else
+//        if (origStack.getItem() == dankNullItem) {
+//            int index = itemHandlerSlotForItem(origStack, curStack.getItem());
+//            origStack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).extractItem(index, 1, false);
+//        } else
             curStack.shrink(1);
     }
 
     private static int itemHandlerSlotForItem(ItemStack stack, Item blockItem) {
-        IItemHandler handler = stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+        LazyOptional<IItemHandler> itemHandlerLazyOptional = stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+        IItemHandler handler = itemHandlerLazyOptional.orElse(null);
+
+        if (handler == null) {
+            EffortlessBuilding.logger.warn("Itemblock proxy has no item handler capability!");
+            return -1;
+        }
+
         for (int i = 0; i < handler.getSlots(); i++) {
             ItemStack ref = handler.getStackInSlot(i);
             if (ref.getItem() instanceof ItemBlock)

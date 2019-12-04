@@ -4,6 +4,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
@@ -11,6 +12,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.InventoryHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
@@ -87,7 +89,6 @@ public class BuildModifiers {
             BlockPos secondPos = startCoordinates.get(startCoordinates.size() - 1);
             UndoRedo.addUndo(player, new BlockSet(coordinates, previousBlockStates, newBlockStates, hitVec, firstPos, secondPos));
         }
-
     }
 
     public static void onBlockBroken(EntityPlayer player, List<BlockPos> startCoordinates, boolean breakStartPos) {
@@ -108,7 +109,7 @@ public class BuildModifiers {
             BlockPreviewRenderer.onBlocksBroken();
 
             //list of air blockstates
-            for (BlockPos coordinate : coordinates) {
+            for (int i = 0; i < coordinates.size(); i++) {
                 newBlockStates.add(Blocks.AIR.getDefaultState());
             }
 
@@ -235,8 +236,8 @@ public class BuildModifiers {
     }
 
     public static IBlockState getBlockStateFromItem(ItemStack itemStack, EntityPlayer player, BlockPos blockPos, EnumFacing facing, Vec3d hitVec, EnumHand hand) {
-        return Block.getBlockFromItem(itemStack.getItem()).getStateForPlacement(player.world, blockPos, facing,
-                ((float) hitVec.x), ((float) hitVec.y), ((float) hitVec.z), itemStack.getMetadata(), player, hand);
+        return Block.getBlockFromItem(itemStack.getItem()).getStateForPlacement(new BlockItemUseContext(player.world, player, itemStack, blockPos, facing,
+                ((float) hitVec.x), ((float) hitVec.y), ((float) hitVec.z)));
     }
 
     //Returns true if equal (or both null)

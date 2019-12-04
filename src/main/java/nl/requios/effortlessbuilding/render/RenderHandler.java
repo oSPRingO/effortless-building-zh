@@ -2,45 +2,42 @@ package nl.requios.effortlessbuilding.render;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.audio.PositionedSoundRecord;
+import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.entity.EntityPlayerSP;
-import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.texture.TextureMap;
+import net.minecraft.client.renderer.WorldRenderer;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.util.EnumHand;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.particles.IParticleData;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.IWorldEventListener;
-import net.minecraft.world.World;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.ModeOptions;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
-import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.ModeActionMessage;
 import nl.requios.effortlessbuilding.network.ModeSettingsMessage;
+import nl.requios.effortlessbuilding.network.PacketHandler;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
-import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
@@ -50,12 +47,12 @@ import java.util.List;
 /***
  * Main render class for Effortless Building
  */
-@Mod.EventBusSubscriber(Side.CLIENT)
+@Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class RenderHandler implements IWorldEventListener {
 
     @SubscribeEvent
     public static void onRender(RenderWorldLastEvent event) {
-        EntityPlayer player = Minecraft.getMinecraft().player;
+        EntityPlayer player = Minecraft.getInstance().player;
         ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
 
@@ -72,15 +69,16 @@ public class RenderHandler implements IWorldEventListener {
 
     @SubscribeEvent
     //Display Radial Menu
-    public static void onRenderGameOverlay(final RenderGameOverlayEvent.Post event ) {
-        Minecraft mc = Minecraft.getMinecraft();
+    public static void onRenderGameOverlay(final RenderGameOverlayEvent.Post event) {
+        Minecraft mc = Minecraft.getInstance();
         EntityPlayerSP player = mc.player;
 
         //check if chisel and bits tool in hand (and has menu)
-        final boolean hasChiselInHand = CompatHelper.chiselsAndBitsProxy.isHoldingChiselTool(EnumHand.MAIN_HAND);
+//        final boolean hasChiselInHand = CompatHelper.chiselsAndBitsProxy.isHoldingChiselTool(EnumHand.MAIN_HAND);
 
         final RenderGameOverlayEvent.ElementType type = event.getType();
-        if (type == RenderGameOverlayEvent.ElementType.ALL && !hasChiselInHand) {
+        //TODO 1.13 compatibility
+        if (type == RenderGameOverlayEvent.ElementType.ALL /*&& !hasChiselInHand*/) {
             final boolean wasVisible = RadialMenu.instance.isVisible();
 
             if (ClientProxy.keyBindings[3].isKeyDown()) {
@@ -98,7 +96,7 @@ public class RenderHandler implements IWorldEventListener {
                         playRadialMenuSound();
                         modeSettings.setBuildMode(RadialMenu.instance.switchTo);
                         ModeSettingsManager.setModeSettings(player, modeSettings);
-                        EffortlessBuilding.packetHandler.sendToServer(new ModeSettingsMessage(modeSettings));
+                        PacketHandler.INSTANCE.sendToServer(new ModeSettingsMessage(modeSettings));
 
                         EffortlessBuilding.log(player, I18n.format(modeSettings.getBuildMode().name), true);
                     }
@@ -107,7 +105,7 @@ public class RenderHandler implements IWorldEventListener {
                     ModeOptions.ActionEnum action = RadialMenu.instance.doAction;
                     if (action != null) {
                         ModeOptions.performAction(player, action);
-                        EffortlessBuilding.packetHandler.sendToServer(new ModeActionMessage(action));
+                        PacketHandler.INSTANCE.sendToServer(new ModeActionMessage(action));
                     }
 
                     playRadialMenuSound();
@@ -119,25 +117,25 @@ public class RenderHandler implements IWorldEventListener {
 
             if (RadialMenu.instance.isVisible()) {
 
-                final ScaledResolution res = event.getResolution();
-                RadialMenu.instance.configure(res.getScaledWidth(), res.getScaledHeight());
+                int scaledWidth = mc.mainWindow.getScaledWidth();
+                int scaledHeight = mc.mainWindow.getScaledHeight();
+                RadialMenu.instance.configure(scaledWidth, scaledHeight);
 
                 if (!wasVisible) {
-                    mc.inGameHasFocus = false;
-                    mc.mouseHelper.ungrabMouseCursor();
+                    mc.mouseHelper.ungrabMouse();
                 }
 
-                if (mc.inGameHasFocus) {
+                if (mc.mouseHelper.isMouseGrabbed()) {
                     KeyBinding.unPressAllKeys();
                 }
 
-                final int mouseX = Mouse.getX() * res.getScaledWidth() / mc.displayWidth;
-                final int mouseY = res.getScaledHeight() - Mouse.getY() * res.getScaledHeight() / mc.displayHeight - 1;
+                final int mouseX = ((int) mc.mouseHelper.getMouseX()) * scaledWidth / mc.mainWindow.getFramebufferWidth();
+                final int mouseY = scaledHeight - ((int) mc.mouseHelper.getMouseY()) * scaledHeight / mc.mainWindow.getFramebufferHeight() - 1;
 
                 net.minecraftforge.client.ForgeHooksClient.drawScreen(RadialMenu.instance, mouseX, mouseY, event.getPartialTicks());
             } else {
                 if (wasVisible && RadialMenu.instance.doAction != ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS) {
-                    mc.setIngameFocus();
+                    mc.mouseHelper.grabMouse();
                 }
             }
         }
@@ -146,14 +144,13 @@ public class RenderHandler implements IWorldEventListener {
     public static void playRadialMenuSound() {
         final float volume = 0.1f;
         if (volume >= 0.0001f) {
-            final PositionedSoundRecord psr = new PositionedSoundRecord(SoundEvents.UI_BUTTON_CLICK, SoundCategory.MASTER,
-                    volume, 1.0f, Minecraft.getMinecraft().player.getPosition());
-            Minecraft.getMinecraft().getSoundHandler().playSound(psr);
+            SimpleSound sound = new SimpleSound(SoundEvents.UI_BUTTON_CLICK, SoundCategory.MASTER, volume, 1.0f, Minecraft.getInstance().player.getPosition());
+            Minecraft.getInstance().getSoundHandler().play(sound);
         }
     }
 
     private static void begin(float partialTicks) {
-        EntityPlayer player = Minecraft.getMinecraft().player;
+        EntityPlayer player = Minecraft.getInstance().player;
         double playerX = player.prevPosX + (player.posX - player.prevPosX) * partialTicks;
         double playerY = player.prevPosY + (player.posY - player.prevPosY) * partialTicks;
         double playerZ = player.prevPosZ + (player.posZ - player.prevPosZ) * partialTicks;
@@ -186,7 +183,7 @@ public class RenderHandler implements IWorldEventListener {
         GL11.glEnable(GL11.GL_CULL_FACE);
         GL11.glEnable(GL11.GL_TEXTURE_2D);
 //        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
-        Minecraft.getMinecraft().renderEngine.bindTexture(ShaderHandler.shaderMaskTextureLocation);
+        Minecraft.getInstance().textureManager.bindTexture(ShaderHandler.shaderMaskTextureLocation);
 
         GlStateManager.enableBlend();
         GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
@@ -207,10 +204,10 @@ public class RenderHandler implements IWorldEventListener {
 
     protected static void renderBlockPreview(BlockRendererDispatcher dispatcher, BlockPos blockPos, IBlockState blockState) {
         GlStateManager.pushMatrix();
-        GlStateManager.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-        GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.translate(-0.01f, -0.01f, 0.01f);
-        GlStateManager.scale(1.02f, 1.02f, 1.02f);
+        GlStateManager.translatef(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+        GlStateManager.rotatef(-90.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager.translatef(-0.01f, -0.01f, 0.01f);
+        GlStateManager.scalef(1.02f, 1.02f, 1.02f);
 
         try {
             dispatcher.renderBlockBrightness(blockState, 0.85f);
@@ -239,23 +236,23 @@ public class RenderHandler implements IWorldEventListener {
 
         AxisAlignedBB aabb = new AxisAlignedBB(pos1, pos2.add(1, 1, 1)).grow(0.0020000000949949026);
 
-        RenderGlobal.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
+        WorldRenderer.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
     }
 
     //Renders outline with given bounding box
-    protected static void renderBlockOutline(BlockPos pos, AxisAlignedBB boundingBox, Vec3d color) {
+    protected static void renderBlockOutline(BlockPos pos, VoxelShape collisionShape, Vec3d color) {
         GL11.glLineWidth(2);
 
-        AxisAlignedBB aabb = boundingBox.offset(pos).grow(0.0020000000949949026);
+//        AxisAlignedBB aabb = boundingBox.offset(pos).grow(0.0020000000949949026);
+//        VoxelShape voxelShape = collisionShape.withOffset(pos.getX(), pos.getY(), pos.getZ());
 
-        RenderGlobal.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
+//        WorldRenderer.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
+        WorldRenderer.drawShape(collisionShape, pos.getX(), pos.getY(), pos.getZ(), (float) color.x, (float) color.y, (float) color.z, 0.4f);
     }
-
-
 
     //IWORLDEVENTLISTENER IMPLEMENTATION
     @Override
-    public void notifyBlockUpdate(World worldIn, BlockPos pos, IBlockState oldState, IBlockState newState, int flags) {
+    public void notifyBlockUpdate(IBlockReader worldIn, BlockPos pos, IBlockState oldState, IBlockState newState, int flags) {
 
     }
 
@@ -281,14 +278,12 @@ public class RenderHandler implements IWorldEventListener {
     }
 
     @Override
-    public void spawnParticle(int particleID, boolean ignoreRange, double xCoord, double yCoord, double zCoord,
-                              double xSpeed, double ySpeed, double zSpeed, int... parameters) {
+    public void addParticle(IParticleData particleData, boolean alwaysRender, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
 
     }
 
     @Override
-    public void spawnParticle(int id, boolean ignoreRange, boolean p_190570_3_, double x, double y, double z,
-                              double xSpeed, double ySpeed, double zSpeed, int... parameters) {
+    public void addParticle(IParticleData particleData, boolean ignoreRange, boolean minimizeLevel, double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
 
     }
 
@@ -315,7 +310,7 @@ public class RenderHandler implements IWorldEventListener {
     //Sends breaking progress for all coordinates to renderglobal, so all blocks get visually broken
     @Override
     public void sendBlockBreakProgress(int breakerId, BlockPos pos, int progress) {
-        Minecraft mc = Minecraft.getMinecraft();
+        Minecraft mc = Minecraft.getInstance();
 
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
         if (!BuildModifiers.isEnabled(modifierSettings, pos)) return;

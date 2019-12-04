@@ -1,26 +1,24 @@
 package nl.requios.effortlessbuilding.network;
 
-import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.network.NetworkEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.BlockSet;
 import nl.requios.effortlessbuilding.buildmodifier.UndoRedo;
-import nl.requios.effortlessbuilding.proxy.ClientProxy;
 
 import java.util.ArrayList;
+import java.util.function.Supplier;
 
 /***
  * Sends a message to the client asking to add a block to the undo stack.
  */
-public class AddUndoMessage implements IMessage {
+public class AddUndoMessage {
     private BlockPos coordinate;
     private IBlockState previousBlockState;
     private IBlockState newBlockState;
@@ -49,46 +47,42 @@ public class AddUndoMessage implements IMessage {
         return newBlockState;
     }
 
-    @Override
-    public void toBytes(ByteBuf buf) {
-        buf.writeInt(this.coordinate.getX());
-        buf.writeInt(this.coordinate.getY());
-        buf.writeInt(this.coordinate.getZ());
-        buf.writeInt(Block.getStateId(this.previousBlockState));
-        buf.writeInt(Block.getStateId(this.newBlockState));
+    public static void encode(AddUndoMessage message, PacketBuffer buf) {
+        buf.writeInt(message.coordinate.getX());
+        buf.writeInt(message.coordinate.getY());
+        buf.writeInt(message.coordinate.getZ());
+        buf.writeInt(Block.getStateId(message.previousBlockState));
+        buf.writeInt(Block.getStateId(message.newBlockState));
     }
 
-    @Override
-    public void fromBytes(ByteBuf buf) {
-        coordinate = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
-        previousBlockState = Block.getStateById(buf.readInt());
-        newBlockState = Block.getStateById(buf.readInt());
+    public static AddUndoMessage decode(PacketBuffer buf) {
+        BlockPos coordinate = new BlockPos(buf.readInt(), buf.readInt(), buf.readInt());
+        IBlockState previousBlockState = Block.getStateById(buf.readInt());
+        IBlockState newBlockState = Block.getStateById(buf.readInt());
+        return new AddUndoMessage(coordinate, previousBlockState, newBlockState);
     }
 
-    // The params of the IMessageHandler are <REQ, REPLY>
-    public static class MessageHandler implements IMessageHandler<AddUndoMessage, IMessage> {
-        // Do note that the default constructor is required, but implicitly defined in this case
+    public static class Handler
+    {
+        public static void handle(AddUndoMessage message, Supplier<NetworkEvent.Context> ctx)
+        {
+            ctx.get().enqueueWork(() -> {
+                EffortlessBuilding.log("AddUndoMessage");
 
-        @Override
-        public IMessage onMessage(AddUndoMessage message, MessageContext ctx) {
-            //EffortlessBuilding.log("message received on " + ctx.side + " side");
+                if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
+                    //Received clientside
 
-            if (ctx.side == Side.CLIENT){
-                //Received clientside
-
-                EffortlessBuilding.proxy.getThreadListenerFromContext(ctx).addScheduledTask(() -> {
                     EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
-
                     //Add to undo stack clientside
-                    UndoRedo.addUndo(player, new BlockSet(
+                    UndoRedo.addUndo(ctx.get().getSender(), new BlockSet(
                             new ArrayList<BlockPos>() {{add(message.getCoordinate());}},
                             new ArrayList<IBlockState>() {{add(message.getPreviousBlockState());}},
                             new ArrayList<IBlockState>() {{add(message.getNewBlockState());}},
                             new Vec3d(0,0,0),
                             message.getCoordinate(), message.getCoordinate()));
-                });
-            }
-            return null;
+                }
+            });
+            ctx.get().setPacketHandled(true);
         }
     }
 }

@@ -1,30 +1,37 @@
 package nl.requios.effortlessbuilding.gui.elements;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiListExtended;
-import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.MouseHelper;
+import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.GuiScreenEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import org.lwjgl.input.Mouse;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.lwjgl.glfw.GLFW;
+import sun.security.ssl.Debug;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-@SideOnly(Side.CLIENT)
-public class GuiScrollPane extends GuiListExtended {
+@OnlyIn(Dist.CLIENT)
+public class GuiScrollPane extends GuiSlot {
 
     public GuiScreen parent;
     public FontRenderer fontRenderer;
-    public List<IScrollEntry> listEntries;
+    private List<IScrollEntry> listEntries;
+    private float scrollMultiplier = 1f;
+
+    private int mouseX;
+    private int mouseY;
 
     public GuiScrollPane(GuiScreen parent, FontRenderer fontRenderer, int top, int bottom) {
         super(parent.mc, parent.width, parent.height, top, bottom, 100);
@@ -32,16 +39,25 @@ public class GuiScrollPane extends GuiListExtended {
         this.fontRenderer = fontRenderer;
         this.setShowSelectionBox(false);
         listEntries = new ArrayList<>();
+        MinecraftForge.EVENT_BUS.register(this);
     }
 
-    @Override
-    public IGuiListEntry getListEntry(int index) {
+    public IScrollEntry getListEntry(int index) {
         return listEntries.get(index);
+    }
+
+    public void AddListEntry(IScrollEntry listEntry){
+        listEntries.add(listEntry);
     }
 
     @Override
     protected int getSize() {
         return listEntries.size();
+    }
+
+    @Override
+    protected boolean isSelected(int slotIndex) {
+        return false;
     }
 
     @Override
@@ -80,15 +96,15 @@ public class GuiScrollPane extends GuiListExtended {
 
             //All entries
             this.drawSelectionBox(insideLeft, insideTop, mouseXIn, mouseYIn, partialTicks);
-            GlStateManager.disableDepth();
+            GlStateManager.disableDepthTest();
 
             //Dirt overlays on top and bottom
 //            this.overlayBackground(0, this.top, 255, 255);
 //            this.overlayBackground(this.bottom, this.height, 255, 255);
 
             GlStateManager.enableBlend();
-            GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-            GlStateManager.disableAlpha();
+            GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+            GlStateManager.disableAlphaTest();
             GlStateManager.shadeModel(7425);
             GlStateManager.disableTexture2D();
 
@@ -161,7 +177,7 @@ public class GuiScrollPane extends GuiListExtended {
 
             GlStateManager.enableTexture2D();
             GlStateManager.shadeModel(7424);
-            GlStateManager.enableAlpha();
+            GlStateManager.enableAlphaTest();
             GlStateManager.disableBlend();
         }
     }
@@ -178,6 +194,17 @@ public class GuiScrollPane extends GuiListExtended {
         return height;
     }
 
+    @Override
+    protected void drawBackground() {
+
+    }
+
+    @Override
+    protected void drawSlot(int slotIndex, int xPos, int yPos, int heightIn, int mouseXIn, int mouseYIn, float partialTicks) {
+        this.getListEntry(slotIndex).drawEntry(slotIndex, xPos, yPos, this.getListWidth(), heightIn, mouseXIn, mouseYIn,
+                this.getSlotIndexFromScreenCoords(mouseXIn, mouseYIn) == slotIndex, partialTicks);
+    }
+
     public int getContentHeight(int count) {
         //Add all count entry heights
         int height = this.headerPadding;
@@ -188,11 +215,10 @@ public class GuiScrollPane extends GuiListExtended {
         return height;
     }
 
-    @Override
-    public int getSlotIndexFromScreenCoords(int posX, int posY) {
+    public int getSlotIndexFromScreenCoords(double posX, double posY) {
         int left = this.left + (this.width - this.getListWidth()) / 2;
         int right = this.left + (this.width + this.getListWidth()) / 2;
-        int relativeMouseY = getRelativeMouseY(mouseY, 0);
+        double relativeMouseY = getRelativeMouseY(mouseY, 0);
 
         //Iterate over every entry until relativeMouseY falls within its height
         for (int i = 0; i < listEntries.size(); i++) {
@@ -206,15 +232,14 @@ public class GuiScrollPane extends GuiListExtended {
     }
 
     @Override
-    public boolean mouseClicked(int mouseX, int mouseY, int mouseEvent)
-    {
+    protected boolean mouseClicked(int index, int button, double mouseX, double mouseY) {
         int selectedSlot = this.getSlotIndexFromScreenCoords(mouseX, mouseY);
-        int relativeX = getRelativeMouseX(mouseX);
+        double relativeX = getRelativeMouseX(mouseX);
 
         //Always pass through mouseclicked, to be able to unfocus textfields
         for (int i = 0; i < this.listEntries.size(); i++) {
-            int relativeY = getRelativeMouseY(mouseY, i);
-            this.getListEntry(i).mousePressed(selectedSlot, mouseX, mouseY, mouseEvent, relativeX, relativeY);
+            double relativeY = getRelativeMouseY(mouseY, i);
+            this.getListEntry(i).mousePressed(selectedSlot, (int) mouseX, (int) mouseY, button, (int) relativeX, (int) relativeY);
         }
 
 
@@ -239,38 +264,36 @@ public class GuiScrollPane extends GuiListExtended {
     }
 
     @Override
-    public boolean mouseReleased(int x, int y, int mouseEvent)
-    {
+    public boolean mouseReleased(double p_mouseReleased_1_, double p_mouseReleased_3_, int p_mouseReleased_5_) {
         for (int i = 0; i < this.getSize(); ++i)
         {
-            int relativeX = getRelativeMouseX(mouseX);
-            int relativeY = getRelativeMouseY(mouseY, i);
-            this.getListEntry(i).mouseReleased(i, x, y, mouseEvent, relativeX, relativeY);
+            double relativeX = getRelativeMouseX(mouseX);
+            double relativeY = getRelativeMouseY(mouseY, i);
+            this.getListEntry(i).mouseReleased(i, (int) p_mouseReleased_1_, (int) p_mouseReleased_3_, p_mouseReleased_5_, (int) relativeX, (int) relativeY);
         }
 
-        this.setEnabled(true);
+        this.visible = true;
         return false;
     }
 
-    @Override
     public void handleMouseInput() {
-        if (this.isMouseYWithinSlotBounds(this.mouseY)) {
-            if (Mouse.getEventButton() == 0 && Mouse.getEventButtonState() && this.mouseY >= this.top &&
+        if (this.isMouseInList(this.mouseX, this.mouseY)) {
+            if (mc.mouseHelper.isLeftDown() && this.mouseY >= this.top &&
                 this.mouseY <= this.bottom) {
                 int i = this.left + (this.width - this.getListWidth()) / 2;
                 int j = this.left + (this.width + this.getListWidth()) / 2;
                 int slotIndex = getSlotIndexFromScreenCoords(this.mouseX, this.mouseY);
-                int relativeMouseY = getRelativeMouseY(mouseY, slotIndex);
+                double relativeMouseY = getRelativeMouseY(mouseY, slotIndex);
 
                 if (slotIndex > -1) {
-                    this.elementClicked(slotIndex, false, this.mouseX, this.mouseY);
+                    this.mouseClicked(slotIndex, 0, this.mouseX, this.mouseY);
                     this.selectedElement = slotIndex;
                 } else if (this.mouseX >= i && this.mouseX <= j && relativeMouseY < 0) {
                     this.clickedHeader(this.mouseX - i, this.mouseY - this.top + (int) this.amountScrolled - 4);
                 }
             }
 
-            if (Mouse.isButtonDown(0) && this.getEnabled()) {
+            if (mc.mouseHelper.isLeftDown() && this.isVisible()) {
                 if (this.initialClickY == -1) {
                     boolean flag1 = true;
 
@@ -278,14 +301,15 @@ public class GuiScrollPane extends GuiListExtended {
                         int i2 = this.left + (this.width - this.getListWidth()) / 2;
                         int j2 = this.left + (this.width + this.getListWidth()) / 2;
                         int slotIndex = getSlotIndexFromScreenCoords(this.mouseX, this.mouseY);
-                        int relativeMouseY = getRelativeMouseY(mouseY, slotIndex);
+                        double relativeMouseY = getRelativeMouseY(mouseY, slotIndex);
 
                         if (slotIndex > -1) {
+                            //TODO 1.13 use flag
                             boolean flag = slotIndex == this.selectedElement &&
-                                           Minecraft.getSystemTime() - this.lastClicked < 250L;
-                            this.elementClicked(slotIndex, flag, this.mouseX, this.mouseY);
+                                           Util.milliTime() - this.lastClicked < 250L;
+                            this.mouseClicked(slotIndex, this.mouseX, this.mouseY);
                             this.selectedElement = slotIndex;
-                            this.lastClicked = Minecraft.getSystemTime();
+                            this.lastClicked = Util.milliTime();
                         } else if (this.mouseX >= i2 && this.mouseX <= j2 && relativeMouseY < 0) {
                             this.clickedHeader(this.mouseX - i2,
                                     this.mouseY - this.top + (int) this.amountScrolled - 4);
@@ -327,17 +351,21 @@ public class GuiScrollPane extends GuiListExtended {
                 this.initialClickY = -1;
             }
 
-            int i2 = Mouse.getEventDWheel();
+        }
+    }
 
-            if (i2 != 0) {
-                if (i2 > 0) {
-                    i2 = -1;
-                } else if (i2 < 0) {
-                    i2 = 1;
-                }
-
-                this.amountScrolled += (float) (i2 * this.slotHeight / 2);
+    //Through forge event instead of through the parent, because the parent no longer has scroll functionality in 1.13
+    @SubscribeEvent
+    public void mouseScrolled(GuiScreenEvent.MouseScrollEvent.Pre event) {
+        double scrollDelta = event.getScrollDelta();
+        if (scrollDelta != 0) {
+            if (scrollDelta > 0) {
+                scrollDelta = -1;
+            } else if (scrollDelta < 0) {
+                scrollDelta = 1;
             }
+
+            this.amountScrolled += (float) (scrollDelta * this.slotHeight / 2);
         }
     }
 
@@ -374,7 +402,7 @@ public class GuiScrollPane extends GuiListExtended {
             {
                 int i1 = this.left + this.width / 2 - this.getListWidth() / 2;
                 int j1 = this.left + this.width / 2 + this.getListWidth() / 2;
-                GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+                GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
                 GlStateManager.disableTexture2D();
                 bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
                 bufferbuilder.pos((double)i1, (double)(y + entryHeight2 + 2), 0.0D).tex(0.0D, 1.0D).color(128, 128, 128, 255).endVertex();
@@ -394,14 +422,14 @@ public class GuiScrollPane extends GuiListExtended {
         }
     }
 
-    private int getRelativeMouseX(int mouseX) {
+    private double getRelativeMouseX(double mouseX) {
         int j = this.left + this.width / 2 - this.getListWidth() / 2 + 2;
         return mouseX - j;
     }
 
-    private int getRelativeMouseY(int mouseY, int contentIndex) {
+    private double getRelativeMouseY(double mouseY, int contentIndex) {
         int k = this.top + 4 - this.getAmountScrolled() + getContentHeight(contentIndex) + this.headerPadding;
-        int relativeMouseY = mouseY - k;
+        double relativeMouseY = mouseY - k;
 
         //Content might be centered, adjust relative mouse y accordingly
         int contentHeight = getContentHeight();
@@ -419,7 +447,6 @@ public class GuiScrollPane extends GuiListExtended {
         for (IScrollEntry entry : this.listEntries) {
             id = entry.initGui(id, buttonList);
         }
-        registerScrollButtons(id++, id++);
         return id;
     }
 
@@ -433,14 +460,11 @@ public class GuiScrollPane extends GuiListExtended {
             entry.drawTooltip(guiScreen, mouseX, mouseY);
     }
 
-    public void keyTyped(char eventChar, int eventKey) throws IOException {
+    @Override
+    public boolean charTyped(char eventChar, int eventKey) {
         for (IScrollEntry entry : this.listEntries)
-            entry.keyTyped(eventChar, eventKey);
-    }
-
-    public void actionPerformed(GuiButton button) {
-        for (IScrollEntry entry : this.listEntries)
-            entry.actionPerformed(button);
+            entry.charTyped(eventChar, eventKey);
+        return false;
     }
 
     public void onGuiClosed() {
@@ -448,19 +472,32 @@ public class GuiScrollPane extends GuiListExtended {
             entry.onGuiClosed();
     }
 
-    public interface IScrollEntry extends GuiListExtended.IGuiListEntry {
+    public interface IScrollEntry {
         int initGui(int id, List<GuiButton> buttonList);
 
         void updateScreen();
 
         void drawTooltip(GuiScreen guiScreen, int mouseX, int mouseY);
 
-        void keyTyped(char eventChar, int eventKey) throws IOException;
-
-        void actionPerformed(GuiButton button);
+        boolean charTyped(char eventChar, int eventKey);
 
         void onGuiClosed();
 
         int getHeight();
+
+        void updatePosition(int slotIndex, int x, int y, float partialTicks);
+
+        void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partialTicks);
+
+        /**
+         * Called when the mouse is clicked within this entry. Returning true means that something within this entry was
+         * clicked and the list should not be dragged.
+         */
+        boolean mousePressed(int slotIndex, int mouseX, int mouseY, int mouseEvent, int relativeX, int relativeY);
+
+        /**
+         * Fired when the mouse button is released. Arguments: index, x, y, mouseEvent, relativeX, relativeY
+         */
+        void mouseReleased(int slotIndex, int x, int y, int mouseEvent, int relativeX, int relativeY);
     }
 }

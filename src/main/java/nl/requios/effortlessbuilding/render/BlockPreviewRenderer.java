@@ -11,11 +11,14 @@ import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.*;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
@@ -26,7 +29,6 @@ import nl.requios.effortlessbuilding.buildmodifier.BuildModifiers;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.ModifierSettings;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
-import nl.requios.effortlessbuilding.helper.InventoryHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
@@ -40,7 +42,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 
-@SideOnly(Side.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class BlockPreviewRenderer {
     private static List<BlockPos> previousCoordinates;
     private static List<IBlockState> previousBlockStates;
@@ -79,13 +81,13 @@ public class BlockPreviewRenderer {
 
         //Render placed blocks with dissolve effect
         //Use fancy shader if config allows, otherwise no dissolve
-        if (BuildConfig.visuals.useShaders) {
+        if (BuildConfig.visuals.useShaders.get()) {
             RenderHandler.beginBlockPreviews();
             for (int i = 0; i < placedDataList.size(); i++) {
                 PlacedData placed = placedDataList.get(i);
                 if (placed.coordinates != null && !placed.coordinates.isEmpty()) {
 
-                    double totalTime = MathHelper.clampedLerp(30, 60, placed.firstPos.distanceSq(placed.secondPos) / 100.0) * BuildConfig.visuals.dissolveTimeMultiplier;
+                    double totalTime = MathHelper.clampedLerp(30, 60, placed.firstPos.distanceSq(placed.secondPos) / 100.0) * BuildConfig.visuals.dissolveTimeMultiplier.get();
                     float dissolve = (ClientProxy.ticksInGame - placed.time) / (float) totalTime;
                     renderBlockPreviews(placed.coordinates, placed.blockStates, placed.itemStacks, dissolve, placed.firstPos, placed.secondPos, false, placed.breaking);
                 }
@@ -94,13 +96,13 @@ public class BlockPreviewRenderer {
         }
         //Expire
         placedDataList.removeIf(placed -> {
-            double totalTime = MathHelper.clampedLerp(30, 60, placed.firstPos.distanceSq(placed.secondPos) / 100.0) * BuildConfig.visuals.dissolveTimeMultiplier;
+            double totalTime = MathHelper.clampedLerp(30, 60, placed.firstPos.distanceSq(placed.secondPos) / 100.0) * BuildConfig.visuals.dissolveTimeMultiplier.get();
             return placed.time + totalTime < ClientProxy.ticksInGame;
         });
 
         //Render block previews
         RayTraceResult lookingAt = ClientProxy.getLookingAt(player);
-        if (modeSettings.getBuildMode() == BuildModes.BuildModeEnum.NORMAL) lookingAt = Minecraft.getMinecraft().objectMouseOver;
+        if (modeSettings.getBuildMode() == BuildModes.BuildModeEnum.NORMAL) lookingAt = Minecraft.getInstance().objectMouseOver;
 
         ItemStack mainhand = player.getHeldItemMainhand();
         boolean toolInHand = !(!mainhand.isEmpty() && CompatHelper.isItemBlockProxy(mainhand));
@@ -110,11 +112,12 @@ public class BlockPreviewRenderer {
         Vec3d hitVec = null;
 
         //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
-        if (lookingAt != null && lookingAt.typeOfHit == RayTraceResult.Type.BLOCK) {
+        if (lookingAt != null && lookingAt.type == RayTraceResult.Type.BLOCK) {
             startPos = lookingAt.getBlockPos();
 
             //Check if tool (or none) in hand
-            boolean replaceable = player.world.getBlockState(startPos).getBlock().isReplaceable(player.world, startPos);
+            //TODO 1.13 replaceable
+            boolean replaceable = player.world.getBlockState(startPos).getBlock().getMaterial(player.world.getBlockState(startPos)).isReplaceable();
             boolean becomesDoubleSlab = SurvivalHelper.doesBecomeDoubleSlab(player, startPos, lookingAt.sideHit);
             if (!modifierSettings.doQuickReplace() && !toolInHand && !replaceable && !becomesDoubleSlab) {
                 startPos = startPos.offset(lookingAt.sideHit);
@@ -149,8 +152,8 @@ public class BlockPreviewRenderer {
                 //get coordinates
                 List<BlockPos> startCoordinates = BuildModes.findCoordinates(player, startPos, breaking || modifierSettings.doQuickReplace());
 
+                //Remember first and last point for the shader
                 BlockPos firstPos = BlockPos.ORIGIN, secondPos = BlockPos.ORIGIN;
-                //Remember first and last pos for the shader
                 if (!startCoordinates.isEmpty()) {
                     firstPos = startCoordinates.get(0);
                     secondPos = startCoordinates.get(startCoordinates.size() - 1);
@@ -210,7 +213,7 @@ public class BlockPreviewRenderer {
                     int blockCount;
 
                     //Use fancy shader if config allows, otherwise outlines
-                    if (BuildConfig.visuals.useShaders && newCoordinates.size() < BuildConfig.visuals.shaderTreshold) {
+                    if (BuildConfig.visuals.useShaders.get() && newCoordinates.size() < BuildConfig.visuals.shaderTreshold.get()) {
 
                         RenderHandler.beginBlockPreviews();
 
@@ -225,8 +228,8 @@ public class BlockPreviewRenderer {
                         if (breaking) color = new Vec3d(1f, 0f, 0f);
 
                         for (int i = newCoordinates.size() - 1; i >= 0; i--) {
-                            AxisAlignedBB boundingBox = blockStates.get(i).getBoundingBox(player.world, newCoordinates.get(i));
-                            RenderHandler.renderBlockOutline(newCoordinates.get(i), boundingBox, color);
+                            VoxelShape collisionShape = blockStates.get(i).getCollisionShape(player.world, newCoordinates.get(i));
+                            RenderHandler.renderBlockOutline(newCoordinates.get(i), collisionShape, color);
                         }
 
                         RenderHandler.endLines();
@@ -236,8 +239,20 @@ public class BlockPreviewRenderer {
 
                     //Display block count and dimensions in actionbar
                     if (BuildModes.isActive(player)) {
-                        BlockPos dim = secondPos.subtract(firstPos);
-                        dim = new BlockPos(Math.abs(dim.getX()) + 1, Math.abs(dim.getY()) + 1, Math.abs(dim.getZ()) + 1);
+
+                        //Find min and max values (not simply firstPos and secondPos because that doesn't work with circles)
+                        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+                        int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+                        int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
+                        for (BlockPos pos : startCoordinates) {
+                            if (pos.getX() < minX) minX = pos.getX();
+                            if (pos.getX() > maxX) maxX = pos.getX();
+                            if (pos.getY() < minY) minY = pos.getY();
+                            if (pos.getY() > maxY) maxY = pos.getY();
+                            if (pos.getZ() < minZ) minZ = pos.getZ();
+                            if (pos.getZ() > maxZ) maxZ = pos.getZ();
+                        }
+                        BlockPos dim = new BlockPos(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
 
                         String dimensions = "(";
                         if (dim.getX() > 1) dimensions += dim.getX() + "x";
@@ -256,21 +271,21 @@ public class BlockPreviewRenderer {
             RenderHandler.beginLines();
             //Draw outlines if tool in hand
             //Find proper raytrace: either normal range or increased range depending on canBreakFar
-            RayTraceResult objectMouseOver = Minecraft.getMinecraft().objectMouseOver;
+            RayTraceResult objectMouseOver = Minecraft.getInstance().objectMouseOver;
             RayTraceResult breakingRaytrace = ReachHelper.canBreakFar(player) ? lookingAt : objectMouseOver;
-            if (toolInHand && breakingRaytrace != null && breakingRaytrace.typeOfHit == RayTraceResult.Type.BLOCK) {
+            if (toolInHand && breakingRaytrace != null && breakingRaytrace.type == RayTraceResult.Type.BLOCK) {
                 List<BlockPos> breakCoordinates = BuildModifiers.findCoordinates(player, breakingRaytrace.getBlockPos());
 
                 //Only render first outline if further than normal reach
-                boolean excludeFirst = objectMouseOver != null && objectMouseOver.typeOfHit == RayTraceResult.Type.BLOCK;
+                boolean excludeFirst = objectMouseOver != null && objectMouseOver.type == RayTraceResult.Type.BLOCK;
                 for (int i = excludeFirst ? 1 : 0; i < breakCoordinates.size(); i++) {
                     BlockPos coordinate = breakCoordinates.get(i);
 
                     IBlockState blockState = player.world.getBlockState(coordinate);
                     if (!blockState.getBlock().isAir(blockState, player.world, coordinate)) {
                         if (SurvivalHelper.canBreak(player.world, player, coordinate) || i == 0) {
-                            AxisAlignedBB boundingBox = blockState.getBoundingBox(player.world, coordinate);
-                            RenderHandler.renderBlockOutline(coordinate, boundingBox, new Vec3d(0f, 0f, 0f));
+                            VoxelShape collisionShape = blockState.getCollisionShape(player.world, coordinate);
+                            RenderHandler.renderBlockOutline(coordinate, collisionShape, new Vec3d(0f, 0f, 0f));
                         }
                     }
                 }
@@ -283,15 +298,15 @@ public class BlockPreviewRenderer {
     public static boolean doRenderBlockPreviews(ModifierSettings modifierSettings, ModeSettings modeSettings, BlockPos startPos) {
         return modeSettings.getBuildMode() != BuildModes.BuildModeEnum.NORMAL ||
                (startPos != null && BuildModifiers.isEnabled(modifierSettings, startPos)) ||
-               BuildConfig.visuals.alwaysShowBlockPreview;
+               BuildConfig.visuals.alwaysShowBlockPreview.get();
     }
 
     protected static int renderBlockPreviews(List<BlockPos> coordinates, List<IBlockState> blockStates,
                                               List<ItemStack> itemStacks, float dissolve, BlockPos firstPos,
                                               BlockPos secondPos, boolean checkCanPlace, boolean red) {
-        EntityPlayer player = Minecraft.getMinecraft().player;
+        EntityPlayer player = Minecraft.getInstance().player;
         ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
-        BlockRendererDispatcher dispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+        BlockRendererDispatcher dispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
         int blocksValid = 0;
 
         if (coordinates.isEmpty()) return blocksValid;
@@ -324,7 +339,7 @@ public class BlockPreviewRenderer {
 
     public static void onBlocksPlaced(List<BlockPos> coordinates, List<ItemStack> itemStacks, List<IBlockState> blockStates,
                                       BlockPos firstPos, BlockPos secondPos) {
-        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        EntityPlayerSP player = Minecraft.getInstance().player;
         ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
 
@@ -333,7 +348,7 @@ public class BlockPreviewRenderer {
 
             //Save current coordinates, blockstates and itemstacks
             if (!coordinates.isEmpty() && blockStates.size() == coordinates.size() &&
-                coordinates.size() > 1 && coordinates.size() < BuildConfig.visuals.shaderTreshold) {
+                coordinates.size() > 1 && coordinates.size() < BuildConfig.visuals.shaderTreshold.get()) {
 
                 placedDataList.add(new PlacedData(ClientProxy.ticksInGame, coordinates, blockStates,
                         itemStacks, firstPos, secondPos, false));
@@ -348,7 +363,7 @@ public class BlockPreviewRenderer {
 
     public static void onBlocksBroken(List<BlockPos> coordinates, List<ItemStack> itemStacks, List<IBlockState> blockStates,
                                       BlockPos firstPos, BlockPos secondPos) {
-        EntityPlayerSP player = Minecraft.getMinecraft().player;
+        EntityPlayerSP player = Minecraft.getInstance().player;
         ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
 
@@ -357,7 +372,7 @@ public class BlockPreviewRenderer {
 
             //Save current coordinates, blockstates and itemstacks
             if (!coordinates.isEmpty() && blockStates.size() == coordinates.size() &&
-                coordinates.size() > 1 && coordinates.size() < BuildConfig.visuals.shaderTreshold) {
+                coordinates.size() > 1 && coordinates.size() < BuildConfig.visuals.shaderTreshold.get()) {
 
                 sortOnDistanceToPlayer(coordinates, player);
 
@@ -371,7 +386,7 @@ public class BlockPreviewRenderer {
     private static Consumer<Integer> generateShaderCallback(final float dissolve, final Vec3d blockpos,
                                                             final Vec3d firstpos, final Vec3d secondpos,
                                                             final boolean highlight, final boolean red) {
-        Minecraft mc = Minecraft.getMinecraft();
+        Minecraft mc = Minecraft.getInstance();
         return (Integer shader) -> {
             int percentileUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "dissolve");
             int highlightUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "highlight");
@@ -387,13 +402,13 @@ public class BlockPreviewRenderer {
 
             //mask
             ARBShaderObjects.glUniform1iARB(maskUniform, secondaryTextureUnit);
-            OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + secondaryTextureUnit);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(ShaderHandler.shaderMaskTextureLocation).getGlTextureId());
+            OpenGlHelper.glActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + secondaryTextureUnit);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(ShaderHandler.shaderMaskTextureLocation).getGlTextureId());
 
             //image
             ARBShaderObjects.glUniform1iARB(imageUniform, primaryTextureUnit);
-            OpenGlHelper.setActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + primaryTextureUnit);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.renderEngine.getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
+            OpenGlHelper.glActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + primaryTextureUnit);
+            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(TextureMap.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
 
             //blockpos
             ARBShaderObjects.glUniform3fARB(blockposUniform, (float) blockpos.x, (float) blockpos.y, (float) blockpos.z);
@@ -413,8 +428,8 @@ public class BlockPreviewRenderer {
 
         Collections.sort(coordinates, (lhs, rhs) -> {
             // -1 - less than, 1 - greater than, 0 - equal
-            double lhsDistanceToPlayer = new Vec3d(lhs).subtract(player.getPositionEyes(1f)).lengthSquared();
-            double rhsDistanceToPlayer = new Vec3d(rhs).subtract(player.getPositionEyes(1f)).lengthSquared();
+            double lhsDistanceToPlayer = new Vec3d(lhs).subtract(player.getEyePosition(1f)).lengthSquared();
+            double rhsDistanceToPlayer = new Vec3d(rhs).subtract(player.getEyePosition(1f)).lengthSquared();
             return (int) Math.signum(lhsDistanceToPlayer - rhsDistanceToPlayer);
         });
 

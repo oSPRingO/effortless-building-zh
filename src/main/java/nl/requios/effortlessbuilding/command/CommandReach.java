@@ -1,46 +1,44 @@
 package nl.requios.effortlessbuilding.command;
 
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.command.WrongUsageException;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraftforge.fml.network.PacketDistributor;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.network.ModifierSettingsMessage;
+import nl.requios.effortlessbuilding.network.PacketHandler;
+import nl.requios.effortlessbuilding.network.RequestLookAtMessage;
 
-public class CommandReach extends CommandBase {
-    @Override
-    public String getName() {
-        return "reach";
+public class CommandReach {
+
+    public static void register(CommandDispatcher<CommandSource> dispatcher) {
+        dispatcher.register(Commands.literal("reach").then(Commands.literal("set").then(Commands.argument("level", IntegerArgumentType.integer(0, 3)).executes((context) -> {
+            return setReachLevel(context.getSource().asPlayer(), IntegerArgumentType.getInteger(context, "level"));
+        }))).then(Commands.literal("get").executes((context -> {
+            return getReachLevel(context.getSource().asPlayer());
+        }))));
     }
 
-    @Override
-    public String getUsage(ICommandSender sender) {
-        return "commands.reach.usage";
+    private static int setReachLevel(EntityPlayerMP player, int level){
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+        modifierSettings.setReachUpgrade(level);
+        ModifierSettingsManager.setModifierSettings(player, modifierSettings);
+        //Send to client
+        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ModifierSettingsMessage(modifierSettings));
+
+        player.sendMessage(new TextComponentString("Reach level of " + player.getName().getString() + " set to " + modifierSettings.getReachUpgrade()));
+
+        return 1;
     }
 
-    @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        EntityPlayerMP player = (EntityPlayerMP) sender;
-        if (args.length != 1) {
-            int reachUpgrade = ModifierSettingsManager.getModifierSettings(player).getReachUpgrade();
-            EffortlessBuilding.log(player, "Current reach: level "+reachUpgrade);
-            throw new WrongUsageException("commands.reach.usage");
-        }
+    private static int getReachLevel(EntityPlayerMP player){
+        int reachUpgrade = ModifierSettingsManager.getModifierSettings(player).getReachUpgrade();
+        EffortlessBuilding.log(player, "Current reach: level "+reachUpgrade);
 
-        if (sender instanceof EntityPlayerMP) {
-            //Set reach level to args[0]
-            ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
-            modifierSettings.setReachUpgrade(Integer.valueOf(args[0]));
-            ModifierSettingsManager.setModifierSettings(player, modifierSettings);
-            //Send to client
-            EffortlessBuilding.packetHandler.sendTo(new ModifierSettingsMessage(modifierSettings), player);
-
-            sender.sendMessage(new TextComponentString("Reach level of " + sender.getName() + " set to " + modifierSettings
-                    .getReachUpgrade()));
-        }
+        return 1;
     }
 }

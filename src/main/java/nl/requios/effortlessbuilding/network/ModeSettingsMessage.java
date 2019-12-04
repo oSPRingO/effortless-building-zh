@@ -2,20 +2,20 @@ package nl.requios.effortlessbuilding.network;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.IThreadListener;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.network.NetworkEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
+import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager.ModeSettings;
 
-import static nl.requios.effortlessbuilding.buildmode.ModeSettingsManager.*;
+import java.util.function.Supplier;
 
 /**
  * Shares mode settings (see ModeSettingsManager) between server and client
  */
-public class ModeSettingsMessage implements IMessage {
+public class ModeSettingsMessage {
 
     private ModeSettings modeSettings;
 
@@ -26,41 +26,31 @@ public class ModeSettingsMessage implements IMessage {
         this.modeSettings = modeSettings;
     }
 
-    @Override
-    public void toBytes(ByteBuf buf) {
-        buf.writeInt(modeSettings.getBuildMode().ordinal());
+    public static void encode(ModeSettingsMessage message, PacketBuffer buf) {
+        buf.writeInt(message.modeSettings.getBuildMode().ordinal());
     }
 
-    @Override
-    public void fromBytes(ByteBuf buf) {
+    public static ModeSettingsMessage decode(PacketBuffer buf) {
         BuildModes.BuildModeEnum buildMode = BuildModes.BuildModeEnum.values()[buf.readInt()];
 
-        modeSettings = new ModeSettings(buildMode);
+        return new ModeSettingsMessage(new ModeSettings(buildMode));
     }
 
-    // The params of the IMessageHandler are <REQ, REPLY>
-    public static class MessageHandler implements IMessageHandler<ModeSettingsMessage, IMessage> {
-        // Do note that the default constructor is required, but implicitly defined in this case
+    public static class Handler
+    {
+        public static void handle(ModeSettingsMessage message, Supplier<NetworkEvent.Context> ctx)
+        {
+            ctx.get().enqueueWork(() -> {
+                EffortlessBuilding.log("ModeSettingsMessage");
 
-        @Override
-        public IMessage onMessage(ModeSettingsMessage message, MessageContext ctx) {
-            //EffortlessBuilding.log("message received on " + ctx.side + " side");
-
-            // The value that was sent
-            ModeSettings modeSettings = message.modeSettings;
-
-            // Execute the action on the main server thread by adding it as a scheduled task
-            IThreadListener threadListener = EffortlessBuilding.proxy.getThreadListenerFromContext(ctx);
-            threadListener.addScheduledTask(() -> {
                 EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 // Sanitize
-                ModeSettingsManager.sanitize(modeSettings, player);
+                ModeSettingsManager.sanitize(message.modeSettings, player);
 
-                ModeSettingsManager.setModeSettings(player, modeSettings);
+                ModeSettingsManager.setModeSettings(player, message.modeSettings);
             });
-            // No response packet
-            return null;
+            ctx.get().setPacketHandled(true);
         }
     }
 }

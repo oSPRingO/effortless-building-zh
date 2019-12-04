@@ -5,6 +5,8 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.client.config.GuiCheckBox;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
@@ -20,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("Duplicates")
+@OnlyIn(Dist.CLIENT)
 public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
 
     protected static final ResourceLocation BUILDING_ICONS = new ResourceLocation(EffortlessBuilding.MODID, "textures/gui/building_icons.png");
@@ -42,7 +46,13 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         id = super.initGui(id, buttonList);
 
         int y = top - 2;
-        buttonMirrorEnabled = new GuiCheckBox(id++, left - 15 + 8, y, "", false);
+        buttonMirrorEnabled = new GuiCheckBox(id++, left - 15 + 8, y, "", false) {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                super.onClick(mouseX, mouseY);
+                setCollapsed(!buttonMirrorEnabled.isChecked());
+            }
+        };
         buttonList.add(buttonMirrorEnabled);
 
         y = top + 18;
@@ -82,19 +92,62 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         mirrorNumberFieldList.add(textMirrorRadius);
 
         y = top + 72;
-        buttonCurrentPosition = new GuiIconButton(id++, left + 5, y, 0, 0, BUILDING_ICONS);
+        buttonCurrentPosition = new GuiIconButton(id++, left + 5, y, 0, 0, BUILDING_ICONS) {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                super.onClick(mouseX, mouseY);
+                Vec3d pos = new Vec3d(Math.floor(mc.player.posX) + 0.5, Math.floor(mc.player.posY) + 0.5, Math.floor(mc.player.posZ) + 0.5);
+                textMirrorPosX.setNumber(pos.x);
+                textMirrorPosY.setNumber(pos.y);
+                textMirrorPosZ.setNumber(pos.z);
+            }
+        };
         buttonCurrentPosition.setTooltip("Set mirror position to current player position");
         mirrorIconButtonList.add(buttonCurrentPosition);
 
-        buttonToggleOdd = new GuiIconButton(id++, left + 35, y, 0, 20, BUILDING_ICONS);
+        buttonToggleOdd = new GuiIconButton(id++, left + 35, y, 0, 20, BUILDING_ICONS) {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                super.onClick(mouseX, mouseY);
+                toggleOdd = !toggleOdd;
+                buttonToggleOdd.setUseAlternateIcon(toggleOdd);
+                if (toggleOdd) {
+                    buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
+                    textMirrorPosX.setNumber(textMirrorPosX.getNumber() + 0.5);
+                    textMirrorPosY.setNumber(textMirrorPosY.getNumber() + 0.5);
+                    textMirrorPosZ.setNumber(textMirrorPosZ.getNumber() + 0.5);
+                } else {
+                    buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+                    textMirrorPosX.setNumber(Math.floor(textMirrorPosX.getNumber()));
+                    textMirrorPosY.setNumber(Math.floor(textMirrorPosY.getNumber()));
+                    textMirrorPosZ.setNumber(Math.floor(textMirrorPosZ.getNumber()));
+                }
+            }
+        };
         buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
         mirrorIconButtonList.add(buttonToggleOdd);
 
-        buttonDrawLines = new GuiIconButton(id++, left + 65, y, 0, 40, BUILDING_ICONS);
+        buttonDrawLines = new GuiIconButton(id++, left + 65, y, 0, 40, BUILDING_ICONS) {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                super.onClick(mouseX, mouseY);
+                drawLines = !drawLines;
+                buttonDrawLines.setUseAlternateIcon(drawLines);
+                buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
+            }
+        };
         buttonDrawLines.setTooltip("Show lines");
         mirrorIconButtonList.add(buttonDrawLines);
 
-        buttonDrawPlanes = new GuiIconButton(id++, left + 95, y, 0, 60, BUILDING_ICONS);
+        buttonDrawPlanes = new GuiIconButton(id++, left + 95, y, 0, 60, BUILDING_ICONS) {
+            @Override
+            public void onClick(double mouseX, double mouseY) {
+                super.onClick(mouseX, mouseY);
+                drawPlanes = !drawPlanes;
+                buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
+                buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
+            }
+        };
         buttonDrawPlanes.setTooltip("Show area");
         mirrorIconButtonList.add(buttonDrawPlanes);
 
@@ -142,31 +195,30 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
     @Override
     public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY,
                           boolean isSelected, float partialTicks) {
-        super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partialTicks);
-
+        
         int yy = y;
         int offset = 8;
 
-        buttonMirrorEnabled.drawButton(this.mc, mouseX, mouseY, partialTicks);
+        buttonMirrorEnabled.render(mouseX, mouseY, partialTicks);
         if (buttonMirrorEnabled.isChecked()) {
             buttonMirrorEnabled.y = yy;
-            fontRenderer.drawString("Mirror enabled", left + offset, yy + 2, 0xFFFFFF, true);
+            fontRenderer.drawString("Mirror enabled", left + offset, yy + 2, 0xFFFFFF);
 
             yy = y + 18;
-            fontRenderer.drawString("Position", left + offset, yy + 5, 0xFFFFFF, true);
-            fontRenderer.drawString("X", left + 40 + offset, yy + 5, 0xFFFFFF, true);
+            fontRenderer.drawString("Position", left + offset, yy + 5, 0xFFFFFF);
+            fontRenderer.drawString("X", left + 40 + offset, yy + 5, 0xFFFFFF);
             textMirrorPosX.y = yy;
-            fontRenderer.drawString("Y", left + 120 + offset, yy + 5, 0xFFFFFF, true);
+            fontRenderer.drawString("Y", left + 120 + offset, yy + 5, 0xFFFFFF);
             textMirrorPosY.y = yy;
-            fontRenderer.drawString("Z", left + 200 + offset, yy + 5, 0xFFFFFF, true);
+            fontRenderer.drawString("Z", left + 200 + offset, yy + 5, 0xFFFFFF);
             textMirrorPosZ.y = yy;
 
             yy = y + 50;
-            fontRenderer.drawString("Direction", left + offset, yy + 2, 0xFFFFFF, true);
+            fontRenderer.drawString("Direction", left + offset, yy + 2, 0xFFFFFF);
             buttonMirrorX.y = yy;
             buttonMirrorY.y = yy;
             buttonMirrorZ.y = yy;
-            fontRenderer.drawString("Radius", left + 176 + offset, yy + 2, 0xFFFFFF, true);
+            fontRenderer.drawString("Radius", left + 176 + offset, yy + 2, 0xFFFFFF);
             textMirrorRadius.y = yy - 3;
 
             yy = y + 72;
@@ -175,12 +227,12 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
             buttonDrawLines.y = yy;
             buttonDrawPlanes.y = yy;
 
-            mirrorButtonList.forEach(button -> button.drawButton(this.mc, mouseX, mouseY, partialTicks));
-            mirrorIconButtonList.forEach(button -> button.drawButton(this.mc, mouseX, mouseY, partialTicks));
-            mirrorNumberFieldList.forEach(numberField -> numberField.drawNumberField(this.mc, mouseX, mouseY, partialTicks));
+            mirrorButtonList.forEach(button -> button.render(mouseX, mouseY, partialTicks));
+            mirrorIconButtonList.forEach(button -> button.render(mouseX, mouseY, partialTicks));
+            mirrorNumberFieldList.forEach(numberField -> numberField.drawNumberField(mouseX, mouseY, partialTicks));
         } else {
             buttonMirrorEnabled.y = yy;
-            fontRenderer.drawString("Mirror disabled", left + offset, yy + 2, 0x999999, true);
+            fontRenderer.drawString("Mirror disabled", left + offset, yy + 2, 0x999999);
         }
 
     }
@@ -195,72 +247,26 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
     }
 
     @Override
-    public void updatePosition(int slotIndex, int x, int y, float partialTicks) {
-        super.updatePosition(slotIndex, x, y, partialTicks);
-    }
-
-    @Override
-    public void keyTyped(char typedChar, int keyCode) throws IOException {
-        super.keyTyped(typedChar, keyCode);
+    public boolean charTyped(char typedChar, int keyCode) {
+        super.charTyped(typedChar, keyCode);
         for (GuiNumberField numberField : mirrorNumberFieldList) {
-            numberField.keyTyped(typedChar, keyCode);
+            numberField.charTyped(typedChar, keyCode);
         }
+        return true;
     }
 
     @Override
     public boolean mousePressed(int slotIndex, int mouseX, int mouseY, int mouseEvent, int relativeX, int relativeY) {
-        super.mousePressed(slotIndex, mouseX, mouseY, mouseEvent, relativeX, relativeY);
         mirrorNumberFieldList.forEach(numberField -> numberField.mouseClicked(mouseX, mouseY, mouseEvent));
 
         boolean insideMirrorEnabledLabel = mouseX >= left && mouseX < right && relativeY >= -2 && relativeY < 12;
 
         if (insideMirrorEnabledLabel) {
-            buttonMirrorEnabled.setIsChecked(!buttonMirrorEnabled.isChecked());
             buttonMirrorEnabled.playPressSound(this.mc.getSoundHandler());
-            actionPerformed(buttonMirrorEnabled);
+            buttonMirrorEnabled.onClick(mouseX, mouseY);
         }
 
         return true;
-    }
-
-    @Override
-    public void actionPerformed(GuiButton button) {
-        super.actionPerformed(button);
-        if (button == buttonMirrorEnabled) {
-            setCollapsed(!buttonMirrorEnabled.isChecked());
-        }
-        if (button == buttonCurrentPosition) {
-            Vec3d pos = new Vec3d(Math.floor(mc.player.posX) + 0.5, Math.floor(mc.player.posY) + 0.5, Math.floor(mc.player.posZ) + 0.5);
-            textMirrorPosX.setNumber(pos.x);
-            textMirrorPosY.setNumber(pos.y);
-            textMirrorPosZ.setNumber(pos.z);
-        }
-        if (button == buttonToggleOdd) {
-            toggleOdd = !toggleOdd;
-            buttonToggleOdd.setUseAlternateIcon(toggleOdd);
-            if (toggleOdd) {
-                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
-                textMirrorPosX.setNumber(textMirrorPosX.getNumber() + 0.5);
-                textMirrorPosY.setNumber(textMirrorPosY.getNumber() + 0.5);
-                textMirrorPosZ.setNumber(textMirrorPosZ.getNumber() + 0.5);
-            } else {
-                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
-                textMirrorPosX.setNumber(Math.floor(textMirrorPosX.getNumber()));
-                textMirrorPosY.setNumber(Math.floor(textMirrorPosY.getNumber()));
-                textMirrorPosZ.setNumber(Math.floor(textMirrorPosZ.getNumber()));
-            }
-        }
-        if (button == buttonDrawLines) {
-            drawLines = !drawLines;
-            buttonDrawLines.setUseAlternateIcon(drawLines);
-            buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
-        }
-        if (button == buttonDrawPlanes) {
-            drawPlanes = !drawPlanes;
-            buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
-            buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
-        }
-        mirrorNumberFieldList.forEach(numberField -> numberField.actionPerformed(button));
     }
 
     public Mirror.MirrorSettings getMirrorSettings() {

@@ -23,20 +23,20 @@ public class RandomizerBagContainer extends Container {
         bagInventory = parIInventory;
         sizeInventory = bagInventory.getSlots();
         for (int i = 0; i < sizeInventory; ++i) {
-            this.addSlotToContainer(new SlotItemHandler(bagInventory, i, 44 + (18 * i), 20));
+            this.addSlot(new SlotItemHandler(bagInventory, i, 44 + (18 * i), 20));
         }
 
         // add player inventory slots
         int i;
         for (i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                addSlotToContainer(new Slot(parInventoryPlayer, j + i * 9 + 9, 8 + j * 18, 51 + i * 18));
+                addSlot(new Slot(parInventoryPlayer, j + i * 9 + 9, 8 + j * 18, 51 + i * 18));
             }
         }
 
         // add hotbar slots
         for (i = 0; i < 9; ++i) {
-            addSlotToContainer(new Slot(parInventoryPlayer, i, 8 + i * 18, 109));
+            addSlot(new Slot(parInventoryPlayer, i, 8 + i * 18, 109));
         }
     }
 

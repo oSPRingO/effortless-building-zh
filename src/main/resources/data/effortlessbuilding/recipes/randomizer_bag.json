@@ -10,8 +10,7 @@
             "item": "minecraft:leather"
         },
 		"O": {
-            "item": "minecraft:planks",
-			"data": 32767
+            "tag": "minecraft:planks"
         }
     },
     "result": {

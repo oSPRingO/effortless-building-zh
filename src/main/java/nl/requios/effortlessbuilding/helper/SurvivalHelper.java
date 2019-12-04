@@ -1,27 +1,28 @@
 package nl.requios.effortlessbuilding.helper;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.BlockSlab;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.IProperty;
+import net.minecraft.block.state.BlockWorldState;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemSlab;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundCategory;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ToolType;
 import nl.requios.effortlessbuilding.BuildConfig;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 
@@ -41,7 +42,7 @@ public class SurvivalHelper {
 
         if (blockState.getBlock().isAir(blockState, world, pos) || itemstack.isEmpty()) {
             dropBlock(world, player, pos);
-            world.setBlockToAir(pos);
+            world.removeBlock(pos);
             return true;
         }
 
@@ -60,8 +61,21 @@ public class SurvivalHelper {
             //Drop existing block
             dropBlock(world, player, pos);
 
-            boolean placed = ((ItemBlock) itemstack.getItem()).placeBlockAt(itemstack, player, world, pos, facing, (float) hitVec.x, (float) hitVec.y, (float) hitVec.z, blockState);
-            if (!placed) return false;
+            //TryPlace sets block with offset, so we only do world.setBlockState now
+            //Remember count of itemstack before tryPlace, and set it back after.
+            //TryPlace reduces stack even in creative so it is not usable here.
+//            int origCount = itemstack.getCount();
+//            BlockItemUseContext blockItemUseContext = new BlockItemUseContext(world, player, itemstack, pos, facing, (float) hitVec.x, (float) hitVec.y, (float) hitVec.z);
+//            EnumActionResult result = ((ItemBlock) itemstack.getItem()).tryPlace(blockItemUseContext);
+//            itemstack.setCount(origCount);
+
+            //Set our (rotated) blockstate
+            world.setBlockState(pos, blockState, 3);
+//            blockState.onBlockAdded(world, pos, blockState);
+//            block.onBlockPlacedBy(world, pos, blockState, player, itemstack);
+//            world.notifyBlockUpdate(pos, blockState, world.getBlockState(pos), 3);
+
+//            if (result != EnumActionResult.SUCCESS) return false;
 
             IBlockState afterState = world.getBlockState(pos);
 
@@ -119,7 +133,7 @@ public class SurvivalHelper {
             //Damage tool
             player.getHeldItemMainhand().onBlockDestroyed(world, world.getBlockState(pos), pos, player);
 
-            world.setBlockToAir(pos);
+            world.removeBlock(pos);
             return true;
         }
         return false;
@@ -198,9 +212,8 @@ public class SurvivalHelper {
         if (player.isCreative()) return true;
 
         IBlockState state = world.getBlockState(pos);
-        state = state.getBlock().getActualState(state, world, pos);
 
-        switch (BuildConfig.survivalBalancers.quickReplaceMiningLevel) {
+        switch (BuildConfig.survivalBalancers.quickReplaceMiningLevel.get()) {
             case -1: return state.getMaterial().isToolNotRequired();
             case 0: return state.getBlock().getHarvestLevel(state) <= 0;
             case 1: return state.getBlock().getHarvestLevel(state) <= 1;
@@ -214,7 +227,9 @@ public class SurvivalHelper {
     //From EntityPlayer#canPlayerEdit
     private static boolean canPlayerEdit(EntityPlayer player, World world, BlockPos pos, ItemStack stack)
     {
-        if (player.capabilities.allowEdit)
+        if (!world.isBlockModifiable(player, pos)) return false;
+
+        if (player.abilities.allowEdit)
         {
             //True in creative and survival mode
             return true;
@@ -222,8 +237,9 @@ public class SurvivalHelper {
         else
         {
             //Adventure mode
-            Block block = world.getBlockState(pos).getBlock();
-            return stack.canPlaceOn(block) || stack.canEditBlocks();
+            BlockWorldState blockworldstate = new BlockWorldState(world, pos, false);
+            return stack.canPlaceOn(world.getTags(), blockworldstate);
+
         }
     }
 
@@ -231,9 +247,9 @@ public class SurvivalHelper {
     private static boolean mayPlace(World world, Block blockIn, IBlockState newBlockState, BlockPos pos, boolean skipCollisionCheck, EnumFacing sidePlacedOn, @Nullable Entity placer)
     {
         IBlockState iblockstate1 = world.getBlockState(pos);
-        AxisAlignedBB axisalignedbb = skipCollisionCheck ? Block.NULL_AABB : blockIn.getDefaultState().getCollisionBoundingBox(world, pos);
+        VoxelShape voxelShape = skipCollisionCheck ? null : blockIn.getDefaultState().getCollisionShape(world, pos);
 
-        if (axisalignedbb != Block.NULL_AABB && !world.checkNoEntityCollision(axisalignedbb.offset(pos)))
+        if (voxelShape != null && !world.checkNoEntityCollision(iblockstate1, pos))
         {
             return false;
         }
@@ -259,7 +275,8 @@ public class SurvivalHelper {
             return true;
         }
 
-        return iblockstate1.getBlock().isReplaceable(world, pos) && blockIn.canPlaceBlockOnSide(world, pos, sidePlacedOn);
+        //TODO 1.13 replaceable
+        return iblockstate1.getMaterial().isReplaceable() /*&& canPlaceBlockOnSide(world, pos, sidePlacedOn)*/;
     }
 
 
@@ -267,7 +284,7 @@ public class SurvivalHelper {
     //Can break using held tool? (or in creative)
     public static boolean canBreak(World world, EntityPlayer player, BlockPos pos) {
         IBlockState blockState = world.getBlockState(pos);
-        if (blockState.getBlock() instanceof BlockLiquid) return false;
+        if (!world.getFluidState(pos).isEmpty()) return false;
 
         if (player.isCreative()) return true;
 
@@ -275,13 +292,12 @@ public class SurvivalHelper {
     }
 
     //From ForgeHooks#canHarvestBlock
-    public static boolean canHarvestBlock(@Nonnull Block block, @Nonnull EntityPlayer player, @Nonnull IBlockAccess world, @Nonnull BlockPos pos)
+    public static boolean canHarvestBlock(@Nonnull Block block, @Nonnull EntityPlayer player, @Nonnull World world, @Nonnull BlockPos pos)
     {
         IBlockState state = world.getBlockState(pos);
-        state = state.getBlock().getActualState(state, world, pos);
 
         //Dont break bedrock
-        if (state.getBlockHardness((World) world, pos) < 0) {
+        if (state.getBlockHardness(world, pos) < 0) {
             return false;
         }
 
@@ -291,13 +307,13 @@ public class SurvivalHelper {
         }
 
         ItemStack stack = player.getHeldItemMainhand();
-        String tool = block.getHarvestTool(state);
+        ToolType tool = block.getHarvestTool(state);
         if (stack.isEmpty() || tool == null)
         {
             return player.canHarvestBlock(state);
         }
 
-        if (stack.getItemDamage() >= stack.getMaxDamage()) return false;
+        if (stack.getDamage() >= stack.getMaxDamage()) return false;
 
         int toolLevel = stack.getItem().getHarvestLevel(stack, tool, player, state);
         if (toolLevel < 0)
@@ -315,20 +331,21 @@ public class SurvivalHelper {
         if (CompatHelper.isItemBlockProxy(itemstack))
             itemstack = CompatHelper.getItemBlockFromStack(itemstack);
 
-        if (itemstack.isEmpty() || !(itemstack.getItem() instanceof ItemSlab)) return false;
-        BlockSlab heldSlab = (BlockSlab) ((ItemSlab) itemstack.getItem()).getBlock();
+        if (itemstack.isEmpty() || !(itemstack.getItem() instanceof ItemBlock) || !(((ItemBlock) itemstack.getItem()).getBlock() instanceof BlockSlab)) return false;
+        BlockSlab heldSlab = (BlockSlab) ((ItemBlock) itemstack.getItem()).getBlock();
 
         if (placedBlockState.getBlock() == heldSlab) {
-            IProperty<?> variantProperty = heldSlab.getVariantProperty();
-            Comparable<?> placedVariant = placedBlockState.getValue(variantProperty);
-            BlockSlab.EnumBlockHalf placedHalf = placedBlockState.getValue(BlockSlab.HALF);
-
-            Comparable<?> heldVariant = heldSlab.getTypeForItem(itemstack);
-
-            if ((facing == EnumFacing.UP && placedHalf == BlockSlab.EnumBlockHalf.BOTTOM || facing == EnumFacing.DOWN && placedHalf == BlockSlab.EnumBlockHalf.TOP) && placedVariant == heldVariant)
-            {
-                return true;
-            }
+            //TODO 1.13
+//            IProperty<?> variantProperty = heldSlab.getVariantProperty();
+//            Comparable<?> placedVariant = placedBlockState.getValue(variantProperty);
+//            BlockSlab.EnumBlockHalf placedHalf = placedBlockState.getValue(BlockSlab.HALF);
+//
+//            Comparable<?> heldVariant = heldSlab.getTypeForItem(itemstack);
+//
+//            if ((facing == EnumFacing.UP && placedHalf == BlockSlab.EnumBlockHalf.BOTTOM || facing == EnumFacing.DOWN && placedHalf == BlockSlab.EnumBlockHalf.TOP) && placedVariant == heldVariant)
+//            {
+//                return true;
+//            }
         }
         return false;
     }

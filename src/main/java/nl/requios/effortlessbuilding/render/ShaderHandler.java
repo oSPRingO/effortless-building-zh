@@ -46,7 +46,7 @@ public final class ShaderHandler {
         if(!doUseShaders())
             return;
 
-        rawColor = createProgram("/assets/effortlessbuilding/shaders/raw_color", FRAG);
+//        rawColor = createProgram("/assets/effortlessbuilding/shaders/raw_color", FRAG);
         dissolve = createProgram("/assets/effortlessbuilding/shaders/dissolve", VERT + FRAG);
     }
 
@@ -74,7 +74,7 @@ public final class ShaderHandler {
     }
 
     public static boolean doUseShaders() {
-        return BuildConfig.visuals.useShaders && OpenGlHelper.shadersSupported;
+        return BuildConfig.visuals.useShaders.get() && OpenGlHelper.shadersSupported;
     }
 
     private static int createProgram(String s, int sides) {

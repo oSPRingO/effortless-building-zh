@@ -7,19 +7,19 @@ import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 
 public class ReachHelper {
     public static int getMaxReach(EntityPlayer player) {
-        if (player.isCreative()) return BuildConfig.reach.maxReachCreative;
+        if (player.isCreative()) return BuildConfig.reach.maxReachCreative.get();
 
-        if (!BuildConfig.reach.enableReachUpgrades) return BuildConfig.reach.maxReachLevel3;
+        if (!BuildConfig.reach.enableReachUpgrades.get()) return BuildConfig.reach.maxReachLevel3.get();
 
         //Check buildsettings for reachUpgrade
         int reachUpgrade = ModifierSettingsManager.getModifierSettings(player).getReachUpgrade();
         switch (reachUpgrade) {
-            case 0: return BuildConfig.reach.maxReachLevel0;
-            case 1: return BuildConfig.reach.maxReachLevel1;
-            case 2: return BuildConfig.reach.maxReachLevel2;
-            case 3: return BuildConfig.reach.maxReachLevel3;
+            case 0: return BuildConfig.reach.maxReachLevel0.get();
+            case 1: return BuildConfig.reach.maxReachLevel1.get();
+            case 2: return BuildConfig.reach.maxReachLevel2.get();
+            case 3: return BuildConfig.reach.maxReachLevel3.get();
         }
-        return BuildConfig.reach.maxReachLevel0;
+        return BuildConfig.reach.maxReachLevel0.get();
     }
 
     public static int getPlacementReach(EntityPlayer player) {
@@ -45,6 +45,6 @@ public class ReachHelper {
     }
 
     public static boolean canBreakFar(EntityPlayer player) {
-        return player.isCreative() || BuildConfig.survivalBalancers.breakFar;
+        return player.isCreative() || BuildConfig.survivalBalancers.breakFar.get();
     }
 }

@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.capability;
 
-import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.INBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -8,15 +8,19 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
 import net.minecraftforge.common.capabilities.ICapabilitySerializable;
+import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Array;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+
+import java.util.concurrent.Callable;
 
 import static nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.*;
 
@@ -48,7 +52,7 @@ public class ModifierCapabilityManager {
 
     public static class Storage implements Capability.IStorage<IModifierCapability> {
         @Override
-        public NBTBase writeNBT(Capability<IModifierCapability> capability, IModifierCapability instance, EnumFacing side) {
+        public INBTBase writeNBT(Capability<IModifierCapability> capability, IModifierCapability instance, EnumFacing side) {
             NBTTagCompound compound = new NBTTagCompound();
             ModifierSettings modifierSettings = instance.getModifierData();
             if (modifierSettings == null) modifierSettings = new ModifierSettings();
@@ -63,7 +67,7 @@ public class ModifierCapabilityManager {
             compound.setBoolean("mirrorX", m.mirrorX);
             compound.setBoolean("mirrorY", m.mirrorY);
             compound.setBoolean("mirrorZ", m.mirrorZ);
-            compound.setInteger("mirrorRadius", m.radius);
+            compound.setInt("mirrorRadius", m.radius);
             compound.setBoolean("mirrorDrawLines", m.drawLines);
             compound.setBoolean("mirrorDrawPlanes", m.drawPlanes);
 
@@ -71,12 +75,12 @@ public class ModifierCapabilityManager {
             Array.ArraySettings a = modifierSettings.getArraySettings();
             if (a == null) a = new Array.ArraySettings();
             compound.setBoolean("arrayEnabled", a.enabled);
-            compound.setInteger("arrayOffsetX", a.offset.getX());
-            compound.setInteger("arrayOffsetY", a.offset.getY());
-            compound.setInteger("arrayOffsetZ", a.offset.getZ());
-            compound.setInteger("arrayCount", a.count);
+            compound.setInt("arrayOffsetX", a.offset.getX());
+            compound.setInt("arrayOffsetY", a.offset.getY());
+            compound.setInt("arrayOffsetZ", a.offset.getZ());
+            compound.setInt("arrayCount", a.count);
 
-            compound.setInteger("reachUpgrade", modifierSettings.getReachUpgrade());
+            compound.setInt("reachUpgrade", modifierSettings.getReachUpgrade());
 
             //compound.setBoolean("quickReplace", buildSettings.doQuickReplace()); dont save quickreplace
 
@@ -87,9 +91,9 @@ public class ModifierCapabilityManager {
             compound.setDouble("radialMirrorPosX", r.position.x);
             compound.setDouble("radialMirrorPosY", r.position.y);
             compound.setDouble("radialMirrorPosZ", r.position.z);
-            compound.setInteger("radialMirrorSlices", r.slices);
+            compound.setInt("radialMirrorSlices", r.slices);
             compound.setBoolean("radialMirrorAlternate", r.alternate);
-            compound.setInteger("radialMirrorRadius", r.radius);
+            compound.setInt("radialMirrorRadius", r.radius);
             compound.setBoolean("radialMirrorDrawLines", r.drawLines);
             compound.setBoolean("radialMirrorDrawPlanes", r.drawPlanes);
 
@@ -97,7 +101,7 @@ public class ModifierCapabilityManager {
         }
 
         @Override
-        public void readNBT(Capability<IModifierCapability> capability, IModifierCapability instance, EnumFacing side, NBTBase nbt) {
+        public void readNBT(Capability<IModifierCapability> capability, IModifierCapability instance, EnumFacing side, INBTBase nbt) {
             NBTTagCompound compound = (NBTTagCompound) nbt;
 
             //MIRROR
@@ -109,7 +113,7 @@ public class ModifierCapabilityManager {
             boolean mirrorX = compound.getBoolean("mirrorX");
             boolean mirrorY = compound.getBoolean("mirrorY");
             boolean mirrorZ = compound.getBoolean("mirrorZ");
-            int mirrorRadius = compound.getInteger("mirrorRadius");
+            int mirrorRadius = compound.getInt("mirrorRadius");
             boolean mirrorDrawLines = compound.getBoolean("mirrorDrawLines");
             boolean mirrorDrawPlanes = compound.getBoolean("mirrorDrawPlanes");
             Mirror.MirrorSettings mirrorSettings = new Mirror.MirrorSettings(mirrorEnabled, mirrorPosition, mirrorX, mirrorY, mirrorZ, mirrorRadius, mirrorDrawLines, mirrorDrawPlanes);
@@ -117,13 +121,13 @@ public class ModifierCapabilityManager {
             //ARRAY
             boolean arrayEnabled = compound.getBoolean("arrayEnabled");
             BlockPos arrayOffset = new BlockPos(
-                    compound.getInteger("arrayOffsetX"),
-                    compound.getInteger("arrayOffsetY"),
-                    compound.getInteger("arrayOffsetZ"));
-            int arrayCount = compound.getInteger("arrayCount");
+                    compound.getInt("arrayOffsetX"),
+                    compound.getInt("arrayOffsetY"),
+                    compound.getInt("arrayOffsetZ"));
+            int arrayCount = compound.getInt("arrayCount");
             Array.ArraySettings arraySettings = new Array.ArraySettings(arrayEnabled, arrayOffset, arrayCount);
 
-            int reachUpgrade = compound.getInteger("reachUpgrade");
+            int reachUpgrade = compound.getInt("reachUpgrade");
 
             //boolean quickReplace = compound.getBoolean("quickReplace"); //dont load quickreplace
 
@@ -133,9 +137,9 @@ public class ModifierCapabilityManager {
                     compound.getDouble("radialMirrorPosX"),
                     compound.getDouble("radialMirrorPosY"),
                     compound.getDouble("radialMirrorPosZ"));
-            int radialMirrorSlices = compound.getInteger("radialMirrorSlices");
+            int radialMirrorSlices = compound.getInt("radialMirrorSlices");
             boolean radialMirrorAlternate = compound.getBoolean("radialMirrorAlternate");
-            int radialMirrorRadius = compound.getInteger("radialMirrorRadius");
+            int radialMirrorRadius = compound.getInt("radialMirrorRadius");
             boolean radialMirrorDrawLines = compound.getBoolean("radialMirrorDrawLines");
             boolean radialMirrorDrawPlanes = compound.getBoolean("radialMirrorDrawPlanes");
             RadialMirror.RadialMirrorSettings radialMirrorSettings = new RadialMirror.RadialMirrorSettings(radialMirrorEnabled, radialMirrorPosition,
@@ -146,36 +150,36 @@ public class ModifierCapabilityManager {
         }
     }
 
-    public static class Provider implements ICapabilitySerializable<NBTBase> {
+    public static class Provider implements ICapabilitySerializable<INBTBase> {
+
         IModifierCapability inst = modifierCapability.getDefaultInstance();
 
+        @Nonnull
         @Override
-        public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
-            return capability == modifierCapability;
+        public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable EnumFacing side) {
+            return modifierCapability.orEmpty(cap, LazyOptional.of(() -> inst));
         }
 
         @Override
-        public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-            if (capability == modifierCapability) return modifierCapability.<T>cast(inst);
-            return null;
-        }
-
-        @Override
-        public NBTBase serializeNBT() {
+        public INBTBase serializeNBT() {
             return modifierCapability.getStorage().writeNBT(modifierCapability, inst, null);
         }
 
         @Override
-        public void deserializeNBT(NBTBase nbt) {
+        public void deserializeNBT(INBTBase nbt) {
             modifierCapability.getStorage().readNBT(modifierCapability, inst, null, nbt);
         }
+
     }
+
 
     // Allows for the capability to persist after death.
     @SubscribeEvent
     public static void clonePlayer(PlayerEvent.Clone event) {
-        IModifierCapability original = event.getOriginal().getCapability(modifierCapability, null);
-        IModifierCapability clone = event.getEntity().getCapability(modifierCapability, null);
-        clone.setModifierData(original.getModifierData());
+        LazyOptional<IModifierCapability> original = event.getOriginal().getCapability(modifierCapability, null);
+        LazyOptional<IModifierCapability> clone = event.getEntity().getCapability(modifierCapability, null);
+        clone.ifPresent(cloneModifierCapability ->
+                original.ifPresent(originalModifierCapability ->
+                        cloneModifierCapability.setModifierData(originalModifierCapability.getModifierData())));
     }
 }

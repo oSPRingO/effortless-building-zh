@@ -4,15 +4,16 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.Color;
 
-@SideOnly(Side.CLIENT)
+import java.awt.*;
+
+@OnlyIn(Dist.CLIENT)
 public class ModifierRenderer {
 
     protected static final Color colorX = new Color(255, 72, 52);

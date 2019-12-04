@@ -3,10 +3,9 @@ package nl.requios.effortlessbuilding.item;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.*;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
@@ -14,9 +13,12 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.fml.network.NetworkHooks;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
@@ -24,6 +26,8 @@ import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.capability.ItemHandlerCapabilityProvider;
+import nl.requios.effortlessbuilding.gui.RandomizerBagContainer;
+import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 
 import javax.annotation.Nullable;
@@ -39,20 +43,25 @@ public class ItemRandomizerBag extends Item {
     private static Random rand = new Random(currentSeed);
 
     public ItemRandomizerBag() {
-        this.setRegistryName(EffortlessBuilding.MODID, "randomizer_bag");
-        this.setTranslationKey(this.getRegistryName().toString());
+        super(new Item.Properties().group(ItemGroup.TOOLS).maxStackSize(1));
 
-        this.maxStackSize = 1;
-        this.setCreativeTab(CreativeTabs.TOOLS);
+        this.setRegistryName(EffortlessBuilding.MODID, "randomizer_bag");
     }
 
     @Override
-    public EnumActionResult onItemUse(EntityPlayer player, World world, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ) {
+    public EnumActionResult onItemUse(ItemUseContext ctx) {
+        EntityPlayer player = ctx.getPlayer();
+        World world = ctx.getWorld();
+        BlockPos pos = ctx.getPos();
+        EnumFacing facing = ctx.getFace();
+        ItemStack item = ctx.getItem();
 
-        if (player.isSneaking()) {
+        if (player == null) return EnumActionResult.FAIL;
+
+        if (ctx.isPlacerSneaking()) {
             if (world.isRemote) return EnumActionResult.SUCCESS;
             //Open inventory
-            player.openGui(EffortlessBuilding.instance, EffortlessBuilding.RANDOMIZER_BAG_GUI, world, 0, 0, 0);
+            NetworkHooks.openGui((EntityPlayerMP) player, new RandomizerBagGuiHandler());
         } else {
             if (world.isRemote) return EnumActionResult.SUCCESS;
 
@@ -65,7 +74,8 @@ public class ItemRandomizerBag extends Item {
 
             //Use item
             //Get bag inventory
-            ItemStack bag = player.getHeldItem(hand);
+            //TODO offhand support
+            ItemStack bag = player.getHeldItem(EnumHand.MAIN_HAND);
             IItemHandler bagInventory = getBagInventory(bag);
             if (bagInventory == null)
                 return EnumActionResult.FAIL;
@@ -77,14 +87,15 @@ public class ItemRandomizerBag extends Item {
             //bag.setItemDamage(toPlace.getMetadata());
             //toPlace.onItemUse(player, world, pos, hand, facing, hitX, hitY, hitZ);
 
-            if (!world.getBlockState(pos).getBlock().isReplaceable(world, pos)) {
+            //TODO replaceable
+            if (!world.getBlockState(pos).getBlock().getMaterial(world.getBlockState(pos)).isReplaceable()) {
                 pos = pos.offset(facing);
             }
 
-            IBlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(world, pos, facing,
-                    hitX, hitY, hitZ, toPlace.getMetadata(), player, hand);
+            BlockItemUseContext blockItemUseContext = new BlockItemUseContext(world, player, item, pos, facing, ctx.getHitX(), ctx.getHitY(), ctx.getHitZ());
+            IBlockState blockState = Block.getBlockFromItem(toPlace.getItem()).getStateForPlacement(blockItemUseContext);
 
-            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, new Vec3d(hitX, hitY, hitZ), false, false, true);
+            SurvivalHelper.placeBlock(world, player, pos, blockState, toPlace, facing, new Vec3d(ctx.getHitX(), ctx.getHitY(), ctx.getHitZ()), false, false, true);
 
             //Synergy
             //Works without calling
@@ -103,7 +114,7 @@ public class ItemRandomizerBag extends Item {
         if (player.isSneaking()) {
             if (world.isRemote) return new ActionResult<>(EnumActionResult.SUCCESS, bag);
             //Open inventory
-            player.openGui(EffortlessBuilding.instance, EffortlessBuilding.RANDOMIZER_BAG_GUI, world, 0, 0, 0);
+            NetworkHooks.openGui((EntityPlayerMP) player, new RandomizerBagGuiHandler());
         } else {
             //Use item
             //Get bag inventory
@@ -126,8 +137,7 @@ public class ItemRandomizerBag extends Item {
      * @return
      */
     public static IItemHandler getBagInventory(ItemStack bag) {
-        if (!bag.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) return null;
-        return bag.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
+        return bag.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null).orElse(null);
     }
 
     /**
@@ -176,7 +186,7 @@ public class ItemRandomizerBag extends Item {
     }
 
     @Override
-    public int getMaxItemUseDuration(ItemStack stack) {
+    public int getUseDuration(ItemStack p_77626_1_) {
         return 1;
     }
 
@@ -187,14 +197,14 @@ public class ItemRandomizerBag extends Item {
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World world, List<String> tooltip, ITooltipFlag flag) {
-        tooltip.add(TextFormatting.BLUE + "Rightclick" + TextFormatting.GRAY + " to place a random block");
-        tooltip.add(TextFormatting.BLUE + "Sneak + rightclick" + TextFormatting.GRAY + " to open inventory");
+    public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+        tooltip.add(new TextComponentString(TextFormatting.BLUE + "Rightclick" + TextFormatting.GRAY + " to place a random block"));
+        tooltip.add(new TextComponentString(TextFormatting.BLUE + "Sneak + rightclick" + TextFormatting.GRAY + " to open inventory"));
     }
 
     @Override
     public String getTranslationKey() {
-        return super.getTranslationKey();
+        return this.getRegistryName().toString();
     }
 
     public static void resetRandomness() {

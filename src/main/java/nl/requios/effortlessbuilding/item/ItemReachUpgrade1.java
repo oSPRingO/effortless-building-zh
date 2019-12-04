@@ -1,12 +1,13 @@
 package nl.requios.effortlessbuilding.item;
 
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.*;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import nl.requios.effortlessbuilding.BuildConfig;
@@ -20,11 +21,8 @@ import java.util.List;
 public class ItemReachUpgrade1 extends Item {
 
     public ItemReachUpgrade1() {
+        super(new Item.Properties().group(ItemGroup.TOOLS).maxStackSize(1));
         this.setRegistryName(EffortlessBuilding.MODID, "reach_upgrade1");
-        this.setTranslationKey(this.getRegistryName().toString());
-
-        this.maxStackSize = 1;
-        this.setCreativeTab(CreativeTabs.TOOLS);
     }
 
     @Override
@@ -56,12 +54,12 @@ public class ItemReachUpgrade1 extends Item {
     }
 
     @Override
-    public void addInformation(ItemStack stack, @Nullable World world, List<String> tooltip, ITooltipFlag flag) {
-        tooltip.add(TextFormatting.GRAY + "Consume to increase reach to " + TextFormatting.BLUE + BuildConfig.reach.maxReachLevel1);
+    public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+        tooltip.add(new TextComponentString(TextFormatting.GRAY + "Consume to increase reach to " + TextFormatting.BLUE + BuildConfig.reach.maxReachLevel1.get()));
     }
 
     @Override
     public String getTranslationKey() {
-        return super.getTranslationKey();
+        return this.getRegistryName().toString();
     }
 }

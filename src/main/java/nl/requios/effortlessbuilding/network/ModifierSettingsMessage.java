@@ -1,25 +1,24 @@
 package nl.requios.effortlessbuilding.network;
 
-import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.IThreadListener;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import net.minecraftforge.fml.network.NetworkEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Array;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
 
-import static nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.*;
+import java.util.function.Supplier;
+
+import static nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager.ModifierSettings;
 
 /**
  * Shares modifier settings (see ModifierSettingsManager) between server and client
  */
-public class ModifierSettingsMessage implements IMessage {
+public class ModifierSettingsMessage {
 
     private ModifierSettings modifierSettings;
 
@@ -30,10 +29,9 @@ public class ModifierSettingsMessage implements IMessage {
         this.modifierSettings = modifierSettings;
     }
 
-    @Override
-    public void toBytes(ByteBuf buf) {
+    public static void encode(ModifierSettingsMessage message, PacketBuffer buf) {
         //MIRROR
-        Mirror.MirrorSettings m = modifierSettings.getMirrorSettings();
+        Mirror.MirrorSettings m = message.modifierSettings.getMirrorSettings();
         buf.writeBoolean(m != null);
         if (m != null) {
             buf.writeBoolean(m.enabled);
@@ -49,7 +47,7 @@ public class ModifierSettingsMessage implements IMessage {
         }
 
         //ARRAY
-        Array.ArraySettings a = modifierSettings.getArraySettings();
+        Array.ArraySettings a = message.modifierSettings.getArraySettings();
         buf.writeBoolean(a != null);
         if (a != null) {
             buf.writeBoolean(a.enabled);
@@ -59,12 +57,12 @@ public class ModifierSettingsMessage implements IMessage {
             buf.writeInt(a.count);
         }
 
-        buf.writeBoolean(modifierSettings.doQuickReplace());
+        buf.writeBoolean(message.modifierSettings.doQuickReplace());
 
-        buf.writeInt(modifierSettings.getReachUpgrade());
+        buf.writeInt(message.modifierSettings.getReachUpgrade());
 
         //RADIAL MIRROR
-        RadialMirror.RadialMirrorSettings r = modifierSettings.getRadialMirrorSettings();
+        RadialMirror.RadialMirrorSettings r = message.modifierSettings.getRadialMirrorSettings();
         buf.writeBoolean(r != null);
         if (r != null) {
             buf.writeBoolean(r.enabled);
@@ -79,8 +77,7 @@ public class ModifierSettingsMessage implements IMessage {
         }
     }
 
-    @Override
-    public void fromBytes(ByteBuf buf) {
+    public static ModifierSettingsMessage decode(PacketBuffer buf) {
         //MIRROR
         Mirror.MirrorSettings m = new Mirror.MirrorSettings();
         if (buf.readBoolean()) {
@@ -93,7 +90,7 @@ public class ModifierSettingsMessage implements IMessage {
             boolean mirrorDrawLines = buf.readBoolean();
             boolean mirrorDrawPlanes = buf.readBoolean();
             m = new Mirror.MirrorSettings(mirrorEnabled, mirrorPosition, mirrorX, mirrorY, mirrorZ, mirrorRadius,
-                            mirrorDrawLines, mirrorDrawPlanes);
+                    mirrorDrawLines, mirrorDrawPlanes);
         }
 
         //ARRAY
@@ -120,35 +117,28 @@ public class ModifierSettingsMessage implements IMessage {
             boolean radialMirrorDrawLines = buf.readBoolean();
             boolean radialMirrorDrawPlanes = buf.readBoolean();
             r = new RadialMirror.RadialMirrorSettings(radialMirrorEnabled, radialMirrorPosition, radialMirrorSlices,
-                            radialMirrorAlternate, radialMirrorRadius, radialMirrorDrawLines, radialMirrorDrawPlanes);
+                    radialMirrorAlternate, radialMirrorRadius, radialMirrorDrawLines, radialMirrorDrawPlanes);
         }
 
-        modifierSettings = new ModifierSettings(m, a, r, quickReplace, reachUpgrade);
+        ModifierSettings modifierSettings = new ModifierSettings(m, a, r, quickReplace, reachUpgrade);
+        return new ModifierSettingsMessage(modifierSettings);
     }
 
-    // The params of the IMessageHandler are <REQ, REPLY>
-    public static class MessageHandler implements IMessageHandler<ModifierSettingsMessage, IMessage> {
-        // Do note that the default constructor is required, but implicitly defined in this case
+    public static class Handler
+    {
+        public static void handle(ModifierSettingsMessage message, Supplier<NetworkEvent.Context> ctx)
+        {
+            ctx.get().enqueueWork(() -> {
+                EffortlessBuilding.log("ModifierSettingsMessage");
 
-        @Override
-        public IMessage onMessage(ModifierSettingsMessage message, MessageContext ctx) {
-            //EffortlessBuilding.log("message received on " + ctx.side + " side");
-
-            // The value that was sent
-            ModifierSettings modifierSettings = message.modifierSettings;
-
-            // Execute the action on the main server thread by adding it as a scheduled task
-            IThreadListener threadListener = EffortlessBuilding.proxy.getThreadListenerFromContext(ctx);
-            threadListener.addScheduledTask(() -> {
                 EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 // Sanitize
-                ModifierSettingsManager.sanitize(modifierSettings, player);
+                ModifierSettingsManager.sanitize(message.modifierSettings, player);
 
-                ModifierSettingsManager.setModifierSettings(player, modifierSettings);
+                ModifierSettingsManager.setModifierSettings(player, message.modifierSettings);
             });
-            // No response packet
-            return null;
+            ctx.get().setPacketHandled(true);
         }
     }
 }
