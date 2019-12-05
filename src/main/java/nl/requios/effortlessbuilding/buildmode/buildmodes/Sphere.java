@@ -56,7 +56,7 @@ public class Sphere extends ThreeClicksBuildMode {
         if (ModeOptions.getFill() == ModeOptions.ActionEnum.FULL)
             addSphereBlocks(list, x1, y1, z1, x3, y3, z3, centerX, centerY, centerZ, radiusX, radiusY, radiusZ);
         else
-            addHollowSphereBlocks(list, x1, y1, z1, x3, y3, z3, centerX, centerY, centerZ, radiusX, radiusY, radiusZ, 1f);
+            addHollowSphereBlocks(list, x1, y1, z1, x3, y3, z3, centerX, centerY, centerZ, radiusX, radiusY, radiusZ);
 
         return list;
     }
@@ -71,7 +71,7 @@ public class Sphere extends ThreeClicksBuildMode {
 
                     float distance = distance(l, m, n, centerX, centerY, centerZ);
                     float radius = calculateSpheroidRadius(centerX, centerY, centerZ, radiusX, radiusY, radiusZ, l, m, n);
-                    if (distance < radius + 0.5f)
+                    if (distance < radius + 0.4f)
                         list.add(new BlockPos(l, m, n));
                 }
             }
@@ -79,7 +79,7 @@ public class Sphere extends ThreeClicksBuildMode {
     }
 
     public static void addHollowSphereBlocks(List<BlockPos> list, int x1, int y1, int z1, int x2, int y2, int z2,
-                                             float centerX, float centerY, float centerZ, float radiusX, float radiusY, float radiusZ, float thickness) {
+                                             float centerX, float centerY, float centerZ, float radiusX, float radiusY, float radiusZ) {
         for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
 
             for (int n = z1; z1 < z2 ? n <= z2 : n >= z2; n += z1 < z2 ? 1 : -1) {
@@ -88,7 +88,7 @@ public class Sphere extends ThreeClicksBuildMode {
 
                     float distance = distance(l, m, n, centerX, centerY, centerZ);
                     float radius = calculateSpheroidRadius(centerX, centerY, centerZ, radiusX, radiusY, radiusZ, l, m, n);
-                    if (distance < radius + (thickness / 2f) && distance > radius - (thickness / 2f))
+                    if (distance < radius + 0.4f && distance > radius - 0.6f)
                         list.add(new BlockPos(l, m, n));
                 }
             }

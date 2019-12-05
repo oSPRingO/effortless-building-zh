@@ -198,13 +198,15 @@ public class BlockPreviewRenderer {
                     //if so, renew randomness of randomizer bag
                     ItemRandomizerBag.renewRandomness();
                     //and play sound (max once every tick)
-                    if (startCoordinates.size() > 1 && blockStates.size() > 1 && soundTime < ClientProxy.ticksInGame - 0) {
+                    if (newCoordinates.size() > 1 && blockStates.size() > 1 && soundTime < ClientProxy.ticksInGame - 0) {
                         soundTime = ClientProxy.ticksInGame;
 
-                        SoundType soundType = blockStates.get(0).getBlock().getSoundType(blockStates.get(0), player.world,
-                                newCoordinates.get(0), player);
-                        player.world.playSound(player, player.getPosition(), breaking ? soundType.getBreakSound() : soundType.getPlaceSound(),
-                                SoundCategory.BLOCKS, 0.3f, 0.8f);
+                        if (blockStates.get(0) != null) {
+                            SoundType soundType = blockStates.get(0).getBlock().getSoundType(blockStates.get(0), player.world,
+                                    newCoordinates.get(0), player);
+                            player.world.playSound(player, player.getPosition(), breaking ? soundType.getBreakSound() : soundType.getPlaceSound(),
+                                    SoundCategory.BLOCKS, 0.3f, 0.8f);
+                        }
                     }
                 }
 
