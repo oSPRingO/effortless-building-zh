@@ -95,7 +95,7 @@ public class BlockPreviewRenderer {
         });
 
         //Render block previews
-        BlockRayTraceResult lookingAt = ClientProxy.getLookingAt(player);
+        RayTraceResult lookingAt = ClientProxy.getLookingAt(player);
         if (modeSettings.getBuildMode() == BuildModes.BuildModeEnum.NORMAL) lookingAt = Minecraft.getInstance().objectMouseOver;
 
         ItemStack mainhand = player.getHeldItemMainhand();
@@ -107,14 +107,15 @@ public class BlockPreviewRenderer {
 
         //Checking for null is necessary! Even in vanilla when looking down ladders it is occasionally null (instead of Type MISS)
         if (lookingAt != null && lookingAt.getType() == RayTraceResult.Type.BLOCK) {
-            startPos = lookingAt.getPos();
+            BlockRayTraceResult blockLookingAt = (BlockRayTraceResult) lookingAt;
+            startPos = blockLookingAt.getPos();
 
             //Check if tool (or none) in hand
             //TODO 1.13 replaceable
             boolean replaceable = player.world.getBlockState(startPos).getBlock().getMaterial(player.world.getBlockState(startPos)).isReplaceable();
-            boolean becomesDoubleSlab = SurvivalHelper.doesBecomeDoubleSlab(player, startPos, lookingAt.getFace());
+            boolean becomesDoubleSlab = SurvivalHelper.doesBecomeDoubleSlab(player, startPos, blockLookingAt.getFace());
             if (!modifierSettings.doQuickReplace() && !toolInHand && !replaceable && !becomesDoubleSlab) {
-                startPos = startPos.offset(lookingAt.getFace());
+                startPos = startPos.offset(blockLookingAt.getFace());
             }
 
             //Get under tall grass and other replaceable blocks
@@ -122,8 +123,8 @@ public class BlockPreviewRenderer {
                 startPos = startPos.down();
             }
 
-            sideHit = lookingAt.getFace();
-            hitVec = lookingAt.getHitVec();
+            sideHit = blockLookingAt.getFace();
+            hitVec = blockLookingAt.getHitVec();
         }
 
         //Dont render if in normal mode and modifiers are disabled
@@ -265,10 +266,11 @@ public class BlockPreviewRenderer {
             RenderHandler.beginLines();
             //Draw outlines if tool in hand
             //Find proper raytrace: either normal range or increased range depending on canBreakFar
-            BlockRayTraceResult objectMouseOver = Minecraft.getInstance().objectMouseOver;
-            BlockRayTraceResult breakingRaytrace = ReachHelper.canBreakFar(player) ? lookingAt : objectMouseOver;
+            RayTraceResult objectMouseOver = Minecraft.getInstance().objectMouseOver;
+            RayTraceResult breakingRaytrace = ReachHelper.canBreakFar(player) ? lookingAt : objectMouseOver;
             if (toolInHand && breakingRaytrace != null && breakingRaytrace.getType() == RayTraceResult.Type.BLOCK) {
-                List<BlockPos> breakCoordinates = BuildModifiers.findCoordinates(player, breakingRaytrace.getPos());
+                BlockRayTraceResult blockBreakingRaytrace = (BlockRayTraceResult) breakingRaytrace;
+                List<BlockPos> breakCoordinates = BuildModifiers.findCoordinates(player, blockBreakingRaytrace.getPos());
 
                 //Only render first outline if further than normal reach
                 boolean excludeFirst = objectMouseOver != null && objectMouseOver.getType() == RayTraceResult.Type.BLOCK;

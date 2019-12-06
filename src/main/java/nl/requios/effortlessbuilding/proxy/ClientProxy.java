@@ -55,8 +55,8 @@ import java.util.function.Supplier;
 @Mod.EventBusSubscriber(value = {Dist.CLIENT})
 public class ClientProxy implements IProxy {
     public static KeyBinding[] keyBindings;
-    public static BlockRayTraceResult previousLookAt;
-    public static BlockRayTraceResult currentLookAt;
+    public static RayTraceResult previousLookAt;
+    public static RayTraceResult currentLookAt;
     private static int placeCooldown = 0;
     private static int breakCooldown = 0;
     private static boolean shadersInitialized = false;
@@ -83,10 +83,10 @@ public class ClientProxy implements IProxy {
         keyBindings[2] = new KeyBinding("key.effortlessbuilding.creative.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_F4, 0), "key.effortlessbuilding.category");
         keyBindings[3] = new KeyBinding("key.effortlessbuilding.mode.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_LEFT_ALT, 0), "key.effortlessbuilding.category") {
             @Override
-            public boolean func_197983_b(KeyBinding other) {
+            public boolean conflicts(KeyBinding other) {
                 //Does not conflict with Chisels and Bits radial menu
                 if (other.getKey().getKeyCode() == getKey().getKeyCode() && other.getKeyDescription().equals("mod.chiselsandbits.other.mode")) return false;
-                return super.func_197983_b(other);
+                return super.conflicts(other);
             }
         };
         keyBindings[4] = new KeyBinding("key.effortlessbuilding.undo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, InputMappings.getInputByCode(GLFW.GLFW_KEY_Z, 0), "key.effortlessbuilding.category");
@@ -106,28 +106,19 @@ public class ClientProxy implements IProxy {
     }
 
     @SubscribeEvent
-    public static void onEntityJoinWorld(EntityJoinWorldEvent event) {
-        if (event.getEntity() == Minecraft.getInstance().player) {
-            event.getWorld().addEventListener(new RenderHandler());
-        }
-    }
-
-    @SubscribeEvent
     public static void onTextureStitch(final TextureStitchEvent.Pre event) {
         //register icon textures
-        final AtlasTexture map = event.getMap();
-
         for ( final BuildModes.BuildModeEnum mode : BuildModes.BuildModeEnum.values() )
         {
             final ResourceLocation sprite = new ResourceLocation(EffortlessBuilding.MODID, "icons/" + mode.name().toLowerCase());
-            map.registerSprite(Minecraft.getInstance().getResourceManager(), sprite);
+            event.addSprite(sprite);
             buildModeIcons.put(mode, sprite);
         }
 
         for ( final ModeOptions.ActionEnum action : ModeOptions.ActionEnum.values() )
         {
             final ResourceLocation sprite = new ResourceLocation(EffortlessBuilding.MODID, "icons/" + action.name().toLowerCase());
-            map.registerSprite(Minecraft.getInstance().getResourceManager(), sprite);
+            event.addSprite(sprite);
             modeOptionIcons.put(action, sprite);
         }
     }
@@ -162,7 +153,7 @@ public class ClientProxy implements IProxy {
                     currentLookAt = objectMouseOver;
                     previousLookAt = objectMouseOver;
                 } else {
-                    if (currentLookAt.getPos() != objectMouseOver.getPos()) {
+                    if (((BlockRayTraceResult) currentLookAt).getPos() != ((BlockRayTraceResult) objectMouseOver).getPos()) {
                         previousLookAt = currentLookAt;
                         currentLookAt = objectMouseOver;
                     }
@@ -210,21 +201,27 @@ public class ClientProxy implements IProxy {
                     ItemStack itemStack = CompatHelper.getItemBlockFromStack(currentItemStack);
 
                     //find position in distance
-                    BlockRayTraceResult lookingAt = getLookingAt(player);
-                    BuildModes.onBlockPlacedMessage(player, lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt, true));
-                    PacketHandler.INSTANCE.sendToServer(lookingAt == null ? new BlockPlacedMessage() : new BlockPlacedMessage(lookingAt, true));
+                    RayTraceResult lookingAt = getLookingAt(player);
+                    if (lookingAt != null && lookingAt.getType() == RayTraceResult.Type.BLOCK) {
+                        BlockRayTraceResult blockLookingAt = (BlockRayTraceResult) lookingAt;
 
-                    //play sound if further than normal
-                    if (lookingAt != null && lookingAt.getType() == RayTraceResult.Type.BLOCK &&
-                        (lookingAt.getHitVec().subtract(player.getEyePosition(1f))).lengthSquared() > 25f &&
-                        itemStack.getItem() instanceof BlockItem) {
+                        BuildModes.onBlockPlacedMessage(player, new BlockPlacedMessage(blockLookingAt, true));
+                        PacketHandler.INSTANCE.sendToServer(new BlockPlacedMessage(blockLookingAt, true));
 
-                        BlockState state = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
-                        BlockPos blockPos = lookingAt.getPos();
-                        SoundType soundType = state.getBlock().getSoundType(state, player.world, blockPos, player);
-                        player.world.playSound(player, player.getPosition(), soundType.getPlaceSound(), SoundCategory.BLOCKS,
-                                0.4f, soundType.getPitch() * 1f);
-                        player.swingArm(Hand.MAIN_HAND);
+                        //play sound if further than normal
+                        if ((blockLookingAt.getHitVec().subtract(player.getEyePosition(1f))).lengthSquared() > 25f &&
+                            itemStack.getItem() instanceof BlockItem) {
+
+                            BlockState state = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
+                            BlockPos blockPos = blockLookingAt.getPos();
+                            SoundType soundType = state.getBlock().getSoundType(state, player.world, blockPos, player);
+                            player.world.playSound(player, player.getPosition(), soundType.getPlaceSound(), SoundCategory.BLOCKS,
+                                    0.4f, soundType.getPitch() * 1f);
+                            player.swingArm(Hand.MAIN_HAND);
+                        }
+                    } else {
+                        BuildModes.onBlockPlacedMessage(player, new BlockPlacedMessage());
+                        PacketHandler.INSTANCE.sendToServer(new BlockPlacedMessage());
                     }
                 }
             }
@@ -248,20 +245,26 @@ public class ClientProxy implements IProxy {
                 //  moving it to after buildmodes fixes that, but introduces this bug
                 if (!ReachHelper.canBreakFar(player)) return;
 
-                BlockRayTraceResult lookingAt = getLookingAt(player);
-                BuildModes.onBlockBrokenMessage(player, lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
-                PacketHandler.INSTANCE.sendToServer(lookingAt == null ? new BlockBrokenMessage() : new BlockBrokenMessage(lookingAt));
+                RayTraceResult lookingAt = getLookingAt(player);
+                if (lookingAt != null && lookingAt.getType() == RayTraceResult.Type.BLOCK) {
+                    BlockRayTraceResult blockLookingAt = (BlockRayTraceResult) lookingAt;
 
-                //play sound if further than normal
-                if (lookingAt != null && lookingAt.getType() == RayTraceResult.Type.BLOCK &&
-                    (lookingAt.getHitVec().subtract(player.getEyePosition(1f))).lengthSquared() > 25f) {
+                    BuildModes.onBlockBrokenMessage(player, new BlockBrokenMessage(blockLookingAt));
+                    PacketHandler.INSTANCE.sendToServer(new BlockBrokenMessage(blockLookingAt));
 
-                    BlockPos blockPos = lookingAt.getPos();
-                    BlockState state = player.world.getBlockState(blockPos);
-                    SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
-                    player.world.playSound(player, player.getPosition(), soundtype.getBreakSound(), SoundCategory.BLOCKS,
-                            0.4f, soundtype.getPitch() * 1f);
-                    player.swingArm(Hand.MAIN_HAND);
+                    //play sound if further than normal
+                    if ((blockLookingAt.getHitVec().subtract(player.getEyePosition(1f))).lengthSquared() > 25f) {
+
+                        BlockPos blockPos = blockLookingAt.getPos();
+                        BlockState state = player.world.getBlockState(blockPos);
+                        SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
+                        player.world.playSound(player, player.getPosition(), soundtype.getBreakSound(), SoundCategory.BLOCKS,
+                                0.4f, soundtype.getPitch() * 1f);
+                        player.swingArm(Hand.MAIN_HAND);
+                    }
+                } else {
+                    BuildModes.onBlockBrokenMessage(player, new BlockBrokenMessage());
+                    PacketHandler.INSTANCE.sendToServer(new BlockBrokenMessage());
                 }
             }
             else if (buildMode == BuildModes.BuildModeEnum.NORMAL_PLUS) {
@@ -371,7 +374,7 @@ public class ClientProxy implements IProxy {
     }
 
     @Nullable
-    public static BlockRayTraceResult getLookingAt(PlayerEntity player) {
+    public static RayTraceResult getLookingAt(PlayerEntity player) {
         World world = player.world;
 
         //base distance off of player ability (config)
@@ -381,7 +384,7 @@ public class ClientProxy implements IProxy {
         Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
         Vec3d end = new Vec3d(player.posX + look.x * raytraceRange, player.posY + player.getEyeHeight() + look.y * raytraceRange, player.posZ + look.z * raytraceRange);
 //        return player.rayTrace(raytraceRange, 1f, RayTraceFluidMode.NEVER);
-        //TODO 1.14 check if correct, make sure it is a blockraytraceresult
+        //TODO 1.14 check if correct
         return world.rayTraceBlocks(new RayTraceContext(start, end, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, player));
     }
 

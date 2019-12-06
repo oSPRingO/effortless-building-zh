@@ -1,5 +1,6 @@
 package nl.requios.effortlessbuilding.gui.buildmodifier;
 
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.ResourceLocation;
@@ -41,8 +42,8 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
     }
 
     @Override
-    public int initGui(int id, List<Button> buttonList) {
-        id = super.initGui(id, buttonList);
+    public void init(List<Widget> buttonList) {
+        super.init(buttonList);
 
         int y = top - 2;
         buttonMirrorEnabled = new GuiCheckBox(left - 15 + 8, y, "", false) {
@@ -55,18 +56,18 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonList.add(buttonMirrorEnabled);
 
         y = top + 18;
-        textMirrorPosX = new GuiNumberField(id++, id++, id++, font, buttonList, left + 58, y, 62, 18);
+        textMirrorPosX = new GuiNumberField(font, buttonList, left + 58, y, 62, 18);
         textMirrorPosX.setNumber(0);
         textMirrorPosX.setTooltip(
                 Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         mirrorNumberFieldList.add(textMirrorPosX);
 
-        textMirrorPosY = new GuiNumberField(id++, id++, id++, font, buttonList, left + 138, y, 62, 18);
+        textMirrorPosY = new GuiNumberField(font, buttonList, left + 138, y, 62, 18);
         textMirrorPosY.setNumber(64);
         textMirrorPosY.setTooltip(Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         mirrorNumberFieldList.add(textMirrorPosY);
 
-        textMirrorPosZ = new GuiNumberField(id++, id++, id++, font, buttonList, left + 218, y, 62, 18);
+        textMirrorPosZ = new GuiNumberField(font, buttonList, left + 218, y, 62, 18);
         textMirrorPosZ.setNumber(0);
         textMirrorPosZ.setTooltip(Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         mirrorNumberFieldList.add(textMirrorPosZ);
@@ -82,7 +83,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         mirrorButtonList.add(buttonMirrorZ);
 
         y = top + 47;
-        textMirrorRadius = new GuiNumberField(id++, id++, id++, font, buttonList, left + 218, y, 62, 18);
+        textMirrorRadius = new GuiNumberField(font, buttonList, left + 218, y, 62, 18);
         textMirrorRadius.setNumber(50);
         //TODO change to diameter (remove /2)
         textMirrorRadius.setTooltip(Arrays.asList("How far the mirror reaches in any direction.",
@@ -91,62 +92,46 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         mirrorNumberFieldList.add(textMirrorRadius);
 
         y = top + 72;
-        buttonCurrentPosition = new GuiIconButton(id++, left + 5, y, 0, 0, BUILDING_ICONS) {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                super.onClick(mouseX, mouseY);
-                Vec3d pos = new Vec3d(Math.floor(mc.player.posX) + 0.5, Math.floor(mc.player.posY) + 0.5, Math.floor(mc.player.posZ) + 0.5);
-                textMirrorPosX.setNumber(pos.x);
-                textMirrorPosY.setNumber(pos.y);
-                textMirrorPosZ.setNumber(pos.z);
-            }
-        };
+        buttonCurrentPosition = new GuiIconButton(left + 5, y, 0, 0, BUILDING_ICONS, button -> {
+            Vec3d pos = new Vec3d(Math.floor(mc.player.posX) + 0.5, Math.floor(mc.player.posY) + 0.5, Math.floor(mc.player.posZ) + 0.5);
+            textMirrorPosX.setNumber(pos.x);
+            textMirrorPosY.setNumber(pos.y);
+            textMirrorPosZ.setNumber(pos.z);
+        });
         buttonCurrentPosition.setTooltip("Set mirror position to current player position");
         mirrorIconButtonList.add(buttonCurrentPosition);
 
-        buttonToggleOdd = new GuiIconButton(id++, left + 35, y, 0, 20, BUILDING_ICONS) {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                super.onClick(mouseX, mouseY);
-                toggleOdd = !toggleOdd;
-                buttonToggleOdd.setUseAlternateIcon(toggleOdd);
-                if (toggleOdd) {
-                    buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
-                    textMirrorPosX.setNumber(textMirrorPosX.getNumber() + 0.5);
-                    textMirrorPosY.setNumber(textMirrorPosY.getNumber() + 0.5);
-                    textMirrorPosZ.setNumber(textMirrorPosZ.getNumber() + 0.5);
-                } else {
-                    buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
-                    textMirrorPosX.setNumber(Math.floor(textMirrorPosX.getNumber()));
-                    textMirrorPosY.setNumber(Math.floor(textMirrorPosY.getNumber()));
-                    textMirrorPosZ.setNumber(Math.floor(textMirrorPosZ.getNumber()));
-                }
+        buttonToggleOdd = new GuiIconButton(left + 35, y, 0, 20, BUILDING_ICONS, button -> {
+            toggleOdd = !toggleOdd;
+            buttonToggleOdd.setUseAlternateIcon(toggleOdd);
+            if (toggleOdd) {
+                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
+                textMirrorPosX.setNumber(textMirrorPosX.getNumber() + 0.5);
+                textMirrorPosY.setNumber(textMirrorPosY.getNumber() + 0.5);
+                textMirrorPosZ.setNumber(textMirrorPosZ.getNumber() + 0.5);
+            } else {
+                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+                textMirrorPosX.setNumber(Math.floor(textMirrorPosX.getNumber()));
+                textMirrorPosY.setNumber(Math.floor(textMirrorPosY.getNumber()));
+                textMirrorPosZ.setNumber(Math.floor(textMirrorPosZ.getNumber()));
             }
-        };
+        });
         buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
         mirrorIconButtonList.add(buttonToggleOdd);
 
-        buttonDrawLines = new GuiIconButton(id++, left + 65, y, 0, 40, BUILDING_ICONS) {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                super.onClick(mouseX, mouseY);
-                drawLines = !drawLines;
-                buttonDrawLines.setUseAlternateIcon(drawLines);
-                buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
-            }
-        };
+        buttonDrawLines = new GuiIconButton(left + 65, y, 0, 40, BUILDING_ICONS, button -> {
+            drawLines = !drawLines;
+            buttonDrawLines.setUseAlternateIcon(drawLines);
+            buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
+        });
         buttonDrawLines.setTooltip("Show lines");
         mirrorIconButtonList.add(buttonDrawLines);
 
-        buttonDrawPlanes = new GuiIconButton(id++, left + 95, y, 0, 60, BUILDING_ICONS) {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                super.onClick(mouseX, mouseY);
-                drawPlanes = !drawPlanes;
-                buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
-                buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
-            }
-        };
+        buttonDrawPlanes = new GuiIconButton(left + 95, y, 0, 60, BUILDING_ICONS, button -> {
+            drawPlanes = !drawPlanes;
+            buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
+            buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
+        });
         buttonDrawPlanes.setTooltip("Show area");
         mirrorIconButtonList.add(buttonDrawPlanes);
 
@@ -181,8 +166,6 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonList.addAll(mirrorIconButtonList);
 
         setCollapsed(!buttonMirrorEnabled.isChecked());
-
-        return id;
     }
 
     @Override

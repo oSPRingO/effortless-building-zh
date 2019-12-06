@@ -19,12 +19,12 @@ public class GuiIconButton extends Button {
     List<String> tooltip = new ArrayList<>();
     private boolean useAltIcon = false;
 
-    public GuiIconButton(int buttonId, int x, int y, int iconX, int iconY, ResourceLocation resourceLocation) {
-        this(buttonId, x, y, 20, 20, iconX, iconY, 20, 20, 20, 0, resourceLocation);
+    public GuiIconButton(int x, int y, int iconX, int iconY, ResourceLocation resourceLocation, Button.IPressable onPress) {
+        this(x, y, 20, 20, iconX, iconY, 20, 20, 20, 0, resourceLocation, onPress);
     }
 
-    public GuiIconButton(int buttonId, int x, int y, int width, int height, int iconX, int iconY, int iconWidth, int iconHeight, int iconAltX, int iconAltY, ResourceLocation resourceLocation) {
-        super(buttonId, x, y, width, height, "");
+    public GuiIconButton(int x, int y, int width, int height, int iconX, int iconY, int iconWidth, int iconHeight, int iconAltX, int iconAltY, ResourceLocation resourceLocation, Button.IPressable onPress) {
+        super(x, y, width, height, "", onPress);
         this.iconX = iconX;
         this.iconY = iconY;
         this.iconWidth = iconWidth;
@@ -51,7 +51,7 @@ public class GuiIconButton extends Button {
         super.render(mouseX, mouseY, partialTicks);
         if (this.visible)
         {
-            this.hovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width && mouseY < this.y + this.height;
+            this.isHovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width && mouseY < this.y + this.height;
             Minecraft.getInstance().getTextureManager().bindTexture(this.resourceLocation);
             int currentIconX = this.iconX;
             int currentIconY = this.iconY;
@@ -62,17 +62,18 @@ public class GuiIconButton extends Button {
                 currentIconY += iconAltY;
             }
 
-            this.drawTexturedModalRect(this.x, this.y, currentIconX, currentIconY, this.iconWidth, this.iconHeight);
+            //Draws a textured rectangle at the current z-value. Used to be drawTexturedModalRect in Gui.
+            this.blit(this.x, this.y, currentIconX, currentIconY, this.iconWidth, this.iconHeight);
         }
     }
 
-    public void drawTooltip(Screen guiScreen, int mouseX, int mouseY) {
+    public void drawTooltip(Screen screen, int mouseX, int mouseY) {
         boolean flag = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
 
         if (flag) {
             List<String> textLines = new ArrayList<>();
             textLines.addAll(tooltip);
-            guiScreen.drawHoveringText(textLines, mouseX - 10, mouseY + 25);
+            screen.renderTooltip(textLines, mouseX - 10, mouseY + 25);
         }
     }
 }

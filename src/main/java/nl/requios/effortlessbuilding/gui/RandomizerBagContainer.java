@@ -20,6 +20,8 @@ public class RandomizerBagContainer extends Container {
             HOTBAR_START = INV_END + 1, HOTBAR_END = HOTBAR_START + 8;
 
     public RandomizerBagContainer(PlayerInventory parInventoryPlayer, IItemHandler parIInventory) {
+        //TODO 1.14 Gui
+        super(null, 0);
         bagInventory = parIInventory;
         sizeInventory = bagInventory.getSlots();
         for (int i = 0; i < sizeInventory; ++i) {

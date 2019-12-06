@@ -1,6 +1,8 @@
 package nl.requios.effortlessbuilding;
 
 import net.minecraft.block.Block;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.item.BlockItem;
 import net.minecraftforge.event.RegistryEvent;
@@ -18,8 +20,7 @@ public class ModEventHandler {
     }
 
     @SubscribeEvent
-    public static void registerItems(RegistryEvent.Register<Item> event)
-    {
+    public static void registerItems(RegistryEvent.Register<Item> event) {
         event.getRegistry().registerAll(EffortlessBuilding.ITEMS);
 
         for (Block block : EffortlessBuilding.BLOCKS)
@@ -27,4 +28,10 @@ public class ModEventHandler {
             event.getRegistry().register(new BlockItem(block, new Item.Properties()).setRegistryName(block.getRegistryName()));
         }
     }
+
+    //TODO 1.14 Gui
+//    @SubscribeEvent
+//    public static void registerContainerTypes(RegistryEvent.Register<ContainerType<?>> event) {
+//        event.getRegistry().register()
+//    }
 }

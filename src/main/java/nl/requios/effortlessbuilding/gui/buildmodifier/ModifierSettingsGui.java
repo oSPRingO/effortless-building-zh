@@ -3,6 +3,8 @@ package nl.requios.effortlessbuilding.gui.buildmodifier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
@@ -25,11 +27,13 @@ public class ModifierSettingsGui extends Screen {
     private ArraySettingsGui arraySettingsGui;
     private RadialMirrorSettingsGui radialMirrorSettingsGui;
 
+    public ModifierSettingsGui() {
+        super(new TranslationTextComponent("effortlessbuilding.screen.modifier_settings"));
+    }
+
     @Override
     //Create buttons and labels and add them to buttonList/labelList
-    public void initGui() {
-        int id = 0;
-
+    protected void init() {
         scrollPane = new GuiScrollPane(this, font, 8, height - 30);
 
         mirrorSettingsGui = new MirrorSettingsGui(scrollPane);
@@ -41,19 +45,14 @@ public class ModifierSettingsGui extends Screen {
         radialMirrorSettingsGui = new RadialMirrorSettingsGui(scrollPane);
         scrollPane.AddListEntry(radialMirrorSettingsGui);
 
-        id = scrollPane.initGui(id, buttons);
+        scrollPane.init(buttons);
 
         //Close button
         int y = height - 26;
-        buttonClose = new Button(width / 2 - 100, y, "Close") {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                super.onClick(mouseX, mouseY);
-                Minecraft.getInstance().player.closeScreen();
-            }
-        };
+        buttonClose = new Button(width / 2 - 100, y, 200, 20, "Close", (button) -> {
+            Minecraft.getInstance().player.closeScreen();
+        });
         buttons.add(buttonClose);
-
     }
 
     @Override
@@ -68,9 +67,9 @@ public class ModifierSettingsGui extends Screen {
     //Set colors using GL11, use the fontObj field to display text
     //Use drawTexturedModalRect() to transfers areas of a texture resource to the screen
     public void render(int mouseX, int mouseY, float partialTicks) {
-        this.drawDefaultBackground();
+        this.renderBackground();
 
-        scrollPane.drawScreen(mouseX, mouseY, partialTicks);
+        scrollPane.render(mouseX, mouseY, partialTicks);
 
         buttonClose.render(mouseX, mouseY, partialTicks);
 
@@ -83,7 +82,7 @@ public class ModifierSettingsGui extends Screen {
         super.charTyped(typedChar, keyCode);
         scrollPane.charTyped(typedChar, keyCode);
         if (keyCode == ClientProxy.keyBindings[0].getKey().getKeyCode()) {
-            mc.player.closeScreen();
+            minecraft.player.closeScreen();
         }
         return false;
     }
@@ -115,7 +114,7 @@ public class ModifierSettingsGui extends Screen {
     }
 
     @Override
-    public void onGuiClosed() {
+    public void onClose() {
         scrollPane.onGuiClosed();
 
         //save everything
@@ -123,17 +122,17 @@ public class ModifierSettingsGui extends Screen {
         Array.ArraySettings a = arraySettingsGui.getArraySettings();
         RadialMirror.RadialMirrorSettings r = radialMirrorSettingsGui.getRadialMirrorSettings();
 
-        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
+        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(minecraft.player);
         if (modifierSettings == null) modifierSettings = new ModifierSettingsManager.ModifierSettings();
         modifierSettings.setMirrorSettings(m);
         modifierSettings.setArraySettings(a);
         modifierSettings.setRadialMirrorSettings(r);
 
         //Sanitize
-        String error = ModifierSettingsManager.sanitize(modifierSettings, mc.player);
-        if (!error.isEmpty()) EffortlessBuilding.log(mc.player, error);
+        String error = ModifierSettingsManager.sanitize(modifierSettings, minecraft.player);
+        if (!error.isEmpty()) EffortlessBuilding.log(minecraft.player, error);
 
-        ModifierSettingsManager.setModifierSettings(mc.player, modifierSettings);
+        ModifierSettingsManager.setModifierSettings(minecraft.player, modifierSettings);
 
         //Send to server
         PacketHandler.INSTANCE.sendToServer(new ModifierSettingsMessage(modifierSettings));

@@ -2,7 +2,7 @@ package nl.requios.effortlessbuilding.gui.elements;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.font;
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraftforge.api.distmarker.Dist;
@@ -27,14 +27,11 @@ public abstract class GuiCollapsibleScrollEntry implements GuiScrollPane.IScroll
     }
 
     @Override
-    public int initGui(int id, List<Button> buttonList) {
-
-        left = scrollPane.width / 2 - 140;
-        right = scrollPane.width / 2 + 140;
-        top = scrollPane.height / 2 - 100;
-        bottom = scrollPane.height / 2 + 100;
-
-        return id;
+    public void init(List<Widget> buttonList) {
+        left = scrollPane.getWidth() / 2 - 140;
+        right = scrollPane.getWidth() / 2 + 140;
+        top = scrollPane.getHeight() / 2 - 100;
+        bottom = scrollPane.getHeight() / 2 + 100;
     }
 
     @Override

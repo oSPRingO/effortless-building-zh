@@ -1,5 +1,6 @@
 package nl.requios.effortlessbuilding.gui.buildmodifier;
 
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.ResourceLocation;
@@ -41,8 +42,8 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
     }
 
     @Override
-    public int initGui(int id, List<Button> buttonList) {
-        id = super.initGui(id, buttonList);
+    public void init(List<Widget> buttonList) {
+        super.init(buttonList);
 
         int y = top - 2;
         buttonRadialMirrorEnabled = new GuiCheckBox(left - 15 + 8, y, "", false) {
@@ -55,29 +56,29 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonList.add(buttonRadialMirrorEnabled);
 
         y = top + 18;
-        textRadialMirrorPosX = new GuiNumberField(id++, id++, id++, font, buttonList, left + 58, y, 62, 18);
+        textRadialMirrorPosX = new GuiNumberField(font, buttonList, left + 58, y, 62, 18);
         textRadialMirrorPosX.setNumber(0);
         textRadialMirrorPosX.setTooltip(
                 Arrays.asList("The position of the radial mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         radialMirrorNumberFieldList.add(textRadialMirrorPosX);
 
-        textRadialMirrorPosY = new GuiNumberField(id++, id++, id++, font, buttonList, left + 138, y, 62, 18);
+        textRadialMirrorPosY = new GuiNumberField(font, buttonList, left + 138, y, 62, 18);
         textRadialMirrorPosY.setNumber(64);
         textRadialMirrorPosY.setTooltip(Arrays.asList("The position of the radial mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         radialMirrorNumberFieldList.add(textRadialMirrorPosY);
 
-        textRadialMirrorPosZ = new GuiNumberField(id++, id++, id++, font, buttonList, left + 218, y, 62, 18);
+        textRadialMirrorPosZ = new GuiNumberField(font, buttonList, left + 218, y, 62, 18);
         textRadialMirrorPosZ.setNumber(0);
         textRadialMirrorPosZ.setTooltip(Arrays.asList("The position of the radial mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
         radialMirrorNumberFieldList.add(textRadialMirrorPosZ);
 
         y = top + 47;
-        textRadialMirrorSlices = new GuiNumberField(id++, id++, id++, font, buttonList, left + 55, y, 50, 18);
+        textRadialMirrorSlices = new GuiNumberField(font, buttonList, left + 55, y, 50, 18);
         textRadialMirrorSlices.setNumber(4);
         textRadialMirrorSlices.setTooltip(Arrays.asList("The number of repeating slices.", TextFormatting.GRAY + "Minimally 2."));
         radialMirrorNumberFieldList.add(textRadialMirrorSlices);
 
-        textRadialMirrorRadius = new GuiNumberField(id++, id++, id++, font, buttonList, left + 218, y, 62, 18);
+        textRadialMirrorRadius = new GuiNumberField(font, buttonList, left + 218, y, 62, 18);
         textRadialMirrorRadius.setNumber(50);
         //TODO change to diameter (remove /2)
         textRadialMirrorRadius.setTooltip(Arrays.asList("How far the radial mirror reaches from its center position.",
@@ -86,62 +87,46 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
         radialMirrorNumberFieldList.add(textRadialMirrorRadius);
 
         y = top + 72;
-        buttonCurrentPosition = new GuiIconButton(id++, left + 5, y, 0, 0, BUILDING_ICONS) {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                super.onClick(mouseX, mouseY);
-                Vec3d pos = new Vec3d(Math.floor(mc.player.posX) + 0.5, Math.floor(mc.player.posY) + 0.5, Math.floor(mc.player.posZ) + 0.5);
-                textRadialMirrorPosX.setNumber(pos.x);
-                textRadialMirrorPosY.setNumber(pos.y);
-                textRadialMirrorPosZ.setNumber(pos.z);
-            }
-        };
+        buttonCurrentPosition = new GuiIconButton(left + 5, y, 0, 0, BUILDING_ICONS, button -> {
+            Vec3d pos = new Vec3d(Math.floor(mc.player.posX) + 0.5, Math.floor(mc.player.posY) + 0.5, Math.floor(mc.player.posZ) + 0.5);
+            textRadialMirrorPosX.setNumber(pos.x);
+            textRadialMirrorPosY.setNumber(pos.y);
+            textRadialMirrorPosZ.setNumber(pos.z);
+        });
         buttonCurrentPosition.setTooltip("Set radial mirror position to current player position");
         radialMirrorIconButtonList.add(buttonCurrentPosition);
 
-        buttonToggleOdd = new GuiIconButton(id++, left + 35, y, 0, 20, BUILDING_ICONS) {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                super.onClick(mouseX, mouseY);
-                toggleOdd = !toggleOdd;
-                buttonToggleOdd.setUseAlternateIcon(toggleOdd);
-                if (toggleOdd) {
-                    buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
-                    textRadialMirrorPosX.setNumber(textRadialMirrorPosX.getNumber() + 0.5);
-                    textRadialMirrorPosY.setNumber(textRadialMirrorPosY.getNumber() + 0.5);
-                    textRadialMirrorPosZ.setNumber(textRadialMirrorPosZ.getNumber() + 0.5);
-                } else {
-                    buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
-                    textRadialMirrorPosX.setNumber(Math.floor(textRadialMirrorPosX.getNumber()));
-                    textRadialMirrorPosY.setNumber(Math.floor(textRadialMirrorPosY.getNumber()));
-                    textRadialMirrorPosZ.setNumber(Math.floor(textRadialMirrorPosZ.getNumber()));
-                }
+        buttonToggleOdd = new GuiIconButton(left + 35, y, 0, 20, BUILDING_ICONS, button -> {
+            toggleOdd = !toggleOdd;
+            buttonToggleOdd.setUseAlternateIcon(toggleOdd);
+            if (toggleOdd) {
+                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
+                textRadialMirrorPosX.setNumber(textRadialMirrorPosX.getNumber() + 0.5);
+                textRadialMirrorPosY.setNumber(textRadialMirrorPosY.getNumber() + 0.5);
+                textRadialMirrorPosZ.setNumber(textRadialMirrorPosZ.getNumber() + 0.5);
+            } else {
+                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+                textRadialMirrorPosX.setNumber(Math.floor(textRadialMirrorPosX.getNumber()));
+                textRadialMirrorPosY.setNumber(Math.floor(textRadialMirrorPosY.getNumber()));
+                textRadialMirrorPosZ.setNumber(Math.floor(textRadialMirrorPosZ.getNumber()));
             }
-        };
+        });
         buttonToggleOdd.setTooltip(Arrays.asList("Set radial mirror position to middle of block", "for odd numbered builds"));
         radialMirrorIconButtonList.add(buttonToggleOdd);
 
-        buttonDrawLines = new GuiIconButton(id++, left + 65, y, 0, 40, BUILDING_ICONS) {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                super.onClick(mouseX, mouseY);
-                drawLines = !drawLines;
-                buttonDrawLines.setUseAlternateIcon(drawLines);
-                buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
-            }
-        };
+        buttonDrawLines = new GuiIconButton(left + 65, y, 0, 40, BUILDING_ICONS, button -> {
+            drawLines = !drawLines;
+            buttonDrawLines.setUseAlternateIcon(drawLines);
+            buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
+        });
         buttonDrawLines.setTooltip("Show lines");
         radialMirrorIconButtonList.add(buttonDrawLines);
 
-        buttonDrawPlanes = new GuiIconButton(id++, left + 95, y, 0, 60, BUILDING_ICONS) {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                super.onClick(mouseX, mouseY);
-                drawPlanes = !drawPlanes;
-                buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
-                buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
-            }
-        };
+        buttonDrawPlanes = new GuiIconButton(left + 95, y, 0, 60, BUILDING_ICONS, button -> {
+            drawPlanes = !drawPlanes;
+            buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
+            buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
+        });
         buttonDrawPlanes.setTooltip("Show area");
         radialMirrorIconButtonList.add(buttonDrawPlanes);
 
@@ -179,8 +164,6 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonList.addAll(radialMirrorIconButtonList);
 
         setCollapsed(!buttonRadialMirrorEnabled.isChecked());
-
-        return id;
     }
 
     public void updateScreen() {

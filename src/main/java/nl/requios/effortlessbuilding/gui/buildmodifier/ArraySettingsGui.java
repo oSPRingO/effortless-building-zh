@@ -1,6 +1,7 @@
 package nl.requios.effortlessbuilding.gui.buildmodifier;
 
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
@@ -31,8 +32,8 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
     }
 
     @Override
-    public int initGui(int id, List<Button> buttons) {
-        id = super.initGui(id, buttons);
+    public void init(List<Widget> buttons) {
+        super.init(buttons);
 
         int y = top;
         buttonArrayEnabled = new GuiCheckBox(left - 15 + 8, y, "", false) {
@@ -45,23 +46,23 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         buttons.add(buttonArrayEnabled);
 
         y = top + 20;
-        textArrayOffsetX = new GuiNumberField(id++, id++, id++, font, buttons, left + 70, y, 50, 18);
+        textArrayOffsetX = new GuiNumberField(font, buttons, left + 70, y, 50, 18);
         textArrayOffsetX.setNumber(0);
         textArrayOffsetX.setTooltip("How much each copy is shifted.");
         arrayNumberFieldList.add(textArrayOffsetX);
 
-        textArrayOffsetY = new GuiNumberField(id++, id++, id++, font, buttons, left + 140, y, 50, 18);
+        textArrayOffsetY = new GuiNumberField(font, buttons, left + 140, y, 50, 18);
         textArrayOffsetY.setNumber(0);
         textArrayOffsetY.setTooltip("How much each copy is shifted.");
         arrayNumberFieldList.add(textArrayOffsetY);
 
-        textArrayOffsetZ = new GuiNumberField(id++, id++, id++, font, buttons, left + 210, y, 50, 18);
+        textArrayOffsetZ = new GuiNumberField(font, buttons, left + 210, y, 50, 18);
         textArrayOffsetZ.setNumber(0);
         textArrayOffsetZ.setTooltip("How much each copy is shifted.");
         arrayNumberFieldList.add(textArrayOffsetZ);
 
         y = top + 50;
-        textArrayCount = new GuiNumberField(id++, id++, id++, font, buttons, left + 55, y, 50, 18);
+        textArrayCount = new GuiNumberField(font, buttons, left + 55, y, 50, 18);
         textArrayCount.setNumber(5);
         textArrayCount.setTooltip("How many copies should be made.");
         arrayNumberFieldList.add(textArrayCount);
@@ -77,8 +78,6 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         }
 
         setCollapsed(!buttonArrayEnabled.isChecked());
-
-        return id;
     }
 
     public void updateScreen() {

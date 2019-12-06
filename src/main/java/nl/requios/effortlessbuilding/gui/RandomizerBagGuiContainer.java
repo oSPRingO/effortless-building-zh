@@ -2,9 +2,9 @@ package nl.requios.effortlessbuilding.gui;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.items.IItemHandler;
@@ -18,7 +18,7 @@ public class RandomizerBagGuiContainer extends ContainerScreen {
     private final IItemHandler inventoryBag;
 
     public RandomizerBagGuiContainer(PlayerInventory inventoryPlayer, IItemHandler inventoryBag) {
-        super(new RandomizerBagContainer(inventoryPlayer, inventoryBag));
+        super(new RandomizerBagContainer(inventoryPlayer, inventoryBag), inventoryPlayer, new TranslationTextComponent("effortlessbuilding.screen.randomizer_bag"));
         this.inventoryPlayer = inventoryPlayer;
         this.inventoryBag = inventoryBag;
 
@@ -27,7 +27,7 @@ public class RandomizerBagGuiContainer extends ContainerScreen {
 
     @Override
     public void render(int mouseX, int mouseY, float partialTicks) {
-        drawDefaultBackground();
+        renderBackground();
         super.render(mouseX, mouseY, partialTicks);
         this.renderHoveredToolTip(mouseX, mouseY);
     }
@@ -45,6 +45,6 @@ public class RandomizerBagGuiContainer extends ContainerScreen {
         minecraft.getTextureManager().bindTexture(guiTextures);
         int marginHorizontal = (width - xSize) / 2;
         int marginVertical = (height - ySize) / 2;
-        drawTexturedModalRect(marginHorizontal, marginVertical, 0, 0, xSize, ySize);
+        blit(marginHorizontal, marginVertical, 0, 0, xSize, ySize);
     }
 }

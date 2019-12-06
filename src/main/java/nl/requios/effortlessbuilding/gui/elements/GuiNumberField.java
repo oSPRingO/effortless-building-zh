@@ -3,6 +3,7 @@ package nl.requios.effortlessbuilding.gui.elements;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
@@ -25,34 +26,27 @@ public class GuiNumberField extends AbstractGui {
 
     List<String> tooltip = new ArrayList<>();
 
-    public GuiNumberField(int id1, int id2, int id3, FontRenderer font,
-                          List<Button> buttonList, int x, int y, int width, int height) {
+    public GuiNumberField(FontRenderer font, List<Widget> buttonList, int x, int y, int width, int height) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
 
-        textField = new TextFieldWidget(id1, font, x + buttonWidth + 1, y + 1, width - 2 * buttonWidth - 2, height - 2);
-        minusButton = new Button(id2, x, y - 1, buttonWidth, height + 2, "-") {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                float valueChanged = 1f;
-                if (Screen.isCtrlKeyDown()) valueChanged = 5f;
-                if (Screen.isShiftKeyDown()) valueChanged = 10f;
+        textField = new TextFieldWidget(font, x + buttonWidth + 1, y + 1, width - 2 * buttonWidth - 2, height - 2, "");
+        minusButton = new Button(x, y - 1, buttonWidth, height + 2, "-", button -> {
+            float valueChanged = 1f;
+            if (Screen.hasControlDown()) valueChanged = 5f;
+            if (Screen.hasShiftDown()) valueChanged = 10f;
 
-                setNumber(getNumber() - valueChanged);
-            }
-        };
-        plusButton  = new Button(id3, x + width - buttonWidth, y - 1, buttonWidth, height + 2, "+") {
-            @Override
-            public void onClick(double mouseX, double mouseY) {
-                float valueChanged = 1f;
-                if (Screen.isCtrlKeyDown()) valueChanged = 5f;
-                if (Screen.isShiftKeyDown()) valueChanged = 10f;
+            setNumber(getNumber() - valueChanged);
+        });
+        plusButton  = new Button(x + width - buttonWidth, y - 1, buttonWidth, height + 2, "+", button -> {
+            float valueChanged = 1f;
+            if (Screen.hasControlDown()) valueChanged = 5f;
+            if (Screen.hasShiftDown()) valueChanged = 10f;
 
-                setNumber(getNumber() + valueChanged);
-            }
-        };
+            setNumber(getNumber() + valueChanged);
+        });
 
         buttonList.add(minusButton);
         buttonList.add(plusButton);
@@ -88,7 +82,7 @@ public class GuiNumberField extends AbstractGui {
         //Rightclicked inside textfield
         if (flag && mouseButton == 1) {
             textField.setText("");
-            textField.setFocused(true);
+            textField.setFocused2(true);
             result = true;
         }
 
@@ -100,12 +94,12 @@ public class GuiNumberField extends AbstractGui {
         minusButton.y = y - 1;
         plusButton.y = y - 1;
 
-        textField.drawTextField(mouseX, mouseY, partialTicks);
+        textField.render(mouseX, mouseY, partialTicks);
         minusButton.render(mouseX, mouseY, partialTicks);
         plusButton.render(mouseX, mouseY, partialTicks);
     }
 
-    public void drawTooltip(Screen guiScreen, int mouseX, int mouseY) {
+    public void drawTooltip(Screen screen, int mouseX, int mouseY) {
         boolean insideTextField = mouseX >= x + buttonWidth && mouseX < x + width - buttonWidth && mouseY >= y && mouseY < y + height;
         boolean insideMinusButton = mouseX >= x && mouseX < x + buttonWidth && mouseY >= y && mouseY < y + height;
         boolean insidePlusButton = mouseX >= x + width - buttonWidth && mouseX < x + width && mouseY >= y && mouseY < y + height;
@@ -128,7 +122,7 @@ public class GuiNumberField extends AbstractGui {
             textLines.add("Hold " + TextFormatting.AQUA + "ctrl " + TextFormatting.RESET + "for " + TextFormatting.DARK_GREEN + "5");
         }
 
-        guiScreen.drawHoveringText(textLines, mouseX - 10, mouseY + 25);
+        screen.renderTooltip(textLines, mouseX - 10, mouseY + 25);
 
     }
 
