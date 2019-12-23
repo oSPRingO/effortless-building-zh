@@ -42,8 +42,6 @@ public class RequestLookAtMessage {
         public static void handle(RequestLookAtMessage message, Supplier<NetworkEvent.Context> ctx)
         {
             ctx.get().enqueueWork(() -> {
-                EffortlessBuilding.log("RequestLookAtMessage");
-
                 if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
                     //Received clientside
                     //Send back your info

@@ -13,7 +13,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
-version = '1.14.4-2.15'
+version = '1.14.4-2.16'
 group = 'nl.requios.effortlessbuilding' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'effortlessbuilding'
 
@@ -64,7 +64,7 @@ minecraft {
                 }
             }
         }
-		
+
         data {
             workingDirectory project.file('run')
 

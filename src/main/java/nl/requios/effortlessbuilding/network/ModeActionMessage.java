@@ -36,8 +36,6 @@ public class ModeActionMessage {
         public static void handle(ModeActionMessage message, Supplier<NetworkEvent.Context> ctx)
         {
             ctx.get().enqueueWork(() -> {
-                EffortlessBuilding.log("ModeActionMessage");
-
                 PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 ModeOptions.performAction(player, message.action);

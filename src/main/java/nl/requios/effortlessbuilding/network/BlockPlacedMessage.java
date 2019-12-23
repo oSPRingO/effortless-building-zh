@@ -96,8 +96,6 @@ public class BlockPlacedMessage {
         public static void handle(BlockPlacedMessage message, Supplier<NetworkEvent.Context> ctx)
         {
             ctx.get().enqueueWork(() -> {
-                EffortlessBuilding.log("BlockPlacedMessage");
-
                 if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
                     //Received clientside
                     //Nod RenderHandler to do the dissolve shader effect
