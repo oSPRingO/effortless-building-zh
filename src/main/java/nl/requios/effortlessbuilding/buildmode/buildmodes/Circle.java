@@ -41,7 +41,7 @@ public class Circle extends TwoClicksBuildMode {
         if (ModeOptions.getFill() == ModeOptions.ActionEnum.FULL)
             addCircleBlocks(list, x1, y1, z1, x2, y2, z2, centerX, centerZ, radiusX, radiusZ);
         else
-            addHollowCircleBlocks(list, x1, y1, z1, x2, y2, z2, centerX, centerZ, radiusX, radiusZ, 1f);
+            addHollowCircleBlocks(list, x1, y1, z1, x2, y2, z2, centerX, centerZ, radiusX, radiusZ);
 
         return list;
     }
@@ -60,7 +60,7 @@ public class Circle extends TwoClicksBuildMode {
         }
     }
 
-    public static void addHollowCircleBlocks(List<BlockPos> list, int x1, int y1, int z1, int x2, int y2, int z2, float centerX, float centerZ, float radiusX, float radiusZ, float thickness) {
+    public static void addHollowCircleBlocks(List<BlockPos> list, int x1, int y1, int z1, int x2, int y2, int z2, float centerX, float centerZ, float radiusX, float radiusZ) {
 
         for (int l = x1; x1 < x2 ? l <= x2 : l >= x2; l += x1 < x2 ? 1 : -1) {
 
@@ -68,7 +68,7 @@ public class Circle extends TwoClicksBuildMode {
 
                 float distance = distance(l, n, centerX, centerZ);
                 float radius = calculateEllipseRadius(centerX, centerZ, radiusX, radiusZ, l, n);
-                if (distance < radius + (thickness / 2f) && distance > radius - (thickness / 2f))
+                if (distance < radius + 0.4f && distance > radius - 0.6f)
                     list.add(new BlockPos(l, y1, n));
             }
         }

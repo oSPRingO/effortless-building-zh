@@ -195,6 +195,8 @@ public class RenderHandler {
     }
 
     protected static void renderBlockPreview(BlockRendererDispatcher dispatcher, BlockPos blockPos, BlockState blockState) {
+        if (blockState == null) return;
+
         GlStateManager.pushMatrix();
         GlStateManager.translatef(blockPos.getX(), blockPos.getY(), blockPos.getZ());
         GlStateManager.rotatef(-90.0F, 0.0F, 1.0F, 0.0F);
