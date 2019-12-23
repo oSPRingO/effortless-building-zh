@@ -4,11 +4,14 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
-import nl.requios.effortlessbuilding.buildmode.ModeOptions.ActionEnum;
+import nl.requios.effortlessbuilding.buildmode.buildmodes.*;
+import nl.requios.effortlessbuilding.buildmode.buildmodes.Circle;
+import nl.requios.effortlessbuilding.buildmode.buildmodes.Cylinder;
+import nl.requios.effortlessbuilding.buildmode.buildmodes.Sphere;
 import nl.requios.effortlessbuilding.buildmodifier.*;
-import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 import nl.requios.effortlessbuilding.network.BlockBrokenMessage;
@@ -19,6 +22,8 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 
+import static nl.requios.effortlessbuilding.buildmode.ModeOptions.*;
+
 public class BuildModes {
 
     //Static variables are shared between client and server in singleplayer
@@ -27,21 +32,24 @@ public class BuildModes {
     public static Dictionary<EntityPlayer, Boolean> currentlyBreakingServer = new Hashtable<>();
 
     public enum BuildModeEnum {
-        NORMAL("effortlessbuilding.mode.normal", new Normal(), new ActionEnum[]{}),
-        NORMAL_PLUS("effortlessbuilding.mode.normal_plus", new NormalPlus(), new ActionEnum[]{ActionEnum.NORMAL_SPEED, ActionEnum.FAST_SPEED}),
-        LINE("effortlessbuilding.mode.line", new Line(), new ActionEnum[]{/*ActionEnum.THICKNESS_1, ActionEnum.THICKNESS_3, ActionEnum.THICKNESS_5*/}),
-        WALL("effortlessbuilding.mode.wall", new Wall(), new ActionEnum[]{ActionEnum.FULL, ActionEnum.HOLLOW}),
-        FLOOR("effortlessbuilding.mode.floor", new Floor(), new ActionEnum[]{ActionEnum.FULL, ActionEnum.HOLLOW}),
-        DIAGONAL_LINE("effortlessbuilding.mode.diagonal_line", new DiagonalLine(), new ActionEnum[]{/*ActionEnum.THICKNESS_1, ActionEnum.THICKNESS_3, ActionEnum.THICKNESS_5*/}),
-        DIAGONAL_WALL("effortlessbuilding.mode.diagonal_wall", new DiagonalWall(), new ActionEnum[]{/*ActionEnum.FULL, ActionEnum.HOLLOW*/}),
-        SLOPE_FLOOR("effortlessbuilding.mode.slope_floor", new SlopeFloor(), new ActionEnum[]{ActionEnum.SHORT_EDGE, ActionEnum.LONG_EDGE}),
-        CUBE("effortlessbuilding.mode.cube", new Cube(), new ActionEnum[]{ActionEnum.CUBE_FULL, ActionEnum.CUBE_HOLLOW, ActionEnum.CUBE_SKELETON});
+        NORMAL("effortlessbuilding.mode.normal", new Normal()),
+        NORMAL_PLUS("effortlessbuilding.mode.normal_plus", new NormalPlus(), OptionEnum.BUILD_SPEED),
+        LINE("effortlessbuilding.mode.line", new Line() /*, OptionEnum.THICKNESS*/),
+        WALL("effortlessbuilding.mode.wall", new Wall(), OptionEnum.FILL),
+        FLOOR("effortlessbuilding.mode.floor", new Floor(), OptionEnum.FILL),
+        DIAGONAL_LINE("effortlessbuilding.mode.diagonal_line", new DiagonalLine() /*, OptionEnum.THICKNESS*/),
+        DIAGONAL_WALL("effortlessbuilding.mode.diagonal_wall", new DiagonalWall() /*, OptionEnum.FILL*/),
+        SLOPE_FLOOR("effortlessbuilding.mode.slope_floor", new SlopeFloor(), OptionEnum.RAISED_EDGE),
+        CIRCLE("effortlessbuilding.mode.circle", new Circle(), OptionEnum.CIRCLE_START, OptionEnum.FILL),
+        CYLINDER("effortlessbuilding.mode.cylinder", new Cylinder(), OptionEnum.CIRCLE_START, OptionEnum.FILL),
+        SPHERE("effortlessbuilding.mode.sphere", new Sphere(), OptionEnum.CIRCLE_START, OptionEnum.FILL),
+        CUBE("effortlessbuilding.mode.cube", new Cube(), OptionEnum.CUBE_FILL);
 
         public String name;
         public IBuildMode instance;
-        public ActionEnum[] options;
+        public OptionEnum[] options;
 
-        BuildModeEnum(String name, IBuildMode instance, ActionEnum[] options) {
+        BuildModeEnum(String name, IBuildMode instance, OptionEnum... options) {
             this.name = name;
             this.instance = instance;
             this.options = options;
@@ -218,6 +226,20 @@ public class BuildModes {
         double y = (z - start.z) / look.z * look.y + start.y;
 
         return new Vec3d(x, y, z);
+    }
+
+    public static boolean isCriteriaValid(Vec3d start, Vec3d look, int reach, EntityPlayer player, boolean skipRaytrace, Vec3d lineBound, Vec3d planeBound, double distToPlayerSq) {
+        boolean intersects = false;
+        if (!skipRaytrace) {
+            //collision within a 1 block radius to selected is fine
+            RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, lineBound, false, true, false);
+            intersects = rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK &&
+                         planeBound.subtract(rayTraceResult.hitVec).lengthSquared() > 4;
+        }
+
+        return planeBound.subtract(start).dotProduct(look) > 0 &&
+               distToPlayerSq > 2 && distToPlayerSq < reach * reach &&
+               !intersects;
     }
 
 }

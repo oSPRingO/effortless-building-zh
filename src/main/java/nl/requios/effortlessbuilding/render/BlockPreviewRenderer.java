@@ -195,13 +195,15 @@ public class BlockPreviewRenderer {
                     //if so, renew randomness of randomizer bag
                     ItemRandomizerBag.renewRandomness();
                     //and play sound (max once every tick)
-                    if (startCoordinates.size() > 1 && blockStates.size() > 1 && soundTime < ClientProxy.ticksInGame - 0) {
+                    if (newCoordinates.size() > 1 && blockStates.size() > 1 && soundTime < ClientProxy.ticksInGame - 0) {
                         soundTime = ClientProxy.ticksInGame;
 
-                        SoundType soundType = blockStates.get(0).getBlock().getSoundType(blockStates.get(0), player.world,
-                                newCoordinates.get(0), player);
-                        player.world.playSound(player, player.getPosition(), breaking ? soundType.getBreakSound() : soundType.getPlaceSound(),
-                                SoundCategory.BLOCKS, 0.3f, 0.8f);
+                        if (blockStates.get(0) != null) {
+                            SoundType soundType = blockStates.get(0).getBlock().getSoundType(blockStates.get(0), player.world,
+                                    newCoordinates.get(0), player);
+                            player.world.playSound(player, player.getPosition(), breaking ? soundType.getBreakSound() : soundType.getPlaceSound(),
+                                    SoundCategory.BLOCKS, 0.3f, 0.8f);
+                        }
                     }
                 }
 
@@ -236,8 +238,20 @@ public class BlockPreviewRenderer {
 
                     //Display block count and dimensions in actionbar
                     if (BuildModes.isActive(player)) {
-                        BlockPos dim = secondPos.subtract(firstPos);
-                        dim = new BlockPos(Math.abs(dim.getX()) + 1, Math.abs(dim.getY()) + 1, Math.abs(dim.getZ()) + 1);
+
+                        //Find min and max values (not simply firstPos and secondPos because that doesn't work with circles)
+                        int minX = Integer.MAX_VALUE, maxX = Integer.MIN_VALUE;
+                        int minY = Integer.MAX_VALUE, maxY = Integer.MIN_VALUE;
+                        int minZ = Integer.MAX_VALUE, maxZ = Integer.MIN_VALUE;
+                        for (BlockPos pos : startCoordinates) {
+                            if (pos.getX() < minX) minX = pos.getX();
+                            if (pos.getX() > maxX) maxX = pos.getX();
+                            if (pos.getY() < minY) minY = pos.getY();
+                            if (pos.getY() > maxY) maxY = pos.getY();
+                            if (pos.getZ() < minZ) minZ = pos.getZ();
+                            if (pos.getZ() > maxZ) maxZ = pos.getZ();
+                        }
+                        BlockPos dim = new BlockPos(maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
 
                         String dimensions = "(";
                         if (dim.getX() > 1) dimensions += dim.getX() + "x";

@@ -206,6 +206,8 @@ public class RenderHandler implements IWorldEventListener {
     }
 
     protected static void renderBlockPreview(BlockRendererDispatcher dispatcher, BlockPos blockPos, IBlockState blockState) {
+        if (blockState == null) return;
+
         GlStateManager.pushMatrix();
         GlStateManager.translate(blockPos.getX(), blockPos.getY(), blockPos.getZ());
         GlStateManager.rotate(-90.0F, 0.0F, 1.0F, 0.0F);

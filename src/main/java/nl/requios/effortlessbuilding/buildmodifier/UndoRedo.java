@@ -206,6 +206,7 @@ public class UndoRedo {
 
     private static ItemStack findItemStackInInventory(EntityPlayer player, IBlockState blockState) {
         ItemStack itemStack = ItemStack.EMPTY;
+        if (blockState == null) return itemStack;
 
         //First try previousBlockStates
         //TODO try to find itemstack with right blockstate first

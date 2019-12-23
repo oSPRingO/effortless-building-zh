@@ -1,22 +1,16 @@
-package nl.requios.effortlessbuilding.buildmode;
+package nl.requios.effortlessbuilding.buildmode.buildmodes;
 
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import nl.requios.effortlessbuilding.buildmode.BuildModes;
+import nl.requios.effortlessbuilding.buildmode.TwoClicksBuildMode;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Line implements IBuildMode {
-    //In singleplayer client and server variables are shared
-    //Split everything that needs separate values and may not be called twice in one click
-    private Dictionary<UUID, Integer> rightClickClientTable = new Hashtable<>();
-    private Dictionary<UUID, Integer> rightClickServerTable = new Hashtable<>();
-    private Dictionary<UUID, BlockPos> firstPosTable = new Hashtable<>();
-    private Dictionary<UUID, EnumFacing> sideHitTable = new Hashtable<>();
-    private Dictionary<UUID, Vec3d> hitVecTable = new Hashtable<>();
+public class Line extends TwoClicksBuildMode {
 
     static class Criteria {
         Vec3d planeBound;
@@ -55,78 +49,14 @@ public class Line implements IBuildMode {
         //also check if raytrace from player to block does not intersect blocks
         public boolean isValid(Vec3d start, Vec3d look, int reach, EntityPlayer player, boolean skipRaytrace) {
 
-            boolean intersects = false;
-            if (!skipRaytrace) {
-                //collision within a 1 block radius to selected is fine
-                RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, lineBound, false, true, false);
-                intersects = rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK &&
-                             planeBound.subtract(rayTraceResult.hitVec).lengthSquared() > 4;
-            }
-
-            return planeBound.subtract(start).dotProduct(look) > 0 &&
-                   distToPlayerSq > 2 && distToPlayerSq < reach * reach &&
-                   !intersects;
+            return BuildModes.isCriteriaValid(start, look, reach, player, skipRaytrace, lineBound, planeBound, distToPlayerSq);
         }
+
     }
 
     @Override
-    public void initialize(EntityPlayer player) {
-        rightClickClientTable.put(player.getUniqueID(), 0);
-        rightClickServerTable.put(player.getUniqueID(), 0);
-        firstPosTable.put(player.getUniqueID(), BlockPos.ORIGIN);
-        sideHitTable.put(player.getUniqueID(), EnumFacing.UP);
-        hitVecTable.put(player.getUniqueID(), Vec3d.ZERO);
-    }
-
-    @Override
-    public List<BlockPos> onRightClick(EntityPlayer player, BlockPos blockPos, EnumFacing sideHit, Vec3d hitVec, boolean skipRaytrace) {
-        List<BlockPos> list = new ArrayList<>();
-
-        Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
-        int rightClickNr = rightClickTable.get(player.getUniqueID());
-        rightClickNr++;
-        rightClickTable.put(player.getUniqueID(), rightClickNr);
-
-        if (rightClickNr == 1) {
-            //If clicking in air, reset and try again
-            if (blockPos == null) {
-                rightClickTable.put(player.getUniqueID(), 0);
-                return list;
-            }
-
-            //First click, remember starting position
-            firstPosTable.put(player.getUniqueID(), blockPos);
-            sideHitTable.put(player.getUniqueID(), sideHit);
-            hitVecTable.put(player.getUniqueID(), hitVec);
-            //Keep list empty, dont place any blocks yet
-        } else {
-            //Second click, place wall
-
-            list = findCoordinates(player, blockPos, skipRaytrace);
-            rightClickTable.put(player.getUniqueID(), 0);
-        }
-
-        return list;
-    }
-
-    @Override
-    public List<BlockPos> findCoordinates(EntityPlayer player, BlockPos blockPos, boolean skipRaytrace) {
-        List<BlockPos> list = new ArrayList<>();
-        Dictionary<UUID, Integer> rightClickTable = player.world.isRemote ? rightClickClientTable : rightClickServerTable;
-        int rightClickNr = rightClickTable.get(player.getUniqueID());
-        BlockPos firstPos = firstPosTable.get(player.getUniqueID());
-
-        if (rightClickNr == 0) {
-            if (blockPos != null)
-                list.add(blockPos);
-        } else {
-            BlockPos secondPos = findLine(player, firstPos, skipRaytrace);
-            if (secondPos == null) return list;
-
-            list.addAll(getLineBlocks(player, firstPos, secondPos));
-        }
-
-        return list;
+    protected BlockPos findSecondPos(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
+        return findLine(player, firstPos, skipRaytrace);
     }
 
     public static BlockPos findLine(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace) {
@@ -178,24 +108,13 @@ public class Line implements IBuildMode {
         return new BlockPos(selected.lineBound);
     }
 
-    public static List<BlockPos> getLineBlocks(EntityPlayer player, BlockPos firstPos, BlockPos secondPos) {
+    @Override
+    protected List<BlockPos> getAllBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2) {
+        return getLineBlocks(player, x1, y1, z1, x2, y2, z2);
+    }
+
+    public static List<BlockPos> getLineBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2) {
         List<BlockPos> list = new ArrayList<>();
-
-        //Limit amount of blocks we can place
-        int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
-
-        //Add whole line
-        int x1 = firstPos.getX(), x2 = secondPos.getX();
-        int y1 = firstPos.getY(), y2 = secondPos.getY();
-        int z1 = firstPos.getZ(), z2 = secondPos.getZ();
-
-        //limit axis
-        if (x2 - x1 >= axisLimit) x2 = x1 + axisLimit - 1;
-        if (x1 - x2 >= axisLimit) x2 = x1 - axisLimit + 1;
-        if (y2 - y1 >= axisLimit) y2 = y1 + axisLimit - 1;
-        if (y1 - y2 >= axisLimit) y2 = y1 - axisLimit + 1;
-        if (z2 - z1 >= axisLimit) z2 = z1 + axisLimit - 1;
-        if (z1 - z2 >= axisLimit) z2 = z1 - axisLimit + 1;
 
         if (x1 != x2) {
             addXLineBlocks(list, x1, x2, y1, z1);
@@ -225,15 +144,4 @@ public class Line implements IBuildMode {
             list.add(new BlockPos(x, y, z));
         }
     }
-
-    @Override
-    public EnumFacing getSideHit(EntityPlayer player) {
-        return sideHitTable.get(player.getUniqueID());
-    }
-
-    @Override
-    public Vec3d getHitVec(EntityPlayer player) {
-        return hitVecTable.get(player.getUniqueID());
-    }
-
 }

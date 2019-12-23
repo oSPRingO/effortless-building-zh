@@ -3,21 +3,15 @@ package nl.requios.effortlessbuilding.buildmode;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
+import nl.requios.effortlessbuilding.buildmode.buildmodes.DiagonalLine;
+import nl.requios.effortlessbuilding.buildmode.buildmodes.Floor;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.*;
 
-public class DiagonalLine implements IBuildMode {
-    //In singleplayer client and server variables are shared
-    //Split everything that needs separate values and may not be called twice in one click
-    private Dictionary<UUID, Integer> rightClickClientTable = new Hashtable<>();
-    private Dictionary<UUID, Integer> rightClickServerTable = new Hashtable<>();
-    private Dictionary<UUID, BlockPos> firstPosTable = new Hashtable<>();
-    private Dictionary<UUID, BlockPos> secondPosTable = new Hashtable<>();
-    private Dictionary<UUID, EnumFacing> sideHitTable = new Hashtable<>();
-    private Dictionary<UUID, Vec3d> hitVecTable = new Hashtable<>();
+public abstract class ThreeClicksBuildMode extends BaseBuildMode {
+    protected Dictionary<UUID, BlockPos> secondPosTable = new Hashtable<>();
 
     static class HeightCriteria {
         Vec3d planeBound;
@@ -42,27 +36,14 @@ public class DiagonalLine implements IBuildMode {
         //also check if raytrace from player to block does not intersect blocks
         public boolean isValid(Vec3d start, Vec3d look, int reach, EntityPlayer player, boolean skipRaytrace) {
 
-            boolean intersects = false;
-            if (!skipRaytrace) {
-                //collision within a 1 block radius to selected is fine
-                RayTraceResult rayTraceResult = player.world.rayTraceBlocks(start, lineBound, false, true, false);
-                intersects = rayTraceResult != null && rayTraceResult.typeOfHit == RayTraceResult.Type.BLOCK &&
-                             planeBound.subtract(rayTraceResult.hitVec).lengthSquared() > 4;
-            }
-
-            return planeBound.subtract(start).dotProduct(look) > 0 &&
-                   distToPlayerSq > 2 && distToPlayerSq < reach * reach &&
-                   !intersects;
+            return BuildModes.isCriteriaValid(start, look, reach, player, skipRaytrace, lineBound, planeBound, distToPlayerSq);
         }
     }
-    
+
     @Override
     public void initialize(EntityPlayer player) {
-        rightClickClientTable.put(player.getUniqueID(), 0);
-        rightClickServerTable.put(player.getUniqueID(), 0);
-        firstPosTable.put(player.getUniqueID(), BlockPos.ORIGIN);
-        sideHitTable.put(player.getUniqueID(), EnumFacing.UP);
-        hitVecTable.put(player.getUniqueID(), Vec3d.ZERO);
+        super.initialize(player);
+        secondPosTable.put(player.getUniqueID(), BlockPos.ORIGIN);
     }
 
     @Override
@@ -89,7 +70,7 @@ public class DiagonalLine implements IBuildMode {
         } else if (rightClickNr == 2) {
             //Second click, find other floor point
             BlockPos firstPos = firstPosTable.get(player.getUniqueID());
-            BlockPos secondPos = Floor.findFloor(player, firstPos, true);
+            BlockPos secondPos = findSecondPos(player, firstPos, true);
 
             if (secondPos == null) {
                 rightClickTable.put(player.getUniqueID(), 1);
@@ -99,7 +80,7 @@ public class DiagonalLine implements IBuildMode {
             secondPosTable.put(player.getUniqueID(), secondPos);
 
         } else {
-            //Third click, place diagonal line with height
+            //Third click, place diagonal wall with height
             list = findCoordinates(player, blockPos, skipRaytrace);
             rightClickTable.put(player.getUniqueID(), 0);
         }
@@ -119,26 +100,75 @@ public class DiagonalLine implements IBuildMode {
         } else if (rightClickNr == 1) {
             BlockPos firstPos = firstPosTable.get(player.getUniqueID());
 
-            BlockPos secondPos = Floor.findFloor(player, firstPos, true);
+            BlockPos secondPos = findSecondPos(player, firstPos, true);
             if (secondPos == null) return list;
 
+            //Limit amount of blocks you can place per row
+            int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
+
+            int x1 = firstPos.getX(), x2 = secondPos.getX();
+            int y1 = firstPos.getY(), y2 = secondPos.getY();
+            int z1 = firstPos.getZ(), z2 = secondPos.getZ();
+
+            //limit axis
+            if (x2 - x1 >= axisLimit) x2 = x1 + axisLimit - 1;
+            if (x1 - x2 >= axisLimit) x2 = x1 - axisLimit + 1;
+            if (y2 - y1 >= axisLimit) y2 = y1 + axisLimit - 1;
+            if (y1 - y2 >= axisLimit) y2 = y1 - axisLimit + 1;
+            if (z2 - z1 >= axisLimit) z2 = z1 + axisLimit - 1;
+            if (z1 - z2 >= axisLimit) z2 = z1 - axisLimit + 1;
+
             //Add diagonal line from first to second
-            list.addAll(getDiagonalLineBlocks(player , firstPos, secondPos, 10));
+            list.addAll(getIntermediateBlocks(player, x1, y1, z1, x2, y2, z2));
 
         } else {
             BlockPos firstPos = firstPosTable.get(player.getUniqueID());
             BlockPos secondPos = secondPosTable.get(player.getUniqueID());
 
-            BlockPos thirdPos = findHeight(player, secondPos, skipRaytrace);
+            BlockPos thirdPos = findThirdPos(player, firstPos, secondPos, skipRaytrace);
             if (thirdPos == null) return list;
 
+            //Limit amount of blocks you can place per row
+            int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
+
+            int x1 = firstPos.getX(), x2 = secondPos.getX(), x3 = thirdPos.getX();
+            int y1 = firstPos.getY(), y2 = secondPos.getY(), y3 = thirdPos.getY();
+            int z1 = firstPos.getZ(), z2 = secondPos.getZ(), z3 = thirdPos.getZ();
+
+            //limit axis
+            if (x2 - x1 >= axisLimit) x2 = x1 + axisLimit - 1;
+            if (x1 - x2 >= axisLimit) x2 = x1 - axisLimit + 1;
+            if (y2 - y1 >= axisLimit) y2 = y1 + axisLimit - 1;
+            if (y1 - y2 >= axisLimit) y2 = y1 - axisLimit + 1;
+            if (z2 - z1 >= axisLimit) z2 = z1 + axisLimit - 1;
+            if (z1 - z2 >= axisLimit) z2 = z1 - axisLimit + 1;
+
+            if (x3 - x1 >= axisLimit) x3 = x1 + axisLimit - 1;
+            if (x1 - x3 >= axisLimit) x3 = x1 - axisLimit + 1;
+            if (y3 - y1 >= axisLimit) y3 = y1 + axisLimit - 1;
+            if (y1 - y3 >= axisLimit) y3 = y1 - axisLimit + 1;
+            if (z3 - z1 >= axisLimit) z3 = z1 + axisLimit - 1;
+            if (z1 - z3 >= axisLimit) z3 = z1 - axisLimit + 1;
+
             //Add diagonal line from first to third
-            list.addAll(getDiagonalLineBlocks(player , firstPos, thirdPos, 10));
+            list.addAll(getFinalBlocks(player, x1, y1, z1, x2, y2, z2, x3, y3, z3));
         }
 
         return list;
     }
-    
+
+    //Finds the place of the second block pos
+    protected abstract BlockPos findSecondPos(EntityPlayer player, BlockPos firstPos, boolean skipRaytrace);
+
+    //Finds the place of the third block pos
+    protected abstract BlockPos findThirdPos(EntityPlayer player, BlockPos firstPos, BlockPos secondPos, boolean skipRaytrace);
+
+    //After first and second pos are known, we want to visualize the blocks in a way (like floor for cube)
+    protected abstract List<BlockPos> getIntermediateBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2);
+
+    //After first, second and third pos are known, we want all the blocks
+    protected abstract List<BlockPos> getFinalBlocks(EntityPlayer player, int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3);
+
     //Finds height after floor has been chosen in buildmodes with 3 clicks
     public static BlockPos findHeight(EntityPlayer player, BlockPos secondPos, boolean skipRaytrace) {
         Vec3d look = player.getLookVec();
@@ -181,48 +211,5 @@ public class DiagonalLine implements IBuildMode {
             }
         }
         return new BlockPos(selected.lineBound);
-    }
-
-    //Add diagonal line from first to second
-    public static List<BlockPos> getDiagonalLineBlocks(EntityPlayer player, BlockPos firstPos, BlockPos secondPos, float sampleMultiplier) {
-        List<BlockPos> list = new ArrayList<>();
-
-        int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
-
-        int x1 = firstPos.getX(), x2 = secondPos.getX();
-        int y1 = firstPos.getY(), y2 = secondPos.getY();
-        int z1 = firstPos.getZ(), z2 = secondPos.getZ();
-
-        //limit axis
-        if (x2 - x1 >= axisLimit) x2 = x1 + axisLimit - 1;
-        if (x1 - x2 >= axisLimit) x2 = x1 - axisLimit + 1;
-        if (y2 - y1 >= axisLimit) y2 = y1 + axisLimit - 1;
-        if (y1 - y2 >= axisLimit) y2 = y1 - axisLimit + 1;
-        if (z2 - z1 >= axisLimit) z2 = z1 + axisLimit - 1;
-        if (z1 - z2 >= axisLimit) z2 = z1 - axisLimit + 1;
-
-        Vec3d first = new Vec3d(x1, y1, z1).add(0.5, 0.5, 0.5);
-        Vec3d second = new Vec3d(x2, y2, z2).add(0.5, 0.5, 0.5);
-
-        int iterations = (int) Math.ceil(first.distanceTo(second) * sampleMultiplier);
-        for (double t = 0; t <= 1.0; t += 1.0/iterations) {
-            Vec3d lerp = first.add(second.subtract(first).scale(t));
-            BlockPos candidate = new BlockPos(lerp);
-            //Only add if not equal to the last in the list
-            if (list.isEmpty() || !list.get(list.size() - 1).equals(candidate))
-                list.add(candidate);
-        }
-
-        return list;
-    }
-
-    @Override
-    public EnumFacing getSideHit(EntityPlayer player) {
-        return sideHitTable.get(player.getUniqueID());
-    }
-
-    @Override
-    public Vec3d getHitVec(EntityPlayer player) {
-        return hitVecTable.get(player.getUniqueID());
     }
 }

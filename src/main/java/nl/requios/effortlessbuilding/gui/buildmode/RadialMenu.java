@@ -26,6 +26,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraftforge.client.model.ModelLoader;
 
 import static nl.requios.effortlessbuilding.buildmode.BuildModes.*;
+import static nl.requios.effortlessbuilding.buildmode.ModeOptions.*;
 
 /**
  * From Chisels and Bits by AlgorithmX2
@@ -39,7 +40,7 @@ public class RadialMenu extends GuiScreen {
     private float visibility = 0.0f;
     private Stopwatch lastChange = Stopwatch.createStarted();
     public BuildModeEnum switchTo = null;
-    public ModeOptions.ActionEnum doAction = null;
+    public ActionEnum doAction = null;
     public boolean actionUsed = false;
 
     private float clampVis(final float f) {
@@ -77,11 +78,11 @@ public class RadialMenu extends GuiScreen {
         public double y1, y2;
         public boolean highlighted;
 
-        public final ModeOptions.ActionEnum action;
+        public final ActionEnum action;
         public String name;
         public EnumFacing textSide;
 
-        public MenuButton(final String name, final ModeOptions.ActionEnum action, final double x, final double y,
+        public MenuButton(final String name, final ActionEnum action, final double x, final double y,
                 final EnumFacing textSide) {
             this.name = I18n.format(name);
             this.action = action;
@@ -138,10 +139,10 @@ public class RadialMenu extends GuiScreen {
         final double mouseYCenter = mouseY - middleY;
         double mouseRadians = Math.atan2(mouseYCenter, mouseXCenter);
 
-        final double ringInnerEdge = 20;
-        final double ringOuterEdge = 50;
-        final double textDistance = 60;
-        final double buttonDistance = 90;
+        final double ringInnerEdge = 30;
+        final double ringOuterEdge = 65;
+        final double textDistance = 75;
+        final double buttonDistance = 105;
         final double quarterCircle = Math.PI / 2.0;
 
         if ( mouseRadians < -quarterCircle ) {
@@ -157,16 +158,18 @@ public class RadialMenu extends GuiScreen {
         }
 
         //Add actions
-        buttons.add(new MenuButton(ModeOptions.ActionEnum.UNDO.name, ModeOptions.ActionEnum.UNDO, -buttonDistance - 26, -13, EnumFacing.UP));
-        buttons.add(new MenuButton(ModeOptions.ActionEnum.REDO.name, ModeOptions.ActionEnum.REDO, -buttonDistance, -13, EnumFacing.UP));
-        buttons.add(new MenuButton(ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS.name, ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS, -buttonDistance - 26, 13, EnumFacing.DOWN));
-        buttons.add(new MenuButton(ModeOptions.ActionEnum.REPLACE.name, ModeOptions.ActionEnum.REPLACE, -buttonDistance, 13, EnumFacing.DOWN));
+        buttons.add(new MenuButton(ActionEnum.UNDO.name, ActionEnum.UNDO, -buttonDistance - 26, -13, EnumFacing.UP));
+        buttons.add(new MenuButton(ActionEnum.REDO.name, ActionEnum.REDO, -buttonDistance, -13, EnumFacing.UP));
+        buttons.add(new MenuButton(ActionEnum.OPEN_MODIFIER_SETTINGS.name, ActionEnum.OPEN_MODIFIER_SETTINGS, -buttonDistance - 26, 13, EnumFacing.DOWN));
+        buttons.add(new MenuButton(ActionEnum.REPLACE.name, ActionEnum.REPLACE, -buttonDistance, 13, EnumFacing.DOWN));
 
         //Add buildmode dependent options
-        ModeOptions.ActionEnum[] options = currentBuildMode.options;
+        OptionEnum[] options = currentBuildMode.options;
         for (int i = 0; i < options.length; i++) {
-            ModeOptions.ActionEnum action = options[i];
-            buttons.add(new MenuButton(action.name, action, buttonDistance + i * 26, -13, EnumFacing.DOWN));
+            for (int j = 0; j < options[i].actions.length; j++) {
+                ActionEnum action = options[i].actions[j];
+                buttons.add(new MenuButton(action.name, action, buttonDistance + j * 26, -13 + i * 39, EnumFacing.DOWN));
+            }
         }
 
         switchTo = null;
@@ -245,11 +248,12 @@ public class RadialMenu extends GuiScreen {
             float a = 0.5f;
 
             //highlight when active option
-            if (btn.action == ModeOptions.getBuildSpeed() ||
-                btn.action == ModeOptions.getFill() ||
-                btn.action == ModeOptions.getCubeFill() ||
-                btn.action == ModeOptions.getRaisedEdge() ||
-                btn.action == ModeOptions.getLineThickness()) {
+            if (btn.action == getBuildSpeed() ||
+                btn.action == getFill() ||
+                btn.action == getCubeFill() ||
+                btn.action == getRaisedEdge() ||
+                btn.action == getLineThickness() ||
+                btn.action == getCircleStart()) {
                 r = 0.0f;
                 g = 0.5f;
                 b = 1f;
@@ -342,32 +346,12 @@ public class RadialMenu extends GuiScreen {
 
         //Draw strings
         //fontRenderer.drawStringWithShadow("Actions", (int) (middleX - buttonDistance - 13) - fontRenderer.getStringWidth("Actions") * 0.5f, (int) middleY - 38, 0xffffffff);
-        String title = "";
-        if (currentBuildMode.options.length > 0) {
-            switch (currentBuildMode.options[0]) {
-                case NORMAL_SPEED:
-                case FAST_SPEED:
-                    title = I18n.format("effortlessbuilding.action.build_speed");
-                    break;
-                case FULL:
-                case HOLLOW:
-                case CUBE_FULL:
-                case CUBE_HOLLOW:
-                case CUBE_SKELETON:
-                    title = I18n.format("effortlessbuilding.action.filling");
-                    break;
-                case SHORT_EDGE:
-                case LONG_EDGE:
-                    title = I18n.format("effortlessbuilding.action.raised_edge");
-                    break;
-                case THICKNESS_1:
-                case THICKNESS_3:
-                case THICKNESS_5:
-                    title = I18n.format("effortlessbuilding.action.thickness");
-                    break;
-            }
+
+        //Draw option strings
+        for (int i = 0; i < currentBuildMode.options.length; i++) {
+            OptionEnum option = options[i];
+            fontRenderer.drawStringWithShadow(I18n.format(option.name), (int) (middleX + buttonDistance - 9), (int) middleY - 37 + i * 39, 0xeeeeeeff);
         }
-        fontRenderer.drawStringWithShadow(title, (int) (middleX + buttonDistance - 9), (int) middleY - 37, 0xeeeeeeff);
 
         String credits = "Effortless Building";
         fontRenderer.drawStringWithShadow(credits, width - fontRenderer.getStringWidth(credits) - 4, height - 10, 0x88888888);
@@ -402,17 +386,25 @@ public class RadialMenu extends GuiScreen {
                 String keybindFormatted = "";
 
                 //Add keybind in brackets
-                if (button.action == ModeOptions.ActionEnum.UNDO) {
+                if (button.action == ActionEnum.UNDO) {
                     keybind = ClientProxy.keyBindings[4].getDisplayName();
                 }
-                if (button.action == ModeOptions.ActionEnum.REDO) {
+                if (button.action == ActionEnum.REDO) {
                     keybind = ClientProxy.keyBindings[5].getDisplayName();
                 }
-                if (button.action == ModeOptions.ActionEnum.REPLACE) {
+                if (button.action == ActionEnum.REPLACE) {
                     keybind = ClientProxy.keyBindings[1].getDisplayName();
                 }
-                if (button.action == ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS) {
+                if (button.action == ActionEnum.OPEN_MODIFIER_SETTINGS) {
                     keybind = ClientProxy.keyBindings[0].getDisplayName();
+                }
+                if (currentBuildMode.options.length > 0) {
+                    //Add (ctrl) to first two actions of first option
+                    if (button.action == currentBuildMode.options[0].actions[0]
+                        || button.action == currentBuildMode.options[0].actions[1]) {
+                        keybind = ClientProxy.keyBindings[6].getDisplayName();
+                        if (keybind.equals("LCONTROL")) keybind = "Ctrl";
+                    }
                 }
                 if (!keybind.isEmpty()) keybindFormatted = TextFormatting.GRAY + "(" + WordUtils.capitalizeFully(keybind) + ")";
 

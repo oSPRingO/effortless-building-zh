@@ -81,7 +81,7 @@ public class ClientProxy implements IProxy {
     @Override
     public void init(FMLInitializationEvent event) {
         // register key bindings
-        keyBindings = new KeyBinding[6];
+        keyBindings = new KeyBinding[7];
 
         // instantiate the key bindings
         keyBindings[0] = new KeyBinding("key.effortlessbuilding.hud.desc", KeyConflictContext.UNIVERSAL, Keyboard.KEY_ADD, "key.effortlessbuilding.category");
@@ -97,7 +97,8 @@ public class ClientProxy implements IProxy {
         };
         keyBindings[4] = new KeyBinding("key.effortlessbuilding.undo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, Keyboard.KEY_Z, "key.effortlessbuilding.category");
         keyBindings[5] = new KeyBinding("key.effortlessbuilding.redo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, Keyboard.KEY_Y, "key.effortlessbuilding.category");
-//        keyBindings[6] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
+        keyBindings[6] = new KeyBinding("key.effortlessbuilding.altplacement.desc", KeyConflictContext.IN_GAME, Keyboard.KEY_LCONTROL, "key.effortlessbuilding.category");
+//        keyBindings[7] = new KeyBinding("Reload shaders", Keyboard.KEY_TAB, "key.effortlessbuilding.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {
@@ -344,8 +345,26 @@ public class ClientProxy implements IProxy {
             EffortlessBuilding.packetHandler.sendToServer(new ModeActionMessage(action));
         }
 
+        //Change placement mode
+        if (keyBindings[6].isPressed()) {
+            //Toggle between first two actions of the first option of the current build mode
+            BuildModes.BuildModeEnum currentBuildMode = ModeSettingsManager.getModeSettings(player).getBuildMode();
+            if (currentBuildMode.options.length > 0) {
+                ModeOptions.OptionEnum option = currentBuildMode.options[0];
+                if (option.actions.length >= 2) {
+                    if (ModeOptions.getOptionSetting(option) == option.actions[0]) {
+                        ModeOptions.performAction(player, option.actions[1]);
+                        EffortlessBuilding.packetHandler.sendToServer(new ModeActionMessage(option.actions[1]));
+                    } else {
+                        ModeOptions.performAction(player, option.actions[0]);
+                        EffortlessBuilding.packetHandler.sendToServer(new ModeActionMessage(option.actions[0]));
+                    }
+                }
+            }
+        }
+
         //For shader development
-        if (keyBindings.length >= 7 && keyBindings[6].isPressed()) {
+        if (keyBindings.length >= 8 && keyBindings[7].isPressed()) {
             ShaderHandler.init();
             EffortlessBuilding.log(player, "Reloaded shaders");
         }
