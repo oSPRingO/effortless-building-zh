@@ -7,10 +7,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.config.GuiCheckBox;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Array;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
+import nl.requios.effortlessbuilding.gui.elements.GuiCheckBoxFixed;
 import nl.requios.effortlessbuilding.gui.elements.GuiCollapsibleScrollEntry;
 import nl.requios.effortlessbuilding.gui.elements.GuiNumberField;
 import nl.requios.effortlessbuilding.gui.elements.GuiScrollPane;
@@ -24,7 +24,7 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
 
     protected List<GuiNumberField> arrayNumberFieldList = new ArrayList<>();
 
-    private GuiCheckBox buttonArrayEnabled;
+    private GuiCheckBoxFixed buttonArrayEnabled;
     private GuiNumberField textArrayOffsetX, textArrayOffsetY, textArrayOffsetZ, textArrayCount;
 
     public ArraySettingsGui(GuiScrollPane scrollPane) {
@@ -36,7 +36,7 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         super.init(buttons);
 
         int y = top;
-        buttonArrayEnabled = new GuiCheckBox(left - 15 + 8, y, "", false) {
+        buttonArrayEnabled = new GuiCheckBoxFixed(left - 15 + 8, y, "", false) {
             @Override
             public void onClick(double mouseX, double mouseY) {
                 super.onClick(mouseX, mouseY);

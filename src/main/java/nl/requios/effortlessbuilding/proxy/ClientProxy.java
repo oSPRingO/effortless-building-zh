@@ -63,9 +63,6 @@ public class ClientProxy implements IProxy {
 
     public static int ticksInGame = 0;
 
-    private static final HashMap<BuildModes.BuildModeEnum, ResourceLocation> buildModeIcons = new HashMap<>();
-    private static final HashMap<ModeOptions.ActionEnum, ResourceLocation> modeOptionIcons = new HashMap<>();
-
     @Override
     public void setup(FMLCommonSetupEvent event) {}
 
@@ -103,32 +100,6 @@ public class ClientProxy implements IProxy {
 
     public PlayerEntity getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx){
         return (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT ? Minecraft.getInstance().player : ctx.get().getSender());
-    }
-
-    @SubscribeEvent
-    public static void onTextureStitch(final TextureStitchEvent.Pre event) {
-        //register icon textures
-        for ( final BuildModes.BuildModeEnum mode : BuildModes.BuildModeEnum.values() )
-        {
-            final ResourceLocation sprite = new ResourceLocation(EffortlessBuilding.MODID, "icons/" + mode.name().toLowerCase());
-            event.addSprite(sprite);
-            buildModeIcons.put(mode, sprite);
-        }
-
-        for ( final ModeOptions.ActionEnum action : ModeOptions.ActionEnum.values() )
-        {
-            final ResourceLocation sprite = new ResourceLocation(EffortlessBuilding.MODID, "icons/" + action.name().toLowerCase());
-            event.addSprite(sprite);
-            modeOptionIcons.put(action, sprite);
-        }
-    }
-
-    public static TextureAtlasSprite getBuildModeIcon(BuildModes.BuildModeEnum mode) {
-        return Minecraft.getInstance().getTextureMap().getSprite(buildModeIcons.get(mode));
-    }
-
-    public static TextureAtlasSprite getModeOptionIcon(ModeOptions.ActionEnum action) {
-        return Minecraft.getInstance().getTextureMap().getSprite(modeOptionIcons.get(action));
     }
 
     @SubscribeEvent

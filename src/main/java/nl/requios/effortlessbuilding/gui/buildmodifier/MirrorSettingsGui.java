@@ -8,14 +8,10 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.config.GuiCheckBox;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.Mirror;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
-import nl.requios.effortlessbuilding.gui.elements.GuiCollapsibleScrollEntry;
-import nl.requios.effortlessbuilding.gui.elements.GuiIconButton;
-import nl.requios.effortlessbuilding.gui.elements.GuiNumberField;
-import nl.requios.effortlessbuilding.gui.elements.GuiScrollPane;
+import nl.requios.effortlessbuilding.gui.elements.*;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.ArrayList;
@@ -33,7 +29,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
     protected List<GuiNumberField> mirrorNumberFieldList = new ArrayList<>();
 
     private GuiNumberField textMirrorPosX, textMirrorPosY, textMirrorPosZ, textMirrorRadius;
-    private GuiCheckBox buttonMirrorEnabled, buttonMirrorX, buttonMirrorY, buttonMirrorZ;
+    private GuiCheckBoxFixed buttonMirrorEnabled, buttonMirrorX, buttonMirrorY, buttonMirrorZ;
     private GuiIconButton buttonCurrentPosition, buttonToggleOdd, buttonDrawPlanes, buttonDrawLines;
     private boolean drawPlanes, drawLines, toggleOdd;
 
@@ -46,7 +42,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         super.init(buttonList);
 
         int y = top - 2;
-        buttonMirrorEnabled = new GuiCheckBox(left - 15 + 8, y, "", false) {
+        buttonMirrorEnabled = new GuiCheckBoxFixed(left - 15 + 8, y, "", false) {
             @Override
             public void onClick(double mouseX, double mouseY) {
                 super.onClick(mouseX, mouseY);
@@ -73,13 +69,13 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         mirrorNumberFieldList.add(textMirrorPosZ);
 
         y = top + 50;
-        buttonMirrorX = new GuiCheckBox(left + 60, y, " X", true);
+        buttonMirrorX = new GuiCheckBoxFixed(left + 60, y, " X", true);
         mirrorButtonList.add(buttonMirrorX);
 
-        buttonMirrorY = new GuiCheckBox(left + 100, y, " Y", false);
+        buttonMirrorY = new GuiCheckBoxFixed(left + 100, y, " Y", false);
         mirrorButtonList.add(buttonMirrorY);
 
-        buttonMirrorZ = new GuiCheckBox(left + 140, y, " Z", false);
+        buttonMirrorZ = new GuiCheckBoxFixed(left + 140, y, " Z", false);
         mirrorButtonList.add(buttonMirrorZ);
 
         y = top + 47;

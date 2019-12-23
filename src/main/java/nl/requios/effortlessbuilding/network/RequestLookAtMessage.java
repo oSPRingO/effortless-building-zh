@@ -2,6 +2,8 @@ package nl.requios.effortlessbuilding.network;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
@@ -49,7 +51,11 @@ public class RequestLookAtMessage {
 
                     //Prevent double placing in normal mode with placeStartPos false
                     //Unless QuickReplace is on, then we do need to place start pos.
-                    PacketHandler.INSTANCE.sendToServer(new BlockPlacedMessage(ClientProxy.previousLookAt, message.getPlaceStartPos()));
+                    if (ClientProxy.previousLookAt.getType() == RayTraceResult.Type.BLOCK) {
+                        PacketHandler.INSTANCE.sendToServer(new BlockPlacedMessage((BlockRayTraceResult) ClientProxy.previousLookAt, message.getPlaceStartPos()));
+                    } else {
+                        PacketHandler.INSTANCE.sendToServer(new BlockPlacedMessage());
+                    }
                 }
             });
             ctx.get().setPacketHandled(true);

@@ -8,14 +8,10 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.fml.client.config.GuiCheckBox;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.RadialMirror;
-import nl.requios.effortlessbuilding.gui.elements.GuiCollapsibleScrollEntry;
-import nl.requios.effortlessbuilding.gui.elements.GuiIconButton;
-import nl.requios.effortlessbuilding.gui.elements.GuiNumberField;
-import nl.requios.effortlessbuilding.gui.elements.GuiScrollPane;
+import nl.requios.effortlessbuilding.gui.elements.*;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
 
 import java.util.ArrayList;
@@ -33,7 +29,7 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
     protected List<GuiNumberField> radialMirrorNumberFieldList = new ArrayList<>();
 
     private GuiNumberField textRadialMirrorPosX, textRadialMirrorPosY, textRadialMirrorPosZ, textRadialMirrorSlices, textRadialMirrorRadius;
-    private GuiCheckBox buttonRadialMirrorEnabled, buttonRadialMirrorAlternate;
+    private GuiCheckBoxFixed buttonRadialMirrorEnabled, buttonRadialMirrorAlternate;
     private GuiIconButton buttonCurrentPosition, buttonToggleOdd, buttonDrawPlanes, buttonDrawLines;
     private boolean drawPlanes, drawLines, toggleOdd;
 
@@ -46,7 +42,7 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
         super.init(buttonList);
 
         int y = top - 2;
-        buttonRadialMirrorEnabled = new GuiCheckBox(left - 15 + 8, y, "", false) {
+        buttonRadialMirrorEnabled = new GuiCheckBoxFixed(left - 15 + 8, y, "", false) {
             @Override
             public void onClick(double mouseX, double mouseY) {
                 super.onClick(mouseX, mouseY);
@@ -131,7 +127,7 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
         radialMirrorIconButtonList.add(buttonDrawPlanes);
 
         y = top + 76;
-        buttonRadialMirrorAlternate = new GuiCheckBox(left + 140, y, " Alternate", false);
+        buttonRadialMirrorAlternate = new GuiCheckBoxFixed(left + 140, y, " Alternate", false);
         radialMirrorButtonList.add(buttonRadialMirrorAlternate);
 
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);

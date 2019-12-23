@@ -11,6 +11,7 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.TranslationTextComponent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
+import nl.requios.effortlessbuilding.ModEventHandler;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.apache.commons.lang3.text.WordUtils;
@@ -298,7 +299,7 @@ public class RadialMenu extends Screen {
             final double x = (menuRegion.x1 + menuRegion.x2) * 0.5 * (ringOuterEdge * 0.6 + 0.4 * ringInnerEdge);
             final double y = (menuRegion.y1 + menuRegion.y2) * 0.5 * (ringOuterEdge * 0.6 + 0.4 * ringInnerEdge);
 
-            final TextureAtlasSprite sprite = ClientProxy.getBuildModeIcon(menuRegion.mode);
+            final TextureAtlasSprite sprite = ModEventHandler.getBuildModeIcon(menuRegion.mode);
 
             final double x1 = x - 8;
             final double x2 = x + 8;
@@ -330,7 +331,7 @@ public class RadialMenu extends Screen {
             final double v1 = 0;
             final double v2 = 16;
 
-            final TextureAtlasSprite sprite = ClientProxy.getModeOptionIcon(button.action);
+            final TextureAtlasSprite sprite = ModEventHandler.getModeOptionIcon(button.action);
 
             final double btnmiddleX = (button.x1 + button.x2) / 2 + 0.01;
             final double btnmiddleY = (button.y1 + button.y2) / 2 + 0.01;
