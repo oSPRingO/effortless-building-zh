@@ -114,7 +114,7 @@ public class ModifierSettingsGui extends Screen {
     }
 
     @Override
-    public void onClose() {
+    public void removed() {
         scrollPane.onGuiClosed();
 
         //save everything

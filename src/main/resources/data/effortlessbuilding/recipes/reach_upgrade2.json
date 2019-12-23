@@ -1,7 +1,4 @@
 {
-    "conditions": [{
-        "type": "effortlessbuilding:enable_reach_upgrades"
-    }],
     "type": "minecraft:crafting_shaped",
     "pattern": [
         " M",

@@ -25,7 +25,6 @@ import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.command.CommandReach;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
-import nl.requios.effortlessbuilding.helper.ReachConditionFactory;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade1;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade2;
@@ -44,7 +43,7 @@ public class EffortlessBuilding
 {
     public static final String MODID = "effortlessbuilding";
     public static final String NAME = "Effortless Building";
-    public static final String VERSION = "1.13.2-2.16";
+    public static final String VERSION = "1.14.4-2.16";
 
     public static EffortlessBuilding instance;
 
@@ -95,9 +94,6 @@ public class EffortlessBuilding
         CapabilityManager.INSTANCE.register(ModeCapabilityManager.IModeCapability.class, new ModeCapabilityManager.Storage(), ModeCapabilityManager.ModeCapability::new);
 
         PacketHandler.register();
-
-        //Register recipe condition
-        CraftingHelper.register(new ResourceLocation(MODID, "enable_reach_upgrades"), new ReachConditionFactory());
 
         //TODO 1.13 config
 //        ConfigManager.sync(MODID, Config.Type.INSTANCE);
