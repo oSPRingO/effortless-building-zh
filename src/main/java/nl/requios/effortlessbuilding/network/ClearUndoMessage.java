@@ -30,8 +30,6 @@ public class ClearUndoMessage {
         public static void handle(ClearUndoMessage message, Supplier<NetworkEvent.Context> ctx)
         {
             ctx.get().enqueueWork(() -> {
-                EffortlessBuilding.log("ClearUndoMessage");
-
                 if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
                     //Received clientside
                     EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);

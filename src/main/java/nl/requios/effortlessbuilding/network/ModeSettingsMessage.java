@@ -41,8 +41,6 @@ public class ModeSettingsMessage {
         public static void handle(ModeSettingsMessage message, Supplier<NetworkEvent.Context> ctx)
         {
             ctx.get().enqueueWork(() -> {
-                EffortlessBuilding.log("ModeSettingsMessage");
-
                 EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 // Sanitize

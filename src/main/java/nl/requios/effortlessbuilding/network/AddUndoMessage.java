@@ -67,8 +67,6 @@ public class AddUndoMessage {
         public static void handle(AddUndoMessage message, Supplier<NetworkEvent.Context> ctx)
         {
             ctx.get().enqueueWork(() -> {
-                EffortlessBuilding.log("AddUndoMessage");
-
                 if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
                     //Received clientside
 

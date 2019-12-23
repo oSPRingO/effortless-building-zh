@@ -25,8 +25,6 @@ public class CancelModeMessage {
         public static void handle(CancelModeMessage message, Supplier<NetworkEvent.Context> ctx)
         {
             ctx.get().enqueueWork(() -> {
-                EffortlessBuilding.log("CancelModeMessage");
-
                 EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 BuildModes.initializeMode(player);

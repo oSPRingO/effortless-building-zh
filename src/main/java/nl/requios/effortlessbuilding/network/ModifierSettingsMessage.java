@@ -129,8 +129,6 @@ public class ModifierSettingsMessage {
         public static void handle(ModifierSettingsMessage message, Supplier<NetworkEvent.Context> ctx)
         {
             ctx.get().enqueueWork(() -> {
-                EffortlessBuilding.log("ModifierSettingsMessage");
-
                 EntityPlayer player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
                 // Sanitize

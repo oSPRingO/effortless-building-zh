@@ -82,7 +82,6 @@ public class BlockBrokenMessage {
     {
         public static void handle(BlockBrokenMessage message, Supplier<NetworkEvent.Context> ctx)
         {
-            EffortlessBuilding.log("BlockBrokenMessage");
             ctx.get().enqueueWork(() -> {
                 if (ctx.get().getDirection().getReceptionSide() == LogicalSide.SERVER) {
                     //Received serverside
