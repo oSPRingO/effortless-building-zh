@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
@@ -11,17 +12,12 @@ import net.minecraftforge.items.IItemHandler;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 
 @OnlyIn(Dist.CLIENT)
-public class RandomizerBagGuiContainer extends ContainerScreen {
+public class RandomizerBagScreen extends ContainerScreen<RandomizerBagContainer> {
     private static final ResourceLocation guiTextures =
             new ResourceLocation(EffortlessBuilding.MODID, "textures/gui/container/randomizerbag.png");
-    private final PlayerInventory inventoryPlayer;
-    private final IItemHandler inventoryBag;
 
-    public RandomizerBagGuiContainer(PlayerInventory inventoryPlayer, IItemHandler inventoryBag) {
-        super(new RandomizerBagContainer(inventoryPlayer, inventoryBag), inventoryPlayer, new TranslationTextComponent("effortlessbuilding.screen.randomizer_bag"));
-        this.inventoryPlayer = inventoryPlayer;
-        this.inventoryBag = inventoryBag;
-
+    public RandomizerBagScreen(RandomizerBagContainer randomizerBagContainer, PlayerInventory playerInventory, ITextComponent title) {
+        super(randomizerBagContainer, playerInventory, title);//new TranslationTextComponent("effortlessbuilding.screen.randomizer_bag"));
         ySize = 134;
     }
 
@@ -34,9 +30,8 @@ public class RandomizerBagGuiContainer extends ContainerScreen {
 
     @Override
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-        String s = "Randomizer Bag";
-        font.drawString(s, 8, 6, 0x404040);
-        font.drawString(inventoryPlayer.getDisplayName().getUnformattedComponentText(), 8, ySize - 96 + 2, 0x404040);
+        font.drawString(this.title.getFormattedText(), 8, 6, 0x404040);
+        font.drawString(playerInventory.getDisplayName().getFormattedText(), 8, ySize - 96 + 2, 0x404040);
     }
 
     @Override

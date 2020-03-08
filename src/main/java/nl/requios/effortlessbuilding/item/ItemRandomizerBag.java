@@ -4,7 +4,10 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.*;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.*;
@@ -16,6 +19,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fml.network.NetworkHooks;
@@ -26,7 +30,7 @@ import nl.requios.effortlessbuilding.buildmode.BuildModes;
 import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.capability.ItemHandlerCapabilityProvider;
-import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
+import nl.requios.effortlessbuilding.gui.RandomizerBagContainer;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 
 import javax.annotation.Nullable;
@@ -61,7 +65,7 @@ public class ItemRandomizerBag extends Item {
         if (ctx.isPlacerSneaking()) {
             if (world.isRemote) return ActionResultType.SUCCESS;
             //Open inventory
-            NetworkHooks.openGui((ServerPlayerEntity) player, new RandomizerBagGuiHandler());
+            NetworkHooks.openGui((ServerPlayerEntity) player, new ContainerProvider(item));
         } else {
             if (world.isRemote) return ActionResultType.SUCCESS;
 
@@ -114,7 +118,7 @@ public class ItemRandomizerBag extends Item {
         if (player.isSneaking()) {
             if (world.isRemote) return new ActionResult<>(ActionResultType.SUCCESS, bag);
             //Open inventory
-            NetworkHooks.openGui((ServerPlayerEntity) player, new RandomizerBagGuiHandler());
+            NetworkHooks.openGui((ServerPlayerEntity) player, new ContainerProvider(bag));
         } else {
             //Use item
             //Get bag inventory
@@ -200,6 +204,9 @@ public class ItemRandomizerBag extends Item {
     public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
         tooltip.add(new StringTextComponent(TextFormatting.BLUE + "Rightclick" + TextFormatting.GRAY + " to place a random block"));
         tooltip.add(new StringTextComponent(TextFormatting.BLUE + "Sneak + rightclick" + TextFormatting.GRAY + " to open inventory"));
+        if (world != null && world.getPlayers().size() > 1) {
+            tooltip.add(new StringTextComponent(TextFormatting.YELLOW + "Experimental on servers: may lose inventory"));
+        }
     }
 
     @Override
@@ -214,5 +221,25 @@ public class ItemRandomizerBag extends Item {
     public static void renewRandomness() {
         currentSeed = Calendar.getInstance().getTimeInMillis();
         rand.setSeed(currentSeed);
+    }
+
+    public static class ContainerProvider implements INamedContainerProvider{
+
+        private ItemStack bag;
+
+        public ContainerProvider(ItemStack bag) {
+            this.bag = bag;
+        }
+
+        @Override
+        public ITextComponent getDisplayName() {
+            return new TranslationTextComponent("effortlessbuilding.screen.randomizer_bag");
+        }
+
+        @Nullable
+        @Override
+        public Container createMenu(int containerId, PlayerInventory playerInventory, PlayerEntity player) {
+            return new RandomizerBagContainer(containerId, playerInventory, ItemRandomizerBag.getBagInventory(bag));
+        }
     }
 }

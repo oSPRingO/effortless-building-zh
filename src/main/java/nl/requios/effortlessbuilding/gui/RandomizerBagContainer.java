@@ -2,29 +2,35 @@ package nl.requios.effortlessbuilding.gui;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.ClickType;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.SlotItemHandler;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 
 public class RandomizerBagContainer extends Container {
 
     private final IItemHandler bagInventory;
-    private final int sizeInventory;
 
     private static final int INV_START = ItemRandomizerBag.INV_SIZE, INV_END = INV_START + 26,
             HOTBAR_START = INV_END + 1, HOTBAR_END = HOTBAR_START + 8;
 
-    public RandomizerBagContainer(PlayerInventory parInventoryPlayer, IItemHandler parIInventory) {
-        //TODO 1.14 Gui
-        super(null, 0);
-        bagInventory = parIInventory;
-        sizeInventory = bagInventory.getSlots();
-        for (int i = 0; i < sizeInventory; ++i) {
+    public RandomizerBagContainer(int containerId, PlayerInventory playerInventory) {
+        this(containerId, playerInventory, new ItemStackHandler(ItemRandomizerBag.INV_SIZE));
+    }
+
+    public RandomizerBagContainer(int containerId, PlayerInventory playerInventory, IItemHandler inventory) {
+        super(EffortlessBuilding.RANDOMIZER_BAG_CONTAINER, containerId);
+        bagInventory = inventory;
+
+        for (int i = 0; i < ItemRandomizerBag.INV_SIZE; ++i) {
             this.addSlot(new SlotItemHandler(bagInventory, i, 44 + (18 * i), 20));
         }
 
@@ -32,13 +38,13 @@ public class RandomizerBagContainer extends Container {
         int i;
         for (i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                addSlot(new Slot(parInventoryPlayer, j + i * 9 + 9, 8 + j * 18, 51 + i * 18));
+                addSlot(new Slot(playerInventory, j + i * 9 + 9, 8 + j * 18, 51 + i * 18));
             }
         }
 
         // add hotbar slots
         for (i = 0; i < 9; ++i) {
-            addSlot(new Slot(parInventoryPlayer, i, 8 + i * 18, 109));
+            addSlot(new Slot(playerInventory, i, 8 + i * 18, 109));
         }
     }
 

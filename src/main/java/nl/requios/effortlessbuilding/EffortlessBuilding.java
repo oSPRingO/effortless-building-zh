@@ -2,8 +2,11 @@ package nl.requios.effortlessbuilding;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.CapabilityManager;
@@ -24,7 +27,7 @@ import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.command.CommandReach;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
-import nl.requios.effortlessbuilding.gui.RandomizerBagGuiHandler;
+import nl.requios.effortlessbuilding.gui.RandomizerBagContainer;
 import nl.requios.effortlessbuilding.item.ItemRandomizerBag;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade1;
 import nl.requios.effortlessbuilding.item.ItemReachUpgrade2;
@@ -66,6 +69,7 @@ public class EffortlessBuilding
             ITEM_REACH_UPGRADE_3
     };
 
+    public static final ContainerType<RandomizerBagContainer> RANDOMIZER_BAG_CONTAINER = register("randomizer_bag", RandomizerBagContainer::new);
     public static final ResourceLocation RANDOMIZER_BAG_GUI = new ResourceLocation(EffortlessBuilding.MODID, "randomizer_bag");
 
     public EffortlessBuilding() {
@@ -97,9 +101,6 @@ public class EffortlessBuilding
 
         //TODO 1.13 config
 //        ConfigManager.sync(MODID, Config.Type.INSTANCE);
-
-        //TODO 1.14 GUI
-//        ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.GUIFACTORY, () -> RandomizerBagGuiHandler::openGui);
 
         proxy.setup(event);
 
@@ -133,6 +134,9 @@ public class EffortlessBuilding
         CommandReach.register(event.getCommandDispatcher());
     }
 
+    private static <T extends Container> ContainerType<T> register(String key, ContainerType.IFactory<T> factory) {
+        return Registry.register(Registry.MENU, key, new ContainerType<>(factory));
+    }
 
     public static void log(String msg){
         logger.info(msg);
