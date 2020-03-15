@@ -39,7 +39,7 @@ public class Wall extends TwoClicksBuildMode {
 
     public static BlockPos findWall(PlayerEntity player, BlockPos firstPos, boolean skipRaytrace) {
         Vec3d look = player.getLookVec();
-        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+        Vec3d start = new Vec3d(player.getPosX(), player.getPosY() + player.getEyeHeight(), player.getPosZ());
 
         List<Criteria> criteriaList = new ArrayList<>(3);
 

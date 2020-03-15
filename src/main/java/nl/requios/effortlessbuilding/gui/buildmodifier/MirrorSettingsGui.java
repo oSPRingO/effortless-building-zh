@@ -89,7 +89,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
 
         y = top + 72;
         buttonCurrentPosition = new GuiIconButton(left + 5, y, 0, 0, BUILDING_ICONS, button -> {
-            Vec3d pos = new Vec3d(Math.floor(mc.player.posX) + 0.5, Math.floor(mc.player.posY) + 0.5, Math.floor(mc.player.posZ) + 0.5);
+            Vec3d pos = new Vec3d(Math.floor(mc.player.getPosX()) + 0.5, Math.floor(mc.player.getPosY()) + 0.5, Math.floor(mc.player.getPosZ()) + 0.5);
             textMirrorPosX.setNumber(pos.x);
             textMirrorPosY.setNumber(pos.y);
             textMirrorPosZ.setNumber(pos.z);

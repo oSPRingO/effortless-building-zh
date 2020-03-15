@@ -117,7 +117,7 @@ public class EventHandler
         //Disable if config says so
         if (!BuildConfig.survivalBalancers.increasedMiningTime.get()) return;
 
-        PlayerEntity player = event.getEntityPlayer();
+        PlayerEntity player = event.getPlayer();
         World world = player.world;
         BlockPos pos = event.getPos();
 
@@ -202,7 +202,7 @@ public class EventHandler
         PlayerEntity oldPlayer = event.getOriginal();
         oldPlayer.revive();
 
-        PlayerEntity newPlayer = event.getEntityPlayer();
+        PlayerEntity newPlayer = event.getPlayer();
         ModifierSettingsManager.setModifierSettings(newPlayer, ModifierSettingsManager.getModifierSettings(oldPlayer));
         ModeSettingsManager.setModeSettings(newPlayer, ModeSettingsManager.getModeSettings(oldPlayer));
     }

@@ -62,7 +62,7 @@ public class ItemRandomizerBag extends Item {
 
         if (player == null) return ActionResultType.FAIL;
 
-        if (ctx.isPlacerSneaking()) {
+        if (ctx.func_225518_g_()) { //ctx.isPlacerSneaking()
             if (world.isRemote) return ActionResultType.SUCCESS;
             //Open inventory
             NetworkHooks.openGui((ServerPlayerEntity) player, new ContainerProvider(item));
@@ -115,7 +115,7 @@ public class ItemRandomizerBag extends Item {
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
         ItemStack bag = player.getHeldItem(hand);
 
-        if (player.isSneaking()) {
+        if (player.func_226563_dT_()) {//player.isSneaking()
             if (world.isRemote) return new ActionResult<>(ActionResultType.SUCCESS, bag);
             //Open inventory
             NetworkHooks.openGui((ServerPlayerEntity) player, new ContainerProvider(bag));

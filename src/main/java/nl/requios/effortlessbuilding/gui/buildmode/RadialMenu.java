@@ -3,7 +3,7 @@ package nl.requios.effortlessbuilding.gui.buildmode;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.util.Direction;
@@ -119,19 +119,19 @@ public class RadialMenu extends Screen {
 
         BuildModeEnum currentBuildMode = ModeSettingsManager.getModeSettings(Minecraft.getInstance().player).getBuildMode();
 
-        GlStateManager.pushMatrix();
-        GlStateManager.translatef( 0.0F, 0.0F, 200.0F );
+        RenderSystem.pushMatrix();
+        RenderSystem.translatef( 0.0F, 0.0F, 200.0F );
 
         final int startColor = (int) ( visibility * 98 ) << 24;
         final int endColor = (int) ( visibility * 128 ) << 24;
 
         fillGradient(0, 0, width, height, startColor, endColor);
 
-        GlStateManager.disableTexture();
-        GlStateManager.enableBlend();
-        GlStateManager.disableAlphaTest();
-        GlStateManager.blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
-        GlStateManager.shadeModel(GL11.GL_SMOOTH);
+        RenderSystem.disableTexture();
+        RenderSystem.enableBlend();
+        RenderSystem.disableAlphaTest();
+        RenderSystem.blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+        RenderSystem.shadeModel(GL11.GL_SMOOTH);
         final Tessellator tessellator = Tessellator.getInstance();
         final BufferBuilder buffer = tessellator.getBuffer();
 
@@ -236,10 +236,10 @@ public class RadialMenu extends Screen {
                     switchTo = menuRegion.mode;
                 }
 
-                buffer.pos(middleX + x1m1, middleY + y1m1, blitOffset).color(r, g, b, a).endVertex();
-                buffer.pos(middleX + x2m1, middleY + y2m1, blitOffset).color(r, g, b, a).endVertex();
-                buffer.pos(middleX + x2m2, middleY + y2m2, blitOffset).color(r, g, b, a).endVertex();
-                buffer.pos(middleX + x1m2, middleY + y1m2, blitOffset).color(r, g, b, a).endVertex();
+                buffer.pos(middleX + x1m1, middleY + y1m1, getBlitOffset()).color(r, g, b, a).endVertex();
+                buffer.pos(middleX + x2m1, middleY + y2m1, getBlitOffset()).color(r, g, b, a).endVertex();
+                buffer.pos(middleX + x2m2, middleY + y2m2, getBlitOffset()).color(r, g, b, a).endVertex();
+                buffer.pos(middleX + x1m2, middleY + y1m2, getBlitOffset()).color(r, g, b, a).endVertex();
 
                 currentMode++;
             }
@@ -275,22 +275,23 @@ public class RadialMenu extends Screen {
                 doAction = btn.action;
             }
 
-            buffer.pos(middleX + btn.x1, middleY + btn.y1, blitOffset).color(r, g, b, a).endVertex();
-            buffer.pos(middleX + btn.x1, middleY + btn.y2, blitOffset).color(r, g, b, a).endVertex();
-            buffer.pos(middleX + btn.x2, middleY + btn.y2, blitOffset).color(r, g, b, a).endVertex();
-            buffer.pos(middleX + btn.x2, middleY + btn.y1, blitOffset).color(r, g, b, a).endVertex();
+            buffer.pos(middleX + btn.x1, middleY + btn.y1, getBlitOffset()).color(r, g, b, a).endVertex();
+            buffer.pos(middleX + btn.x1, middleY + btn.y2, getBlitOffset()).color(r, g, b, a).endVertex();
+            buffer.pos(middleX + btn.x2, middleY + btn.y2, getBlitOffset()).color(r, g, b, a).endVertex();
+            buffer.pos(middleX + btn.x2, middleY + btn.y1, getBlitOffset()).color(r, g, b, a).endVertex();
         }
 
         tessellator.draw();
 
-        GlStateManager.shadeModel(GL11.GL_FLAT);
+        RenderSystem.shadeModel(GL11.GL_FLAT);
 
-        GlStateManager.translatef(0f, 0f, 5f);
-        GlStateManager.enableTexture();
-        GlStateManager.color3f(1f, 1f, 1f);
-        GlStateManager.disableBlend();
-        GlStateManager.enableAlphaTest();
-        GlStateManager.bindTexture(Minecraft.getInstance().getTextureMap().getGlTextureId());
+        RenderSystem.translatef(0f, 0f, 5f);
+        RenderSystem.enableTexture();
+        RenderSystem.color3f(1f, 1f, 1f);
+        RenderSystem.disableBlend();
+        RenderSystem.enableAlphaTest();
+        //TODO 1.15 check if correct
+        RenderSystem.bindTexture(0/*Minecraft.getInstance().getTextureMap().getGlTextureId()*/);
 
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
 
@@ -315,10 +316,10 @@ public class RadialMenu extends Screen {
             final double v1 = 0;
             final double v2 = 16;
 
-            buffer.pos(middleX + x1, middleY + y1, blitOffset).tex(sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v1)).color(f, f, f, a).endVertex();
-            buffer.pos(middleX + x1, middleY + y2, blitOffset).tex(sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v2)).color(f, f, f, a).endVertex();
-            buffer.pos(middleX + x2, middleY + y2, blitOffset).tex(sprite.getInterpolatedU(u2), sprite.getInterpolatedV(v2)).color(f, f, f, a).endVertex();
-            buffer.pos(middleX + x2, middleY + y1, blitOffset).tex(sprite.getInterpolatedU(u2), sprite.getInterpolatedV(v1)).color(f, f, f, a).endVertex();
+            buffer.pos(middleX + x1, middleY + y1, getBlitOffset()).tex(sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v1)).color(f, f, f, a).endVertex();
+            buffer.pos(middleX + x1, middleY + y2, getBlitOffset()).tex(sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v2)).color(f, f, f, a).endVertex();
+            buffer.pos(middleX + x2, middleY + y2, getBlitOffset()).tex(sprite.getInterpolatedU(u2), sprite.getInterpolatedV(v2)).color(f, f, f, a).endVertex();
+            buffer.pos(middleX + x2, middleY + y1, getBlitOffset()).tex(sprite.getInterpolatedU(u2), sprite.getInterpolatedV(v1)).color(f, f, f, a).endVertex();
         }
 
         //Draw action icons
@@ -341,10 +342,10 @@ public class RadialMenu extends Screen {
             final double btny1 = btnmiddleY - 8;
             final double btny2 = btnmiddleY + 8;
 
-            buffer.pos(middleX + btnx1, middleY + btny1, blitOffset).tex(sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v1)).color(f, f, f, a).endVertex();
-            buffer.pos(middleX + btnx1, middleY + btny2, blitOffset).tex(sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v2)).color(f, f, f, a).endVertex();
-            buffer.pos(middleX + btnx2, middleY + btny2, blitOffset).tex(sprite.getInterpolatedU(u2), sprite.getInterpolatedV(v2)).color(f, f, f, a).endVertex();
-            buffer.pos(middleX + btnx2, middleY + btny1, blitOffset).tex(sprite.getInterpolatedU(u2), sprite.getInterpolatedV(v1)).color(f, f, f, a).endVertex();
+            buffer.pos(middleX + btnx1, middleY + btny1, getBlitOffset()).tex(sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v1)).color(f, f, f, a).endVertex();
+            buffer.pos(middleX + btnx1, middleY + btny2, getBlitOffset()).tex(sprite.getInterpolatedU(u1), sprite.getInterpolatedV(v2)).color(f, f, f, a).endVertex();
+            buffer.pos(middleX + btnx2, middleY + btny2, getBlitOffset()).tex(sprite.getInterpolatedU(u2), sprite.getInterpolatedV(v2)).color(f, f, f, a).endVertex();
+            buffer.pos(middleX + btnx2, middleY + btny1, getBlitOffset()).tex(sprite.getInterpolatedU(u2), sprite.getInterpolatedV(v1)).color(f, f, f, a).endVertex();
         }
 
         tessellator.draw();
@@ -444,7 +445,7 @@ public class RadialMenu extends Screen {
             }
         }
 
-        GlStateManager.popMatrix();
+        RenderSystem.popMatrix();
     }
 
     private boolean inTriangle(final double x1, final double y1, final double x2, final double y2,

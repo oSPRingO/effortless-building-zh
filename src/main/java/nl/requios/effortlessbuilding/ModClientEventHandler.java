@@ -37,10 +37,14 @@ public class ModClientEventHandler {
     }
 
     public static TextureAtlasSprite getBuildModeIcon(BuildModes.BuildModeEnum mode) {
-        return Minecraft.getInstance().getTextureMap().getSprite(buildModeIcons.get(mode));
+        //TODO 1.15
+        return null;
+//        return Minecraft.getInstance().getTextureMap().getSprite(buildModeIcons.get(mode));
     }
 
     public static TextureAtlasSprite getModeOptionIcon(ModeOptions.ActionEnum action) {
-        return Minecraft.getInstance().getTextureMap().getSprite(modeOptionIcons.get(action));
+        //TODO 1.15
+        return null;
+//        return Minecraft.getInstance().getTextureMap().getSprite(modeOptionIcons.get(action));
     }
 }

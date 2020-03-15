@@ -1,6 +1,7 @@
 package nl.requios.effortlessbuilding.gui;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
@@ -36,7 +37,7 @@ public class RandomizerBagScreen extends ContainerScreen<RandomizerBagContainer>
 
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
-        GlStateManager.color3f(1.0F, 1.0F, 1.0F);
+        RenderSystem.color3f(1.0F, 1.0F, 1.0F);
         minecraft.getTextureManager().bindTexture(guiTextures);
         int marginHorizontal = (width - xSize) / 2;
         int marginVertical = (height - ySize) / 2;

@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.render;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SimpleSound;
@@ -108,8 +108,8 @@ public class RenderHandler {
 
             if (RadialMenu.instance.isVisible()) {
 
-                int scaledWidth = mc.mainWindow.getScaledWidth();
-                int scaledHeight = mc.mainWindow.getScaledHeight();
+                int scaledWidth = mc.getMainWindow().getScaledWidth();
+                int scaledHeight = mc.getMainWindow().getScaledHeight();
                 RadialMenu.instance.configure(scaledWidth, scaledHeight);
 
                 if (!wasVisible) {
@@ -120,8 +120,8 @@ public class RenderHandler {
                     KeyBinding.unPressAllKeys();
                 }
 
-                final int mouseX = ((int) mc.mouseHelper.getMouseX()) * scaledWidth / mc.mainWindow.getFramebufferWidth();
-                final int mouseY = scaledHeight - ((int) mc.mouseHelper.getMouseY()) * scaledHeight / mc.mainWindow.getFramebufferHeight() - 1;
+                final int mouseX = ((int) mc.mouseHelper.getMouseX()) * scaledWidth / mc.getMainWindow().getFramebufferWidth();
+                final int mouseY = scaledHeight - ((int) mc.mouseHelper.getMouseY()) * scaledHeight / mc.getMainWindow().getFramebufferHeight() - 1;
 
                 net.minecraftforge.client.ForgeHooksClient.drawScreen(RadialMenu.instance, mouseX, mouseY, event.getPartialTicks());
             } else {
@@ -149,7 +149,8 @@ public class RenderHandler {
 
         GL11.glPushMatrix();
 //        GL11.glTranslated(-playerPos.x, -playerPos.y, -playerPos.z);
-        GlStateManager.translated(-TileEntityRendererDispatcher.staticPlayerX, -TileEntityRendererDispatcher.staticPlayerY, -TileEntityRendererDispatcher.staticPlayerZ);
+        //TODO 1.15
+        //RenderSystem.translated(-TileEntityRendererDispatcher.staticPlayerX, -TileEntityRendererDispatcher.staticPlayerY, -TileEntityRendererDispatcher.staticPlayerZ);
 
         GL11.glDepthMask(false);
     }
@@ -177,14 +178,14 @@ public class RenderHandler {
 //        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         Minecraft.getInstance().textureManager.bindTexture(ShaderHandler.shaderMaskTextureLocation);
 
-        GlStateManager.enableBlend();
-        GlStateManager.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL14.glBlendColor(1F, 1F, 1F, 0.8f);
     }
 
     protected static void endBlockPreviews() {
         ShaderHandler.releaseShader();
-        GlStateManager.disableBlend();
+        RenderSystem.disableBlend();
 
         GL11.glPopAttrib();
     }
@@ -197,27 +198,28 @@ public class RenderHandler {
     protected static void renderBlockPreview(BlockRendererDispatcher dispatcher, BlockPos blockPos, BlockState blockState) {
         if (blockState == null) return;
 
-        GlStateManager.pushMatrix();
-        GlStateManager.translatef(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-        GlStateManager.rotatef(-90.0F, 0.0F, 1.0F, 0.0F);
-        GlStateManager.translatef(-0.01f, -0.01f, 0.01f);
-        GlStateManager.scalef(1.02f, 1.02f, 1.02f);
+        RenderSystem.pushMatrix();
+        RenderSystem.translatef(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+        RenderSystem.rotatef(-90.0F, 0.0F, 1.0F, 0.0F);
+        RenderSystem.translatef(-0.01f, -0.01f, 0.01f);
+        RenderSystem.scalef(1.02f, 1.02f, 1.02f);
 
-        try {
-            dispatcher.renderBlockBrightness(blockState, 0.85f);
-        } catch (NullPointerException e) {
-            EffortlessBuilding.logger.warn("RenderHandler::renderBlockPreview cannot render " + blockState.getBlock().toString());
+        //TODO 1.15
+//        try {
+//            dispatcher.renderBlockBrightness(blockState, 0.85f);
+//        } catch (NullPointerException e) {
+//            EffortlessBuilding.logger.warn("RenderHandler::renderBlockPreview cannot render " + blockState.getBlock().toString());
+//
+//            //Render outline as backup
+//            RenderSystem.popMatrix();
+////            ShaderHandler.releaseShader();
+//            GL11.glDisable(GL11.GL_LIGHTING);
+//            renderBlockOutline(blockPos, new Vec3d(1f, 1f, 1f));
+//            GL11.glEnable(GL11.GL_LIGHTING);
+//            RenderSystem.pushMatrix();
+//        }
 
-            //Render outline as backup
-            GlStateManager.popMatrix();
-//            ShaderHandler.releaseShader();
-            GL11.glDisable(GL11.GL_LIGHTING);
-            renderBlockOutline(blockPos, new Vec3d(1f, 1f, 1f));
-            GL11.glEnable(GL11.GL_LIGHTING);
-            GlStateManager.pushMatrix();
-        }
-
-        GlStateManager.popMatrix();
+        RenderSystem.popMatrix();
     }
 
     protected static void renderBlockOutline(BlockPos pos, Vec3d color) {
@@ -230,7 +232,8 @@ public class RenderHandler {
 
         AxisAlignedBB aabb = new AxisAlignedBB(pos1, pos2.add(1, 1, 1)).grow(0.0020000000949949026);
 
-        WorldRenderer.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
+        //TODO 1.15
+//        WorldRenderer.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
     }
 
     //Renders outline with given bounding box
@@ -241,7 +244,8 @@ public class RenderHandler {
 //        VoxelShape voxelShape = collisionShape.withOffset(pos.getX(), pos.getY(), pos.getZ());
 
 //        WorldRenderer.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
-        WorldRenderer.drawShape(collisionShape, pos.getX(), pos.getY(), pos.getZ(), (float) color.x, (float) color.y, (float) color.z, 0.4f);
+        //TODO 1.15
+//        WorldRenderer.drawShape(collisionShape, pos.getX(), pos.getY(), pos.getZ(), (float) color.x, (float) color.y, (float) color.z, 0.4f);
     }
 
     //TODO 1.14

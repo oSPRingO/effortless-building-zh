@@ -168,7 +168,7 @@ public class ClientProxy implements IProxy {
 
                 ItemStack currentItemStack = player.getHeldItem(Hand.MAIN_HAND);
                 if (currentItemStack.getItem() instanceof BlockItem ||
-                    (CompatHelper.isItemBlockProxy(currentItemStack) && !player.isSneaking())) {
+                    (CompatHelper.isItemBlockProxy(currentItemStack) && !player.func_226563_dT_())) { //!player.isSneaking()
 
                     ItemStack itemStack = CompatHelper.getItemBlockFromStack(currentItemStack);
 
@@ -353,8 +353,8 @@ public class ClientProxy implements IProxy {
         float raytraceRange = ReachHelper.getPlacementReach(player);
 
         Vec3d look = player.getLookVec();
-        Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
-        Vec3d end = new Vec3d(player.posX + look.x * raytraceRange, player.posY + player.getEyeHeight() + look.y * raytraceRange, player.posZ + look.z * raytraceRange);
+        Vec3d start = new Vec3d(player.getPosX(), player.getPosY() + player.getEyeHeight(), player.getPosZ());
+        Vec3d end = new Vec3d(player.getPosX() + look.x * raytraceRange, player.getPosY() + player.getEyeHeight() + look.y * raytraceRange, player.getPosZ() + look.z * raytraceRange);
 //        return player.rayTrace(raytraceRange, 1f, RayTraceFluidMode.NEVER);
         //TODO 1.14 check if correct
         return world.rayTraceBlocks(new RayTraceContext(start, end, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, player));

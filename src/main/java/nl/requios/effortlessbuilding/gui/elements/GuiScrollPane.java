@@ -1,11 +1,11 @@
 package nl.requios.effortlessbuilding.gui.elements;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.Widget;
-import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -77,8 +77,6 @@ public class GuiScrollPane extends SlotGui {
             int scrollbarLeft = this.getScrollbarPosition();
             int scrollbarRight = scrollbarLeft + 6;
             this.capYPosition();
-            GlStateManager.disableLighting();
-            GlStateManager.disableFog();
 
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder bufferbuilder = tessellator.getBuffer();
@@ -91,17 +89,17 @@ public class GuiScrollPane extends SlotGui {
 
             //All entries
             this.renderList(insideLeft, insideTop, mouseXIn, mouseYIn, partialTicks);
-            GlStateManager.disableDepthTest();
+            RenderSystem.disableDepthTest();
 
             //Dirt overlays on top and bottom
 //            this.renderHoleBackground(0, this.y0, 255, 255);
 //            this.renderHoleBackground(this.y1, this.height, 255, 255);
 
-            GlStateManager.enableBlend();
-            GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-            GlStateManager.disableAlphaTest();
-            GlStateManager.shadeModel(7425);
-            GlStateManager.disableTexture();
+            RenderSystem.enableBlend();
+            RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
+            RenderSystem.disableAlphaTest();
+            RenderSystem.shadeModel(7425);
+            RenderSystem.disableTexture();
 
             //top
 //            bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
@@ -130,29 +128,30 @@ public class GuiScrollPane extends SlotGui {
                 }
 
                 bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-                bufferbuilder.pos((double) scrollbarLeft, (double) this.y1, 0.0D).tex(0.0D, 1.0D).color(0, 0, 0, 255).endVertex();
-                bufferbuilder.pos((double) scrollbarRight, (double) this.y1, 0.0D).tex(1.0D, 1.0D).color(0, 0, 0, 255).endVertex();
-                bufferbuilder.pos((double) scrollbarRight, (double) this.y0, 0.0D).tex(1.0D, 0.0D).color(0, 0, 0, 255).endVertex();
-                bufferbuilder.pos((double) scrollbarLeft, (double) this.y0, 0.0D).tex(0.0D, 0.0D).color(0, 0, 0, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarLeft, (double) this.y1, 0.0F).tex(0.0F, 1.0F).color(0, 0, 0, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarRight, (double) this.y1, 0.0F).tex(1.0F, 1.0F).color(0, 0, 0, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarRight, (double) this.y0, 0.0F).tex(1.0F, 0.0F).color(0, 0, 0, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarLeft, (double) this.y0, 0.0F).tex(0.0F, 0.0F).color(0, 0, 0, 255).endVertex();
                 tessellator.draw();
                 bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-                bufferbuilder.pos((double) scrollbarLeft, (double) (l1 + k1), 0.0D).tex(0.0D, 1.0D).color(128, 128, 128, 255).endVertex();
-                bufferbuilder.pos((double) scrollbarRight, (double) (l1 + k1), 0.0D).tex(1.0D, 1.0D).color(128, 128, 128, 255).endVertex();
-                bufferbuilder.pos((double) scrollbarRight, (double) l1, 0.0D).tex(1.0D, 0.0D).color(128, 128, 128, 255).endVertex();
-                bufferbuilder.pos((double) scrollbarLeft, (double) l1, 0.0D).tex(0.0D, 0.0D).color(128, 128, 128, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarLeft, (double) (l1 + k1), 0.0F).tex(0.0F, 1.0F).color(128, 128, 128, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarRight, (double) (l1 + k1), 0.0F).tex(1.0F, 1.0F).color(128, 128, 128, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarRight, (double) l1, 0.0F).tex(1.0F, 0.0F).color(128, 128, 128, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarLeft, (double) l1, 0.0F).tex(0.0F, 0.0F).color(128, 128, 128, 255).endVertex();
                 tessellator.draw();
                 bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-                bufferbuilder.pos((double) scrollbarLeft, (double) (l1 + k1 - 1), 0.0D).tex(0.0D, 1.0D).color(192, 192, 192, 255).endVertex();
-                bufferbuilder.pos((double) (scrollbarRight - 1), (double) (l1 + k1 - 1), 0.0D).tex(1.0D, 1.0D).color(192, 192, 192, 255).endVertex();
-                bufferbuilder.pos((double) (scrollbarRight - 1), (double) l1, 0.0D).tex(1.0D, 0.0D).color(192, 192, 192, 255).endVertex();
-                bufferbuilder.pos((double) scrollbarLeft, (double) l1, 0.0D).tex(0.0D, 0.0D).color(192, 192, 192, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarLeft, (double) (l1 + k1 - 1), 0.0F).tex(0.0F, 1.0F).color(192, 192, 192, 255).endVertex();
+                bufferbuilder.pos((double) (scrollbarRight - 1), (double) (l1 + k1 - 1), 0.0F).tex(1.0F, 1.0F).color(192, 192, 192, 255).endVertex();
+                bufferbuilder.pos((double) (scrollbarRight - 1), (double) l1, 0.0F).tex(1.0F, 0.0F).color(192, 192, 192, 255).endVertex();
+                bufferbuilder.pos((double) scrollbarLeft, (double) l1, 0.0F).tex(0.0F, 0.0F).color(192, 192, 192, 255).endVertex();
                 tessellator.draw();
             }
 
-            GlStateManager.enableTexture();
-            GlStateManager.shadeModel(7424);
-            GlStateManager.enableAlphaTest();
-            GlStateManager.disableBlend();
+            //this.renderDecorations(mouseXIn, mouseYIn);
+            RenderSystem.enableTexture();
+            RenderSystem.shadeModel(7424);
+            RenderSystem.enableAlphaTest();
+            RenderSystem.disableBlend();
         }
     }
 
@@ -354,23 +353,23 @@ public class GuiScrollPane extends SlotGui {
             if (this.renderSelection && this.isSelectedItem(i)) {
                 int i1 = this.x0 + this.width / 2 - this.getRowWidth() / 2;
                 int j1 = this.x0 + this.width / 2 + this.getRowWidth() / 2;
-                GlStateManager.disableTexture();
+                RenderSystem.disableTexture();
                 float f = this.isFocused() ? 1.0F : 0.5F;
-                GlStateManager.color4f(f, f, f, 1.0F);
+                RenderSystem.color4f(f, f, f, 1.0F);
                 bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
                 bufferbuilder.pos((double)i1, (double)(y + entryHeight2 + 2), 0.0D).endVertex();
                 bufferbuilder.pos((double)j1, (double)(y + entryHeight2 + 2), 0.0D).endVertex();
                 bufferbuilder.pos((double)j1, (double)(y - 2), 0.0D).endVertex();
                 bufferbuilder.pos((double)i1, (double)(y - 2), 0.0D).endVertex();
                 tessellator.draw();
-                GlStateManager.color4f(0.0F, 0.0F, 0.0F, 1.0F);
+                RenderSystem.color4f(0.0F, 0.0F, 0.0F, 1.0F);
                 bufferbuilder.begin(7, DefaultVertexFormats.POSITION);
                 bufferbuilder.pos((double)(i1 + 1), (double)(y + entryHeight2 + 1), 0.0D).endVertex();
                 bufferbuilder.pos((double)(j1 - 1), (double)(y + entryHeight2 + 1), 0.0D).endVertex();
                 bufferbuilder.pos((double)(j1 - 1), (double)(y - 1), 0.0D).endVertex();
                 bufferbuilder.pos((double)(i1 + 1), (double)(y - 1), 0.0D).endVertex();
                 tessellator.draw();
-                GlStateManager.enableTexture();
+                RenderSystem.enableTexture();
             }
 
             this.renderItem(i, insideLeft, y, entryHeight2, mouseXIn, mouseYIn, partialTicks);

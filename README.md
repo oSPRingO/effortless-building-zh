@@ -1,1 +1,0 @@
-The 1.12 repository can be found here: https://bitbucket.org/Requios/effortless-building/src/master/

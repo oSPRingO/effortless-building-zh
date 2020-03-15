@@ -1,6 +1,6 @@
 package nl.requios.effortlessbuilding.render;
 
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.client.Minecraft;
@@ -395,7 +395,7 @@ public class BlockPreviewRenderer {
             int imageUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "image");
             int maskUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "mask");
 
-            GlStateManager.enableTexture();
+            RenderSystem.enableTexture();
             GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 
             //mask
