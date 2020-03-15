@@ -46,7 +46,7 @@ public class EffortlessBuilding
 {
     public static final String MODID = "effortlessbuilding";
     public static final String NAME = "Effortless Building";
-    public static final String VERSION = "1.14.4-2.16";
+    public static final String VERSION = "1.14.4-2.18";
 
     public static EffortlessBuilding instance;
 
@@ -148,5 +148,10 @@ public class EffortlessBuilding
 
     public static void log(PlayerEntity player, String msg, boolean actionBar){
         player.sendStatusMessage(new StringTextComponent(msg), actionBar);
+    }
+
+    //Log with translation supported, call either on client or server (which then sends a message)
+    public static void logTranslate(PlayerEntity player, String prefix, String translationKey, String suffix, boolean actionBar){
+        proxy.logTranslate(player, prefix, translationKey, suffix, actionBar);
     }
 }

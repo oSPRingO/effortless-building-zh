@@ -176,7 +176,7 @@ public class ModeOptions {
         }
 
         if (player.world.isRemote && action != ActionEnum.REPLACE && action != ActionEnum.OPEN_MODIFIER_SETTINGS) {
-            ClientProxy.logTranslate(action.name);
+            EffortlessBuilding.logTranslate(player, "", action.name, "", true);
         }
     }
 }

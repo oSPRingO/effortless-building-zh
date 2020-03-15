@@ -360,7 +360,8 @@ public class ClientProxy implements IProxy {
         return world.rayTraceBlocks(new RayTraceContext(start, end, RayTraceContext.BlockMode.COLLIDER, RayTraceContext.FluidMode.NONE, player));
     }
 
-    public static void logTranslate(String key) {
-        EffortlessBuilding.log(Minecraft.getInstance().player, I18n.format(key), true);
+    @Override
+    public void logTranslate(PlayerEntity player, String prefix, String translationKey, String suffix, boolean actionBar) {
+        EffortlessBuilding.log(Minecraft.getInstance().player, prefix + I18n.format(translationKey) + suffix, actionBar);
     }
 }

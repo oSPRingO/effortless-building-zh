@@ -72,7 +72,8 @@ public class AddUndoMessage {
 
                     PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
                     //Add to undo stack clientside
-                    UndoRedo.addUndo(ctx.get().getSender(), new BlockSet(
+                    //Only the appropriate player that needs to add this to the undo stack gets this message
+                    UndoRedo.addUndo(player, new BlockSet(
                             new ArrayList<BlockPos>() {{add(message.getCoordinate());}},
                             new ArrayList<BlockState>() {{add(message.getPreviousBlockState());}},
                             new ArrayList<BlockState>() {{add(message.getNewBlockState());}},

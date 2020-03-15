@@ -13,4 +13,6 @@ public interface IProxy {
     void clientSetup(final FMLClientSetupEvent event);
 
     PlayerEntity getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx);
+
+    void logTranslate(PlayerEntity player, String prefix, String translationKey, String suffix, boolean actionBar);
 }

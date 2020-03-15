@@ -12,6 +12,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.loot.LootContext;
+import net.minecraft.world.storage.loot.LootParameterSet;
 import nl.requios.effortlessbuilding.BuildConfig;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 import nl.requios.effortlessbuilding.helper.FixedStack;
@@ -102,7 +103,7 @@ public class UndoRedo {
                 //get blockstate from itemstack
                 BlockState previousBlockState = Blocks.AIR.getDefaultState();
                 if (itemStack.getItem() instanceof BlockItem) {
-                    previousBlockState = previousBlockStates.get(i);//((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                    previousBlockState = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
                 }
 
                 if (player.world.isBlockPresent(coordinate)) {
@@ -111,8 +112,10 @@ public class UndoRedo {
                         itemStack = findItemStackInInventory(player, previousBlockStates.get(i));
                         //get blockstate from new itemstack
                         if (!itemStack.isEmpty() && itemStack.getItem() instanceof BlockItem) {
-                            previousBlockState = previousBlockStates.get(i);//((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                            previousBlockState = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
                         } else {
+                            if (previousBlockStates.get(i).getBlock() != Blocks.AIR)
+                                EffortlessBuilding.logTranslate(player, "", previousBlockStates.get(i).getBlock().getTranslationKey(), " not found in inventory", true);
                             previousBlockState = Blocks.AIR.getDefaultState();
                         }
                     }
@@ -160,7 +163,7 @@ public class UndoRedo {
                 //get blockstate from itemstack
                 BlockState newBlockState = Blocks.AIR.getDefaultState();
                 if (itemStack.getItem() instanceof BlockItem) {
-                    newBlockState = newBlockStates.get(i);//((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                    newBlockState = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
                 }
 
                 if (player.world.isBlockPresent(coordinate)) {
@@ -169,8 +172,10 @@ public class UndoRedo {
                         itemStack = findItemStackInInventory(player, newBlockStates.get(i));
                         //get blockstate from new itemstack
                         if (!itemStack.isEmpty() && itemStack.getItem() instanceof BlockItem) {
-                            newBlockState = newBlockStates.get(i);//((ItemBlock) itemStack.getItem()).getBlock().getDefaultState();
+                            newBlockState = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
                         } else {
+                            if (newBlockStates.get(i).getBlock() != Blocks.AIR)
+                                EffortlessBuilding.logTranslate(player, "", newBlockStates.get(i).getBlock().getTranslationKey(), " not found in inventory", true);
                             newBlockState = Blocks.AIR.getDefaultState();
                         }
                     }
@@ -214,13 +219,18 @@ public class UndoRedo {
         // then change line 103 back (get state from item)
         itemStack = InventoryHelper.findItemStackInInventory(player, blockState.getBlock());
 
+
         //then anything it drops
         if (itemStack.isEmpty()) {
-            List<ItemStack> itemsDropped = blockState.getDrops(new LootContext.Builder((ServerWorld) player.world));
-            for (ItemStack itemStackDropped : itemsDropped) {
-                if (itemStackDropped.getItem() instanceof BlockItem) {
-                    Block block = ((BlockItem) itemStackDropped.getItem()).getBlock();
-                    itemStack = InventoryHelper.findItemStackInInventory(player, block);
+            //Cannot check drops on clientside because loot tables are server only
+            if (!player.world.isRemote)
+            {
+                List<ItemStack> itemsDropped = Block.getDrops(blockState, (ServerWorld) player.world, BlockPos.ZERO, null);
+                for (ItemStack itemStackDropped : itemsDropped) {
+                    if (itemStackDropped.getItem() instanceof BlockItem) {
+                        Block block = ((BlockItem) itemStackDropped.getItem()).getBlock();
+                        itemStack = InventoryHelper.findItemStackInInventory(player, block);
+                    }
                 }
             }
         }
