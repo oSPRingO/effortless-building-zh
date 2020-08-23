@@ -35,7 +35,7 @@ public class Floor extends TwoClicksBuildMode {
     }
 
     public static BlockPos findFloor(PlayerEntity player, BlockPos firstPos, boolean skipRaytrace) {
-        Vec3d look = player.getLookVec();
+        Vec3d look = BuildModes.getPlayerLookVec(player);
         Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
 
         List<Criteria> criteriaList = new ArrayList<>(3);

@@ -169,7 +169,7 @@ public abstract class ThreeClicksBuildMode extends BaseBuildMode {
 
     //Finds height after floor has been chosen in buildmodes with 3 clicks
     public static BlockPos findHeight(PlayerEntity player, BlockPos secondPos, boolean skipRaytrace) {
-        Vec3d look = player.getLookVec();
+        Vec3d look = BuildModes.getPlayerLookVec(player);
         Vec3d start = new Vec3d(player.posX, player.posY + player.getEyeHeight(), player.posZ);
 
         List<HeightCriteria> criteriaList = new ArrayList<>(3);
