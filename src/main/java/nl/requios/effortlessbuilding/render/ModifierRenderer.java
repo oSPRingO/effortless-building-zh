@@ -1,5 +1,6 @@
 package nl.requios.effortlessbuilding.render;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -24,7 +25,7 @@ public class ModifierRenderer {
     protected static final int planeAlpha = 75;
     protected static final Vec3d epsilon = new Vec3d(0.001, 0.001, 0.001); //prevents z-fighting
 
-    public static void render(ModifierSettingsManager.ModifierSettings modifierSettings) {
+    public static void render(ModifierSettingsManager.ModifierSettings modifierSettings, MatrixStack matrixStack) {
         RenderHandler.beginLines();
 
         //Mirror lines and areas

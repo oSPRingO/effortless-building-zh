@@ -1,5 +1,6 @@
 package nl.requios.effortlessbuilding.render;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
@@ -71,7 +72,7 @@ public class BlockPreviewRenderer {
     private static final int primaryTextureUnit = 0;
     private static final int secondaryTextureUnit = 2;
 
-    public static void render(PlayerEntity player, ModifierSettings modifierSettings, ModeSettings modeSettings) {
+    public static void render(PlayerEntity player, ModifierSettings modifierSettings, ModeSettings modeSettings, MatrixStack matrixStack) {
 
         //Render placed blocks with dissolve effect
         //Use fancy shader if config allows, otherwise no dissolve
@@ -83,7 +84,7 @@ public class BlockPreviewRenderer {
 
                     double totalTime = MathHelper.clampedLerp(30, 60, placed.firstPos.distanceSq(placed.secondPos) / 100.0) * BuildConfig.visuals.dissolveTimeMultiplier.get();
                     float dissolve = (ClientProxy.ticksInGame - placed.time) / (float) totalTime;
-                    renderBlockPreviews(placed.coordinates, placed.blockStates, placed.itemStacks, dissolve, placed.firstPos, placed.secondPos, false, placed.breaking);
+                    renderBlockPreviews(placed.coordinates, placed.blockStates, placed.itemStacks, dissolve, placed.firstPos, placed.secondPos, false, placed.breaking, matrixStack);
                 }
             }
             RenderHandler.endBlockPreviews();
@@ -214,7 +215,7 @@ public class BlockPreviewRenderer {
 
                         RenderHandler.beginBlockPreviews();
 
-                        blockCount = renderBlockPreviews(newCoordinates, blockStates, itemStacks, 0f, firstPos, secondPos, !breaking, breaking);
+                        blockCount = renderBlockPreviews(newCoordinates, blockStates, itemStacks, 0f, firstPos, secondPos, !breaking, breaking, matrixStack);
 
                         RenderHandler.endBlockPreviews();
                     } else {
@@ -226,7 +227,7 @@ public class BlockPreviewRenderer {
 
                         for (int i = newCoordinates.size() - 1; i >= 0; i--) {
                             VoxelShape collisionShape = blockStates.get(i).getCollisionShape(player.world, newCoordinates.get(i));
-                            RenderHandler.renderBlockOutline(newCoordinates.get(i), collisionShape, color);
+                            RenderHandler.renderBlockOutline(newCoordinates.get(i), collisionShape, color, matrixStack);
                         }
 
                         RenderHandler.endLines();
@@ -283,7 +284,7 @@ public class BlockPreviewRenderer {
                     if (!blockState.getBlock().isAir(blockState, player.world, coordinate)) {
                         if (SurvivalHelper.canBreak(player.world, player, coordinate) || i == 0) {
                             VoxelShape collisionShape = blockState.getCollisionShape(player.world, coordinate);
-                            RenderHandler.renderBlockOutline(coordinate, collisionShape, new Vec3d(0f, 0f, 0f));
+                            RenderHandler.renderBlockOutline(coordinate, collisionShape, new Vec3d(0f, 0f, 0f), matrixStack);
                         }
                     }
                 }
@@ -300,8 +301,8 @@ public class BlockPreviewRenderer {
     }
 
     protected static int renderBlockPreviews(List<BlockPos> coordinates, List<BlockState> blockStates,
-                                              List<ItemStack> itemStacks, float dissolve, BlockPos firstPos,
-                                              BlockPos secondPos, boolean checkCanPlace, boolean red) {
+                                             List<ItemStack> itemStacks, float dissolve, BlockPos firstPos,
+                                             BlockPos secondPos, boolean checkCanPlace, boolean red, MatrixStack matrixStack) {
         PlayerEntity player = Minecraft.getInstance().player;
         ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
         BlockRendererDispatcher dispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
@@ -324,7 +325,7 @@ public class BlockPreviewRenderer {
                 ShaderHandler.useShader(ShaderHandler.dissolve, generateShaderCallback(dissolve,
                         new Vec3d(blockPos), new Vec3d(firstPos), new Vec3d(secondPos),
                         blockPos == secondPos, red));
-                RenderHandler.renderBlockPreview(dispatcher, blockPos, blockState);
+                RenderHandler.renderBlockPreview(dispatcher, blockPos, blockState, matrixStack);
                 blocksValid++;
             }
         }
@@ -401,12 +402,14 @@ public class BlockPreviewRenderer {
             //mask
             ARBShaderObjects.glUniform1iARB(maskUniform, secondaryTextureUnit);
             glActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + secondaryTextureUnit);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(ShaderHandler.shaderMaskTextureLocation).getGlTextureId());
+            mc.getTextureManager().getTexture(ShaderHandler.shaderMaskTextureLocation).bindTexture();
+            //GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(ShaderHandler.shaderMaskTextureLocation).getGlTextureId());
 
             //image
             ARBShaderObjects.glUniform1iARB(imageUniform, primaryTextureUnit);
             glActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + primaryTextureUnit);
-            GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
+            mc.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).bindTexture();
+            //GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
 
             //blockpos
             ARBShaderObjects.glUniform3fARB(blockposUniform, (float) blockpos.x, (float) blockpos.y, (float) blockpos.z);

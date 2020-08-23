@@ -1,6 +1,7 @@
 package nl.requios.effortlessbuilding;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
@@ -20,6 +21,7 @@ public class ModClientEventHandler {
 
     @SubscribeEvent
     public static void onTextureStitch(final TextureStitchEvent.Pre event) {
+        EffortlessBuilding.log("Stitching textures");
         //register icon textures
         for (final BuildModes.BuildModeEnum mode : BuildModes.BuildModeEnum.values())
         {
@@ -37,14 +39,10 @@ public class ModClientEventHandler {
     }
 
     public static TextureAtlasSprite getBuildModeIcon(BuildModes.BuildModeEnum mode) {
-        //TODO 1.15
-        return null;
-//        return Minecraft.getInstance().getTextureMap().getSprite(buildModeIcons.get(mode));
+        return Minecraft.getInstance().getModelManager().getAtlasTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).getSprite(buildModeIcons.get(mode));
     }
 
     public static TextureAtlasSprite getModeOptionIcon(ModeOptions.ActionEnum action) {
-        //TODO 1.15
-        return null;
-//        return Minecraft.getInstance().getTextureMap().getSprite(modeOptionIcons.get(action));
+        return Minecraft.getInstance().getModelManager().getAtlasTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).getSprite(modeOptionIcons.get(action));
     }
 }

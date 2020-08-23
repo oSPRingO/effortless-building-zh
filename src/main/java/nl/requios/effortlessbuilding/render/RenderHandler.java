@@ -1,25 +1,35 @@
 package nl.requios.effortlessbuilding.render;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.IVertexBuilder;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.SimpleSound;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.WorldRenderer;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.model.IBakedModel;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvents;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.World;
+import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
@@ -35,27 +45,113 @@ import nl.requios.effortlessbuilding.proxy.ClientProxy;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
+import java.awt.*;
+import java.util.OptionalDouble;
+import java.util.Random;
+
 /***
  * Main render class for Effortless Building
  */
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
 public class RenderHandler {
 
+    protected static final RenderState.LayerState PROJECTION_LAYERING = new RenderState.LayerState("projection_layering", () -> {
+        RenderSystem.matrixMode(5889);
+        RenderSystem.pushMatrix();
+        RenderSystem.scalef(1.0F, 1.0F, 0.999F);
+        RenderSystem.matrixMode(5888);
+    }, () -> {
+        RenderSystem.matrixMode(5889);
+        RenderSystem.popMatrix();
+        RenderSystem.matrixMode(5888);
+    });
+    protected static final RenderState.TransparencyState TRANSLUCENT_TRANSPARENCY = new RenderState.TransparencyState("translucent_transparency", () -> {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+    }, () -> {
+        RenderSystem.disableBlend();
+    });
+    protected static final RenderState.WriteMaskState COLOR_WRITE = new RenderState.WriteMaskState(true, false);
+
+    public static final RenderType PLANES = RenderType.makeType("planes", DefaultVertexFormats.POSITION_COLOR, GL11.GL_TRIANGLE_STRIP, 256, RenderType.State.getBuilder().line(new RenderState.LineState(OptionalDouble.empty())).layer(PROJECTION_LAYERING).transparency(TRANSLUCENT_TRANSPARENCY).writeMask(COLOR_WRITE).build(false));
+
     @SubscribeEvent
     public static void onRender(RenderWorldLastEvent event) {
-        PlayerEntity player = Minecraft.getInstance().player;
-        ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
-        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+        if(event.getPhase() != EventPriority.NORMAL)
+            return;
 
-        begin(event.getPartialTicks());
+        // Get instances of the classes required for a block render.
+        MinecraftServer server = Minecraft.getInstance().getIntegratedServer();
+        World world = DimensionManager.getWorld(server, DimensionType.OVERWORLD, false, true);
+        MatrixStack matrixStack = event.getMatrixStack();
 
-        //Mirror and radial mirror lines and areas
-        ModifierRenderer.render(modifierSettings);
+        // Get the projected view coordinates.
+        Vec3d projectedView = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
 
-        //Render block previews
-        BlockPreviewRenderer.render(player, modifierSettings, modeSettings);
+        // Choose obsidian as the arbitrary block.
+        BlockState blockState = Blocks.BIRCH_LOG.getDefaultState();
 
-        end();
+        // Begin rendering the block.
+        BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
+        IRenderTypeBuffer.Impl renderTypeBuffer = IRenderTypeBuffer.getImpl(bufferBuilder);
+
+        renderBlock(matrixStack, renderTypeBuffer, world, blockState, new BlockPos(0, 128, 0), projectedView, new Vec3d(0.0, 128.0, 0.0));
+
+        renderTypeBuffer.finish();
+
+//TEST lines
+
+        matrixStack.push();
+        Vec3d pos = new Vec3d(0, 0, 0);
+        matrixStack.translate(-projectedView.x + pos.x, -projectedView.y + pos.y, -projectedView.z + pos.z);
+        IVertexBuilder buffer = renderTypeBuffer.getBuffer(PLANES);
+//        bufferBuilder.begin(GL11.GL_TRIANGLE_STRIP, DefaultVertexFormats.POSITION_COLOR);
+
+        Vec3d posA = new Vec3d(-10, 128, -10);
+        Vec3d posB = new Vec3d(10, 120, 10);
+        Color c = new Color(255, 72, 52);
+        int planeAlpha = 75;
+        buffer.pos(posA.x, posA.y, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
+        buffer.pos(posA.x, posB.y, posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
+        buffer.pos(posB.x, posA.y, posB.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
+        buffer.pos(posB.x, posB.y, posB.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
+
+        matrixStack.pop();
+        renderTypeBuffer.finish();
+
+
+//        PlayerEntity player = Minecraft.getInstance().player;
+//        ModeSettingsManager.ModeSettings modeSettings = ModeSettingsManager.getModeSettings(player);
+//        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+//
+//        begin(event.getPartialTicks(), event.getMatrixStack());
+//
+//        //Mirror and radial mirror lines and areas
+//        ModifierRenderer.render(modifierSettings, event.getMatrixStack());
+//
+//        //Render block previews
+//        BlockPreviewRenderer.render(player, modifierSettings, modeSettings, event.getMatrixStack());
+//
+//        end(event.getMatrixStack());
+    }
+
+    public static void renderBlock(MatrixStack matrixStack, IRenderTypeBuffer.Impl renderTypeBuffer, World world, BlockState blockState, BlockPos logicPos, Vec3d projectedView, Vec3d renderCoordinates)
+    {
+        BlockRendererDispatcher blockRendererDispatcher = Minecraft.getInstance().getBlockRendererDispatcher();
+        int i = OverlayTexture.NO_OVERLAY;
+
+        matrixStack.push();
+        matrixStack.translate(-projectedView.x + renderCoordinates.x, -projectedView.y + renderCoordinates.y, -projectedView.z + renderCoordinates.z);
+
+        RenderType renderType = RenderTypeLookup.getRenderType(blockState);
+        renderType = Atlases.getTranslucentBlockType();
+        IBakedModel model = blockRendererDispatcher.getModelForState(blockState);
+        blockRendererDispatcher.getBlockModelRenderer().renderModelBrightnessColor(matrixStack.getLast(), renderTypeBuffer.getBuffer(renderType),
+                blockState, model, 1f, 1f, 1f, 1000, OverlayTexture.NO_OVERLAY);
+//        blockRendererDispatcher.getBlockModelRenderer().renderModel(world, blockRendererDispatcher.getModelForState(blockState),
+//                blockState, logicPos, matrixStack, renderTypeBuffer.getBuffer(renderType), true, new Random(), blockState.getPositionRandom(logicPos), i);
+
+        matrixStack.pop();
     }
 
     @SubscribeEvent
@@ -140,62 +236,66 @@ public class RenderHandler {
         }
     }
 
-    private static void begin(float partialTicks) {
+    private static void begin(float partialTicks, MatrixStack matrixStack) {
 //        PlayerEntity player = Minecraft.getInstance().player;
 //        double playerX = player.prevPosX + (player.posX - player.prevPosX) * partialTicks;
 //        double playerY = player.prevPosY + (player.posY - player.prevPosY) * partialTicks;
 //        double playerZ = player.prevPosZ + (player.posZ - player.prevPosZ) * partialTicks;
 //        Vec3d playerPos = new Vec3d(playerX, playerY, playerZ);
 
-        GL11.glPushMatrix();
+        matrixStack.push();
+//        RenderSystem.pushMatrix();
 //        GL11.glTranslated(-playerPos.x, -playerPos.y, -playerPos.z);
         //TODO 1.15
-        //RenderSystem.translated(-TileEntityRendererDispatcher.staticPlayerX, -TileEntityRendererDispatcher.staticPlayerY, -TileEntityRendererDispatcher.staticPlayerZ);
+//        Vec3d projectedView = Minecraft.getInstance().getRenderManager().info.getProjectedView();
+//        RenderSystem.translated(-projectedView.x, -projectedView.y, -projectedView.z);
 
-        GL11.glDepthMask(false);
+        RenderSystem.depthMask(false);
     }
 
     protected static void beginLines() {
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-        GL11.glDisable(GL11.GL_CULL_FACE);
-        GL11.glDisable(GL11.GL_LIGHTING);
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        RenderSystem.pushLightingAttributes(); //GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
+        RenderSystem.pushTextureAttributes();
+        RenderSystem.disableCull();
+        RenderSystem.disableLighting();
+        RenderSystem.disableTexture();
 
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
-        GL11.glLineWidth(2);
+        RenderSystem.lineWidth(2);
     }
 
     protected static void endLines() {
-        GL11.glPopAttrib();
+        RenderSystem.popAttributes();
     }
 
     protected static void beginBlockPreviews() {
-        GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
-        GL11.glEnable(GL11.GL_CULL_FACE);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        RenderSystem.pushLightingAttributes(); //GL11.glPushAttrib(GL11.GL_ENABLE_BIT);
+        RenderSystem.pushTextureAttributes();
+        RenderSystem.enableCull();
+        RenderSystem.enableTexture();
 //        Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         Minecraft.getInstance().textureManager.bindTexture(ShaderHandler.shaderMaskTextureLocation);
 
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL14.glBlendColor(1F, 1F, 1F, 0.8f);
+        RenderSystem.blendColor(1f, 1f, 1f, 0.8f);
     }
 
     protected static void endBlockPreviews() {
         ShaderHandler.releaseShader();
         RenderSystem.disableBlend();
 
-        GL11.glPopAttrib();
+        RenderSystem.popAttributes();
     }
 
-    private static void end() {
-        GL11.glDepthMask(true);
-        GL11.glPopMatrix();
+    private static void end(MatrixStack matrixStack) {
+        RenderSystem.depthMask(true);
+        matrixStack.pop();
     }
 
-    protected static void renderBlockPreview(BlockRendererDispatcher dispatcher, BlockPos blockPos, BlockState blockState) {
+    protected static void renderBlockPreview(BlockRendererDispatcher dispatcher, BlockPos blockPos, BlockState blockState, MatrixStack matrixStack) {
         if (blockState == null) return;
 
         RenderSystem.pushMatrix();
@@ -205,46 +305,53 @@ public class RenderHandler {
         RenderSystem.scalef(1.02f, 1.02f, 1.02f);
 
         //TODO 1.15
-//        try {
+        try {
+            IRenderTypeBuffer.Impl bufferSource = Minecraft.getInstance().getRenderTypeBuffers().getBufferSource();
+            dispatcher.renderBlock(blockState, matrixStack, bufferSource, 1, 1);
+            bufferSource.finish();
 //            dispatcher.renderBlockBrightness(blockState, 0.85f);
-//        } catch (NullPointerException e) {
-//            EffortlessBuilding.logger.warn("RenderHandler::renderBlockPreview cannot render " + blockState.getBlock().toString());
-//
-//            //Render outline as backup
-//            RenderSystem.popMatrix();
-////            ShaderHandler.releaseShader();
-//            GL11.glDisable(GL11.GL_LIGHTING);
-//            renderBlockOutline(blockPos, new Vec3d(1f, 1f, 1f));
-//            GL11.glEnable(GL11.GL_LIGHTING);
-//            RenderSystem.pushMatrix();
-//        }
+        } catch (NullPointerException e) {
+            EffortlessBuilding.logger.warn("RenderHandler::renderBlockPreview cannot render " + blockState.getBlock().toString());
+
+            //Render outline as backup
+            RenderSystem.popMatrix();
+//            ShaderHandler.releaseShader();
+            GL11.glDisable(GL11.GL_LIGHTING);
+            renderBlockOutline(blockPos, new Vec3d(1f, 1f, 1f), matrixStack);
+            GL11.glEnable(GL11.GL_LIGHTING);
+            RenderSystem.pushMatrix();
+        }
 
         RenderSystem.popMatrix();
     }
 
-    protected static void renderBlockOutline(BlockPos pos, Vec3d color) {
-        renderBlockOutline(pos, pos, color);
+    protected static void renderBlockOutline(BlockPos pos, Vec3d color, MatrixStack matrixStack) {
+        renderBlockOutline(pos, pos, color, matrixStack);
     }
 
     //Renders outline. Pos1 has to be minimal x,y,z and pos2 maximal x,y,z
-    protected static void renderBlockOutline(BlockPos pos1, BlockPos pos2, Vec3d color) {
-        GL11.glLineWidth(2);
+    protected static void renderBlockOutline(BlockPos pos1, BlockPos pos2, Vec3d color, MatrixStack matrixStack) {
+        RenderSystem.lineWidth(2);
 
         AxisAlignedBB aabb = new AxisAlignedBB(pos1, pos2.add(1, 1, 1)).grow(0.0020000000949949026);
 
         //TODO 1.15
+        IVertexBuilder buffer = Minecraft.getInstance().getRenderTypeBuffers().getBufferSource().getBuffer(RenderType.LINES);
+        WorldRenderer.drawBoundingBox(matrixStack, buffer, aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
 //        WorldRenderer.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
     }
 
     //Renders outline with given bounding box
-    protected static void renderBlockOutline(BlockPos pos, VoxelShape collisionShape, Vec3d color) {
-        GL11.glLineWidth(2);
+    protected static void renderBlockOutline(BlockPos pos, VoxelShape collisionShape, Vec3d color, MatrixStack matrixStack) {
+        RenderSystem.lineWidth(2);
 
 //        AxisAlignedBB aabb = boundingBox.offset(pos).grow(0.0020000000949949026);
 //        VoxelShape voxelShape = collisionShape.withOffset(pos.getX(), pos.getY(), pos.getZ());
 
 //        WorldRenderer.drawSelectionBoundingBox(aabb, (float) color.x, (float) color.y, (float) color.z, 0.4f);
         //TODO 1.15
+        IVertexBuilder buffer = Minecraft.getInstance().getRenderTypeBuffers().getBufferSource().getBuffer(RenderType.LINES);
+        WorldRenderer.drawVoxelShapeParts(matrixStack, buffer, collisionShape, pos.getX(), pos.getY(), pos.getZ(), (float) color.x, (float) color.y, (float) color.z, 0.4f);
 //        WorldRenderer.drawShape(collisionShape, pos.getX(), pos.getY(), pos.getZ(), (float) color.x, (float) color.y, (float) color.z, 0.4f);
     }
 
