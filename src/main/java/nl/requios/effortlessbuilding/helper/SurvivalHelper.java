@@ -1,9 +1,11 @@
 package nl.requios.effortlessbuilding.helper;
 
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.block.*;
 import net.minecraft.block.SlabBlock;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.util.*;
 import net.minecraft.block.BlockState;
@@ -57,21 +59,15 @@ public class SurvivalHelper {
             //Drop existing block
             dropBlock(world, player, pos);
 
-            //TryPlace sets block with offset, so we only do world.setBlockState now
-            //Remember count of itemstack before tryPlace, and set it back after.
-            //TryPlace reduces stack even in creative so it is not usable here.
-//            int origCount = itemstack.getCount();
+            //TryPlace sets block with offset and reduces itemstack count in creative, so we copy only parts of it
 //            BlockItemUseContext blockItemUseContext = new BlockItemUseContext(world, player, itemstack, pos, facing, (float) hitVec.x, (float) hitVec.y, (float) hitVec.z);
 //            EnumActionResult result = ((ItemBlock) itemstack.getItem()).tryPlace(blockItemUseContext);
-//            itemstack.setCount(origCount);
-
-            //Set our (rotated) blockstate
-            world.setBlockState(pos, blockState, 3);
-//            blockState.onBlockAdded(world, pos, blockState);
-//            block.onBlockPlacedBy(world, pos, blockState, player, itemstack);
-//            world.notifyBlockUpdate(pos, blockState, world.getBlockState(pos), 3);
-
-//            if (result != EnumActionResult.SUCCESS) return false;
+            if (!world.setBlockState(pos, blockState, 3)) return false;
+            BlockItem.setTileEntityNBT(world, player, pos, itemstack); //Actually BlockItem::onBlockPlaced but that is protected
+            block.onBlockPlacedBy(world, pos, blockState, player, itemstack);
+            if (player instanceof ServerPlayerEntity) {
+                CriteriaTriggers.PLACED_BLOCK.trigger((ServerPlayerEntity)player, pos, itemstack);
+            }
 
             BlockState afterState = world.getBlockState(pos);
 
