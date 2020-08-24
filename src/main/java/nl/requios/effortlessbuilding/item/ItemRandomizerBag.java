@@ -115,7 +115,7 @@ public class ItemRandomizerBag extends Item {
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
         ItemStack bag = player.getHeldItem(hand);
 
-        if (player.func_226563_dT_()) {//player.isSneaking()
+        if (player.isSneaking()) {
             if (world.isRemote) return new ActionResult<>(ActionResultType.SUCCESS, bag);
             //Open inventory
             NetworkHooks.openGui((ServerPlayerEntity) player, new ContainerProvider(bag));

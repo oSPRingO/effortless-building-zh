@@ -168,7 +168,7 @@ public class ClientProxy implements IProxy {
 
                 ItemStack currentItemStack = player.getHeldItem(Hand.MAIN_HAND);
                 if (currentItemStack.getItem() instanceof BlockItem ||
-                    (CompatHelper.isItemBlockProxy(currentItemStack) && !player.func_226563_dT_())) { //!player.isSneaking()
+                    (CompatHelper.isItemBlockProxy(currentItemStack) && !player.isSneaking())) {
 
                     ItemStack itemStack = CompatHelper.getItemBlockFromStack(currentItemStack);
 

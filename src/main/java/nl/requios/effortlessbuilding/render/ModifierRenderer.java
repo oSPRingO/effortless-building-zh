@@ -97,7 +97,7 @@ public class ModifierRenderer {
         Matrix4f matrixPos = matrixStack.getLast().getMatrix();
 
         if (drawPlanes) {
-            IVertexBuilder buffer = renderTypeBuffer.getBuffer(BuildRenderTypes.PLANES);
+            IVertexBuilder buffer = RenderHandler.beginPlanes(renderTypeBuffer);
 
             buffer.pos(matrixPos, (float) posA.x, (float) posA.y, (float) posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
             buffer.pos(matrixPos, (float) posA.x, (float) posB.y, (float) posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
@@ -107,11 +107,11 @@ public class ModifierRenderer {
             buffer.pos(matrixPos, (float) posA.x, (float) posA.y, (float) posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
             buffer.pos(matrixPos, (float) posA.x, (float) posB.y, (float) posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
 
-            renderTypeBuffer.finish();
+            RenderHandler.endPlanes(renderTypeBuffer);
         }
 
         if (drawLines) {
-            IVertexBuilder buffer = renderTypeBuffer.getBuffer(BuildRenderTypes.LINES);
+            IVertexBuilder buffer = RenderHandler.beginLines(renderTypeBuffer);
 
             Vec3d middle = posA.add(posB).scale(0.5);
             buffer.pos(matrixPos, (float) posA.x, (float) middle.y, (float) posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
@@ -121,7 +121,7 @@ public class ModifierRenderer {
                 buffer.pos(matrixPos, (float) middle.x, (float) posB.y, (float) middle.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
             }
 
-            renderTypeBuffer.finish();
+            RenderHandler.endLines(renderTypeBuffer);
         }
     }
 
@@ -131,7 +131,7 @@ public class ModifierRenderer {
         Matrix4f matrixPos = matrixStack.getLast().getMatrix();
 
         if (drawPlanes) {
-            IVertexBuilder buffer = renderTypeBuffer.getBuffer(BuildRenderTypes.PLANES);
+            IVertexBuilder buffer = RenderHandler.beginPlanes(renderTypeBuffer);
 
             buffer.pos(matrixPos, (float) posA.x, (float) posA.y, (float) posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
             buffer.pos(matrixPos, (float) posA.x, (float) posA.y, (float) posB.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
@@ -141,11 +141,11 @@ public class ModifierRenderer {
             buffer.pos(matrixPos, (float) posA.x, (float) posA.y, (float) posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
             buffer.pos(matrixPos, (float) posA.x, (float) posA.y, (float) posB.z).color(c.getRed(), c.getGreen(), c.getBlue(), planeAlpha).endVertex();
 
-            renderTypeBuffer.finish();
+            RenderHandler.endPlanes(renderTypeBuffer);
         }
 
         if (drawLines) {
-            IVertexBuilder buffer = renderTypeBuffer.getBuffer(BuildRenderTypes.LINES);
+            IVertexBuilder buffer = RenderHandler.beginLines(renderTypeBuffer);
 
             Vec3d middle = posA.add(posB).scale(0.5);
             buffer.pos(matrixPos, (float) middle.x, (float) middle.y, (float) posA.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
@@ -153,14 +153,14 @@ public class ModifierRenderer {
             buffer.pos(matrixPos, (float) posA.x, (float) middle.y, (float) middle.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
             buffer.pos(matrixPos, (float) posB.x, (float) middle.y, (float) middle.z).color(c.getRed(), c.getGreen(), c.getBlue(), lineAlpha).endVertex();
 
-            renderTypeBuffer.finish();
+            RenderHandler.endLines(renderTypeBuffer);
         }
     }
 
     protected static void drawMirrorLines(MatrixStack matrixStack, IRenderTypeBuffer.Impl renderTypeBuffer, Mirror.MirrorSettings m) {
 
 //        GL11.glColor4d(100, 100, 100, 255);
-        IVertexBuilder buffer = renderTypeBuffer.getBuffer(BuildRenderTypes.LINES);
+        IVertexBuilder buffer = RenderHandler.beginLines(renderTypeBuffer);
         Matrix4f matrixPos = matrixStack.getLast().getMatrix();
 
         Vec3d pos = m.position.add(epsilon);
@@ -172,6 +172,6 @@ public class ModifierRenderer {
         buffer.pos(matrixPos, (float) pos.x, (float) pos.y, (float) pos.z - m.radius).color(colorZ.getRed(), colorZ.getGreen(), colorZ.getBlue(), lineAlpha).endVertex();
         buffer.pos(matrixPos, (float) pos.x, (float) pos.y, (float) pos.z + m.radius).color(colorZ.getRed(), colorZ.getGreen(), colorZ.getBlue(), lineAlpha).endVertex();
 
-        renderTypeBuffer.finish();
+        RenderHandler.endLines(renderTypeBuffer);
     }
 }
