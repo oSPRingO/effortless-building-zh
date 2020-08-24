@@ -7,6 +7,7 @@ import net.minecraft.block.SoundType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.client.renderer.BlockRendererDispatcher;
+import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -72,7 +73,7 @@ public class BlockPreviewRenderer {
     private static final int primaryTextureUnit = 0;
     private static final int secondaryTextureUnit = 2;
 
-    public static void render(PlayerEntity player, ModifierSettings modifierSettings, ModeSettings modeSettings, MatrixStack matrixStack) {
+    public static void render(MatrixStack matrixStack, IRenderTypeBuffer.Impl renderTypeBuffer, PlayerEntity player, ModifierSettings modifierSettings, ModeSettings modeSettings) {
 
         //Render placed blocks with dissolve effect
         //Use fancy shader if config allows, otherwise no dissolve
