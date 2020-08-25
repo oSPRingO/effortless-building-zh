@@ -71,9 +71,6 @@ public class BlockPreviewRenderer {
 
     private static List<PlacedData> placedDataList = new ArrayList<>();
 
-    private static final int primaryTextureUnit = 0;
-    private static final int secondaryTextureUnit = 2;
-
     public static void render(MatrixStack matrixStack, IRenderTypeBuffer.Impl renderTypeBuffer, PlayerEntity player, ModifierSettings modifierSettings, ModeSettings modeSettings) {
 
         //Render placed blocks with dissolve effect
@@ -316,10 +313,7 @@ public class BlockPreviewRenderer {
             if ((!checkCanPlace /*&& player.world.getNewBlockState(blockPos) == blockState*/) || //TODO enable (breaks the breaking shader)
                 SurvivalHelper.canPlace(player.world, player, blockPos, blockState, itemstack, modifierSettings.doQuickReplace(), Direction.UP)) {
 
-//                ShaderHandler.useShader(ShaderHandler.dissolve, generateShaderCallback(dissolve,
-//                        new Vec3d(blockPos), new Vec3d(firstPos), new Vec3d(secondPos),
-//                        blockPos == secondPos, red));
-                RenderHandler.renderBlockPreview(matrixStack, renderTypeBuffer, dispatcher, blockPos, blockState);
+                RenderHandler.renderBlockPreview(matrixStack, renderTypeBuffer, dispatcher, blockPos, blockState, dissolve, firstPos, secondPos, red);
                 blocksValid++;
             }
         }
@@ -376,57 +370,6 @@ public class BlockPreviewRenderer {
 
     }
 
-    private static Consumer<Integer> generateShaderCallback(final float dissolve, final Vec3d blockpos,
-                                                            final Vec3d firstpos, final Vec3d secondpos,
-                                                            final boolean highlight, final boolean red) {
-        Minecraft mc = Minecraft.getInstance();
-        return (Integer shader) -> {
-            int percentileUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "dissolve");
-            int highlightUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "highlight");
-            int redUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "red");
-            int blockposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "blockpos");
-            int firstposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "firstpos");
-            int secondposUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "secondpos");
-            int imageUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "image");
-            int maskUniform = ARBShaderObjects.glGetUniformLocationARB(shader, "mask");
-
-            RenderSystem.enableTexture();
-            GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
-
-            //mask
-            ARBShaderObjects.glUniform1iARB(maskUniform, secondaryTextureUnit);
-            glActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + secondaryTextureUnit);
-            mc.getTextureManager().getTexture(ShaderHandler.shaderMaskTextureLocation).bindTexture();
-            //GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(ShaderHandler.shaderMaskTextureLocation).getGlTextureId());
-
-            //image
-            ARBShaderObjects.glUniform1iARB(imageUniform, primaryTextureUnit);
-            glActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + primaryTextureUnit);
-            mc.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).bindTexture();
-            //GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
-
-            //blockpos
-            ARBShaderObjects.glUniform3fARB(blockposUniform, (float) blockpos.x, (float) blockpos.y, (float) blockpos.z);
-            ARBShaderObjects.glUniform3fARB(firstposUniform, (float) firstpos.x, (float) firstpos.y, (float) firstpos.z);
-            ARBShaderObjects.glUniform3fARB(secondposUniform, (float) secondpos.x, (float) secondpos.y, (float) secondpos.z);
-
-            //dissolve
-            ARBShaderObjects.glUniform1fARB(percentileUniform, dissolve);
-            //highlight
-            ARBShaderObjects.glUniform1iARB(highlightUniform, highlight ? 1 : 0);
-            //red
-            ARBShaderObjects.glUniform1iARB(redUniform, red ? 1 : 0);
-        };
-    }
-
-    public static void glActiveTexture(int texture) {
-        if (GL.getCapabilities().GL_ARB_multitexture && !GL.getCapabilities().OpenGL13) {
-            ARBMultitexture.glActiveTextureARB(texture);
-        } else {
-            GL13.glActiveTexture(texture);
-        }
-
-    }
 
     private static void sortOnDistanceToPlayer(List<BlockPos> coordinates, PlayerEntity player) {
 

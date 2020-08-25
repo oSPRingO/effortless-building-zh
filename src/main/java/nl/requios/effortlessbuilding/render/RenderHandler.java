@@ -174,16 +174,8 @@ public class RenderHandler {
         renderTypeBuffer.finish();
     }
 
-    protected static IVertexBuilder beginBlockPreviews(IRenderTypeBuffer.Impl renderTypeBuffer) {
-//        return renderTypeBuffer.getBuffer(Atlases.getTranslucentBlockType());
-        return renderTypeBuffer.getBuffer(BuildRenderTypes.BLOCK_PREVIEWS);
-    }
-
-    protected static void endBlockPreviews(IRenderTypeBuffer.Impl renderTypeBuffer) {
-        renderTypeBuffer.finish();
-    }
-
-    protected static void renderBlockPreview(MatrixStack matrixStack, IRenderTypeBuffer.Impl renderTypeBuffer, BlockRendererDispatcher dispatcher, BlockPos blockPos, BlockState blockState) {
+    protected static void renderBlockPreview(MatrixStack matrixStack, IRenderTypeBuffer.Impl renderTypeBuffer, BlockRendererDispatcher dispatcher,
+                                             BlockPos blockPos, BlockState blockState, float dissolve, BlockPos firstPos, BlockPos secondPos, boolean red) {
         if (blockState == null) return;
 
         matrixStack.push();
@@ -192,8 +184,10 @@ public class RenderHandler {
         matrixStack.translate(-0.01f, -0.01f, -0.01f);
         matrixStack.scale(1.02f, 1.02f, 1.02f);
 
-        IVertexBuilder buffer = RenderHandler.beginBlockPreviews(renderTypeBuffer);
-//        RenderType renderType = RenderTypeLookup.getRenderType(blockState);
+        //Begin block preview rendering
+        RenderType blockPreviewRenderType = BuildRenderTypes.getBlockPreviewRenderType(dissolve, blockPos, firstPos, secondPos, red);
+        IVertexBuilder buffer = renderTypeBuffer.getBuffer(blockPreviewRenderType);
+
 //        MinecraftServer server = Minecraft.getInstance().getIntegratedServer();
 //        World world = DimensionManager.getWorld(server, DimensionType.OVERWORLD, false, true);
 
@@ -208,16 +202,15 @@ public class RenderHandler {
 
             //Render outline as backup, escape out of the current renderstack
             matrixStack.pop();
-            endBlockPreviews(renderTypeBuffer);
+            renderTypeBuffer.finish();
             IVertexBuilder lineBuffer = beginLines(renderTypeBuffer);
             renderBlockOutline(matrixStack, lineBuffer, blockPos, new Vec3d(1f, 1f, 1f));
             endLines(renderTypeBuffer);
-            buffer = beginBlockPreviews(renderTypeBuffer);
+            buffer = renderTypeBuffer.getBuffer(Atlases.getTranslucentBlockType()); //any type will do, as long as we have something on the stack
             matrixStack.push();
         }
 
-        endBlockPreviews(renderTypeBuffer);
-
+        renderTypeBuffer.finish();
         matrixStack.pop();
     }
 
