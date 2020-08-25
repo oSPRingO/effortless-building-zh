@@ -229,6 +229,31 @@ public class BuildModes {
         return new Vec3d(x, y, z);
     }
 
+    //Use this instead of player.getLookVec() in any buildmodes code
+    public static Vec3d getPlayerLookVec(PlayerEntity player){
+        Vec3d lookVec = player.getLookVec();
+        double x = lookVec.x;
+        double y = lookVec.y;
+        double z = lookVec.z;
+
+        //Further calculations (findXBound etc) don't like any component being 0 or 1 (e.g. dividing by 0)
+        //isCriteriaValid below will take up to 2 minutes to raytrace blocks towards infinity if that is the case
+        //So make sure they are close to but never exactly 0 or 1
+        if (Math.abs(x) < 0.0001) x = 0.0001;
+        if (Math.abs(x - 1.0) < 0.0001) x = 0.9999;
+        if (Math.abs(x + 1.0) < 0.0001) x = -0.9999;
+
+        if (Math.abs(y) < 0.0001) y = 0.0001;
+        if (Math.abs(y - 1.0) < 0.0001) y = 0.9999;
+        if (Math.abs(y + 1.0) < 0.0001) y = -0.9999;
+
+        if (Math.abs(z) < 0.0001) z = 0.0001;
+        if (Math.abs(z - 1.0) < 0.0001) z = 0.9999;
+        if (Math.abs(z + 1.0) < 0.0001) z = -0.9999;
+
+        return new Vec3d(x, y, z);
+    } 
+
     public static boolean isCriteriaValid(Vec3d start, Vec3d look, int reach, PlayerEntity player, boolean skipRaytrace, Vec3d lineBound, Vec3d planeBound, double distToPlayerSq) {
         boolean intersects = false;
         if (!skipRaytrace) {
