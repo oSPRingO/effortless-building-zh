@@ -70,7 +70,7 @@ public class RadialMenu extends Screen {
         return visibility > 0.001;
     }
 
-    public void configure(final int scaledWidth, final int scaledHeight ) {
+    public void configure(final int scaledWidth, final int scaledHeight) {
         Minecraft mc = Minecraft.getInstance();
         font = mc.fontRenderer;
         width = scaledWidth;
@@ -140,8 +140,14 @@ public class RadialMenu extends Screen {
         final double middleX = width / 2.0;
         final double middleY = height / 2.0;
 
-        final double mouseXCenter = mouseX - middleX;
-        final double mouseYCenter = -mouseY + middleY;
+        //Fix for high def (retina) displays: use custom mouse coordinates
+        //Borrowed from GameRenderer::updateCameraAndRender
+        Minecraft mc = Minecraft.getInstance();
+        int mouseXX = (int)(mc.mouseHelper.getMouseX() * (double)mc.mainWindow.getScaledWidth() / (double)mc.mainWindow.getWidth());
+        int mouseYY = (int)(mc.mouseHelper.getMouseY() * (double)mc.mainWindow.getScaledHeight() / (double)mc.mainWindow.getHeight());
+
+        final double mouseXCenter = mouseXX - middleX;
+        final double mouseYCenter = mouseYY - middleY;
         double mouseRadians = Math.atan2(mouseYCenter, mouseXCenter);
 
         final double ringInnerEdge = 30;
