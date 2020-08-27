@@ -14,6 +14,7 @@ public class ModeOptions {
         REDO("effortlessbuilding.action.redo"),
         REPLACE("effortlessbuilding.action.replace"),
         OPEN_MODIFIER_SETTINGS("effortlessbuilding.action.open_modifier_settings"),
+        OPEN_PLAYER_SETTINGS("effortlessbuilding.action.open_player_settings"),
 
         NORMAL_SPEED("effortlessbuilding.action.normal_speed"),
         FAST_SPEED("effortlessbuilding.action.fast_speed"),
@@ -130,6 +131,10 @@ public class ModeOptions {
                 if (player.world.isRemote)
                     ClientProxy.openModifierSettings();
                 break;
+            case OPEN_PLAYER_SETTINGS:
+                if (player.world.isRemote)
+                    ClientProxy.openPlayerSettings();
+                break;
 
             case NORMAL_SPEED:
                 buildSpeed = ActionEnum.NORMAL_SPEED;
@@ -175,7 +180,11 @@ public class ModeOptions {
                 break;
         }
 
-        if (player.world.isRemote && action != ActionEnum.REPLACE && action != ActionEnum.OPEN_MODIFIER_SETTINGS) {
+        if (player.world.isRemote &&
+            action != ActionEnum.REPLACE &&
+            action != ActionEnum.OPEN_MODIFIER_SETTINGS &&
+            action != ActionEnum.OPEN_PLAYER_SETTINGS) {
+
             EffortlessBuilding.logTranslate(player, "", action.name, "", true);
         }
     }

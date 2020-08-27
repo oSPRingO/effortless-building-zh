@@ -137,7 +137,6 @@ public class ModifierSettingsGui extends Screen {
         //Send to server
         PacketHandler.INSTANCE.sendToServer(new ModifierSettingsMessage(modifierSettings));
 
-        //TODO fix not being able to scroll after this gui has opened
         Minecraft.getInstance().mouseHelper.grabMouse();
     }
 

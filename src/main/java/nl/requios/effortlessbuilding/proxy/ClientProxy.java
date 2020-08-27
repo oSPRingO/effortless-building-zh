@@ -41,6 +41,7 @@ import nl.requios.effortlessbuilding.buildmode.ModeSettingsManager;
 import nl.requios.effortlessbuilding.buildmodifier.ModifierSettingsManager;
 import nl.requios.effortlessbuilding.compatibility.CompatHelper;
 import nl.requios.effortlessbuilding.gui.RandomizerBagScreen;
+import nl.requios.effortlessbuilding.gui.buildmode.PlayerSettingsGui;
 import nl.requios.effortlessbuilding.gui.buildmode.RadialMenu;
 import nl.requios.effortlessbuilding.gui.buildmodifier.ModifierSettingsGui;
 import nl.requios.effortlessbuilding.helper.ReachHelper;
@@ -68,9 +69,6 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void clientSetup(FMLClientSetupEvent event) {
-        //Crashes in 1.13, do it elsewhere
-//        ShaderHandler.init();
-
         // register key bindings
         keyBindings = new KeyBinding[7];
 
@@ -334,6 +332,20 @@ public class ClientProxy implements IProxy {
             } else {
                 player.closeScreen();
             }
+        }
+    }
+
+    public static void openPlayerSettings() {
+        Minecraft mc = Minecraft.getInstance();
+        ClientPlayerEntity player = mc.player;
+
+        RadialMenu.instance.setVisibility(0f);
+
+        //Disabled if max reach is 0, might be set in the config that way.
+        if (mc.currentScreen == null) {
+            mc.displayGuiScreen(new PlayerSettingsGui());
+        } else {
+            player.closeScreen();
         }
     }
 

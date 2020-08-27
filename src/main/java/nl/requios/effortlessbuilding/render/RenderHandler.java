@@ -143,7 +143,9 @@ public class RenderHandler {
 
                 net.minecraftforge.client.ForgeHooksClient.drawScreen(RadialMenu.instance, mouseX, mouseY, event.getPartialTicks());
             } else {
-                if (wasVisible && RadialMenu.instance.doAction != ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS) {
+                if (wasVisible &&
+                    RadialMenu.instance.doAction != ModeOptions.ActionEnum.OPEN_MODIFIER_SETTINGS &&
+                    RadialMenu.instance.doAction != ModeOptions.ActionEnum.OPEN_PLAYER_SETTINGS) {
                     mc.mouseHelper.grabMouse();
                 }
             }

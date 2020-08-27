@@ -2,6 +2,7 @@
 	"effortlessbuilding.screen.modifier_settings": "Modifier Settings",
 	"effortlessbuilding.screen.radial_menu": "Build Modes",
 	"effortlessbuilding.screen.randomizer_bag": "Randomizer Bag",
+	"effortlessbuilding.screen.player_settings": "Player Settings",
 
     "key.effortlessbuilding.category": "Effortless Building",
     "key.effortlessbuilding.hud.desc": "Modifier Menu",
@@ -34,6 +35,7 @@
     "effortlessbuilding.action.redo": "Redo",
     "effortlessbuilding.action.replace": "Replace",
     "effortlessbuilding.action.open_modifier_settings": "Open Modifier Settings",
+	"effortlessbuilding.action.open_player_settings": "Open Settings",
 	
     "effortlessbuilding.action.build_speed": "Build Speed",
     "effortlessbuilding.action.filling": "Filling",

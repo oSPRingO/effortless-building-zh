@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.Direction;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
@@ -171,8 +172,9 @@ public class RadialMenu extends Screen {
         //Add actions
         buttons.add(new MenuButton(ActionEnum.UNDO.name, ActionEnum.UNDO, -buttonDistance - 26, -13, Direction.UP));
         buttons.add(new MenuButton(ActionEnum.REDO.name, ActionEnum.REDO, -buttonDistance, -13, Direction.UP));
-        buttons.add(new MenuButton(ActionEnum.OPEN_MODIFIER_SETTINGS.name, ActionEnum.OPEN_MODIFIER_SETTINGS, -buttonDistance - 26, 13, Direction.DOWN));
-        buttons.add(new MenuButton(ActionEnum.REPLACE.name, ActionEnum.REPLACE, -buttonDistance, 13, Direction.DOWN));
+        buttons.add(new MenuButton(ActionEnum.OPEN_PLAYER_SETTINGS.name, ActionEnum.OPEN_PLAYER_SETTINGS, -buttonDistance - 26 - 13, 13, Direction.DOWN));
+        buttons.add(new MenuButton(ActionEnum.OPEN_MODIFIER_SETTINGS.name, ActionEnum.OPEN_MODIFIER_SETTINGS, -buttonDistance - 13, 13, Direction.DOWN));
+        buttons.add(new MenuButton(ActionEnum.REPLACE.name, ActionEnum.REPLACE, -buttonDistance + 13, 13, Direction.DOWN));
 
         //Add buildmode dependent options
         OptionEnum[] options = currentBuildMode.options;
@@ -473,16 +475,16 @@ public class RadialMenu extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         EffortlessBuilding.log("mouse clicked");
 
-//        KeyBinding.updateKeyBindState();
-//        KeyBinding.setKeyBindState(ClientProxy.keyBindings[3].getKeyCode(), true);
+        KeyBinding.updateKeyBindState();
+        KeyBinding.setKeyBindState(ClientProxy.keyBindings[3].getKey(), true);
 
-//        if (mouseButton == 0) {
-//            this.mc.displayGuiScreen(null);
-//
-//            if (this.mc.currentScreen == null) {
-//                this.mc.setIngameFocus();
-//            }
-//        }
+        if (mouseButton == 0) {
+            this.minecraft.displayGuiScreen(null);
+
+            if (this.minecraft.currentScreen == null) {
+                this.minecraft.setGameFocused(true);
+            }
+        }
         return super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
