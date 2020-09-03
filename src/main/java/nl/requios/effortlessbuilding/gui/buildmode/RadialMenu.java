@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.renderer.texture.AtlasTexture;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.Direction;
@@ -298,8 +299,7 @@ public class RadialMenu extends Screen {
         RenderSystem.color3f(1f, 1f, 1f);
         RenderSystem.disableBlend();
         RenderSystem.enableAlphaTest();
-        //TODO 1.15 check if correct
-        RenderSystem.bindTexture(0/*Minecraft.getInstance().getTextureMap().getGlTextureId()*/);
+        mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);
 
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX_COLOR);
 

@@ -10,6 +10,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
+import nl.requios.effortlessbuilding.EffortlessBuilding;
 import org.lwjgl.opengl.*;
 
 import java.util.OptionalDouble;
@@ -91,6 +92,22 @@ public class BuildRenderTypes {
 
     }
 
+    private class ShaderInfo {
+        float dissolve;
+        Vec3d blockPos;
+        Vec3d firstPos;
+        Vec3d secondPos;
+        boolean red;
+
+        public ShaderInfo(float dissolve, Vec3d blockPos, Vec3d firstPos, Vec3d secondPos, boolean red) {
+            this.dissolve = dissolve;
+            this.blockPos = blockPos;
+            this.firstPos = firstPos;
+            this.secondPos = secondPos;
+            this.red = red;
+        }
+    }
+
     public static RenderType getBlockPreviewRenderType(float dissolve, BlockPos blockPos, BlockPos firstPos,
                                                        BlockPos secondPos, boolean red) {
 //        RenderSystem.pushLightingAttributes();
@@ -106,11 +123,13 @@ public class BuildRenderTypes {
 //        ShaderHandler.releaseShader();
 
         //highjacking texturing state (which does nothing by default) to do my own things
-        RenderState.TexturingState MY_TEXTURING = new RenderState.TexturingState("eb_texturing", () -> {
+
+        String stateName = "eb_texturing_" + dissolve + "_" + blockPos + "_" + firstPos + "_" + secondPos + "_" + red;
+        RenderState.TexturingState MY_TEXTURING = new RenderState.TexturingState(stateName, () -> {
 //            RenderSystem.pushLightingAttributes();
 //            RenderSystem.pushTextureAttributes();
-            ShaderHandler.useShader(ShaderHandler.dissolve, generateShaderCallback(dissolve, new Vec3d(blockPos), new Vec3d(firstPos), new Vec3d(secondPos), blockPos == secondPos, red));
 
+            ShaderHandler.useShader(ShaderHandler.dissolve, generateShaderCallback(dissolve, new Vec3d(blockPos), new Vec3d(firstPos), new Vec3d(secondPos), blockPos == secondPos, red));
             RenderSystem.blendColor(1f, 1f, 1f, 0.8f);
         }, () -> {
             ShaderHandler.releaseShader();
@@ -126,7 +145,9 @@ public class BuildRenderTypes {
                 .lightmap(new RenderState.LightmapState(false))
                 .overlay(new RenderState.OverlayState(false))
                 .build(true);
-        return RenderType.makeType("eb_block_previews",
+        //Unique name for every combination, otherwise it will reuse the previous one
+        String name = "eb_block_previews_" + dissolve + "_" + blockPos + "_" + firstPos + "_" + secondPos + "_" + red;
+        return RenderType.makeType(name,
                 DefaultVertexFormats.BLOCK, GL11.GL_QUADS, 256, true, true, renderState);
     }
 
@@ -151,13 +172,13 @@ public class BuildRenderTypes {
             //mask
             ARBShaderObjects.glUniform1iARB(maskUniform, secondaryTextureUnit);
             glActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + secondaryTextureUnit);
-            mc.getTextureManager().getTexture(ShaderHandler.shaderMaskTextureLocation).bindTexture();
+            mc.getTextureManager().bindTexture(ShaderHandler.shaderMaskTextureLocation);//getTexture(ShaderHandler.shaderMaskTextureLocation).bindTexture();
             //GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(ShaderHandler.shaderMaskTextureLocation).getGlTextureId());
 
             //image
             ARBShaderObjects.glUniform1iARB(imageUniform, primaryTextureUnit);
             glActiveTexture(ARBMultitexture.GL_TEXTURE0_ARB + primaryTextureUnit);
-            mc.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).bindTexture();
+            mc.getTextureManager().bindTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE);//.getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).bindTexture();
             //GL11.glBindTexture(GL11.GL_TEXTURE_2D, mc.getTextureManager().getTexture(AtlasTexture.LOCATION_BLOCKS_TEXTURE).getGlTextureId());
 
             //blockpos
@@ -182,4 +203,43 @@ public class BuildRenderTypes {
         }
 
     }
+
+//    public static class MyTexturingState extends RenderState.TexturingState {
+//
+//        public float dissolve;
+//        public Vec3d blockPos;
+//        public Vec3d firstPos;
+//        public Vec3d secondPos;
+//        public boolean highlight;
+//        public boolean red;
+//
+//        public MyTexturingState(String p_i225989_1_, float dissolve, Vec3d blockPos, Vec3d firstPos,
+//                                Vec3d secondPos, boolean highlight, boolean red, Runnable p_i225989_2_, Runnable p_i225989_3_) {
+//            super(p_i225989_1_, p_i225989_2_, p_i225989_3_);
+//            this.dissolve = dissolve;
+//            this.blockPos = blockPos;
+//            this.firstPos = firstPos;
+//            this.secondPos = secondPos;
+//            this.highlight = highlight;
+//            this.red = red;
+//        }
+//
+//        @Override
+//        public boolean equals(Object p_equals_1_) {
+//            if (this == p_equals_1_) {
+//                return true;
+//            } else if (p_equals_1_ != null && this.getClass() == p_equals_1_.getClass()) {
+//                MyTexturingState other = (MyTexturingState)p_equals_1_;
+//                return this.dissolve == other.dissolve && this.blockPos == other.blockPos && this.firstPos == other.firstPos
+//                       && this.secondPos == other.secondPos && this.highlight == other.highlight && this.red == other.red;
+//            } else {
+//                return false;
+//            }
+//        }
+//
+//        @Override
+//        public int hashCode() {
+//
+//        }
+//    }
 }
