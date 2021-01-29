@@ -20,46 +20,47 @@ import java.util.List;
 
 public class ItemReachUpgrade1 extends Item {
 
-    public ItemReachUpgrade1() {
-        super(new Item.Properties().group(ItemGroup.TOOLS).maxStackSize(1));
-        this.setRegistryName(EffortlessBuilding.MODID, "reach_upgrade1");
-    }
+	public ItemReachUpgrade1() {
+		super(new Item.Properties().group(ItemGroup.TOOLS).maxStackSize(1));
+		this.setRegistryName(EffortlessBuilding.MODID, "reach_upgrade1");
+	}
 
-    @Override
-    public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
-        if (player.isCreative()) {
-            if (world.isRemote) EffortlessBuilding.log(player, "Reach upgrades are not necessary in creative.");
-            if (world.isRemote) EffortlessBuilding.log(player, "Still want increased reach? Use the config.");
-            return new ActionResult<>(ActionResultType.PASS, player.getHeldItem(hand));
-        }
+	@Override
+	public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
+		if (player.isCreative()) {
+			if (world.isRemote) EffortlessBuilding.log(player, "Reach upgrades are not necessary in creative.");
+			if (world.isRemote) EffortlessBuilding.log(player, "Still want increased reach? Use the config.");
+			return new ActionResult<>(ActionResultType.PASS, player.getHeldItem(hand));
+		}
 
-        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
-        int currentLevel = modifierSettings.getReachUpgrade();
-        if (currentLevel == 0) {
-            modifierSettings.setReachUpgrade(1);
+		ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+		int currentLevel = modifierSettings.getReachUpgrade();
+		if (currentLevel == 0) {
+			modifierSettings.setReachUpgrade(1);
 
-            if (world.isRemote) EffortlessBuilding.log(player, "Upgraded reach to " + ReachHelper.getMaxReach(player));
-            player.setHeldItem(hand, ItemStack.EMPTY);
+			if (world.isRemote) EffortlessBuilding.log(player, "Upgraded reach to " + ReachHelper.getMaxReach(player));
+			player.setHeldItem(hand, ItemStack.EMPTY);
 
-            SoundEvent soundEvent = new SoundEvent(new ResourceLocation("entity.player.levelup"));
-            player.playSound(soundEvent, 1f, 1f);
-        } else if (currentLevel > 0) {
-            if (world.isRemote) EffortlessBuilding.log(player, "Already used this upgrade! Current reach is " + ReachHelper
-                    .getMaxReach(player) + ".");
+			SoundEvent soundEvent = new SoundEvent(new ResourceLocation("entity.player.levelup"));
+			player.playSound(soundEvent, 1f, 1f);
+		} else if (currentLevel > 0) {
+			if (world.isRemote)
+				EffortlessBuilding.log(player, "Already used this upgrade! Current reach is " + ReachHelper
+					.getMaxReach(player) + ".");
 
-            SoundEvent soundEvent = new SoundEvent(new ResourceLocation("item.armor.equip_leather"));
-            player.playSound(soundEvent, 1f, 1f);
-        }
-        return new ActionResult<>(ActionResultType.PASS, player.getHeldItem(hand));
-    }
+			SoundEvent soundEvent = new SoundEvent(new ResourceLocation("item.armor.equip_leather"));
+			player.playSound(soundEvent, 1f, 1f);
+		}
+		return new ActionResult<>(ActionResultType.PASS, player.getHeldItem(hand));
+	}
 
-    @Override
-    public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-        tooltip.add(new StringTextComponent(TextFormatting.GRAY + "Consume to increase reach to " + TextFormatting.BLUE + BuildConfig.reach.maxReachLevel1.get()));
-    }
+	@Override
+	public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
+		tooltip.add(new StringTextComponent(TextFormatting.GRAY + "Consume to increase reach to " + TextFormatting.BLUE + BuildConfig.reach.maxReachLevel1.get()));
+	}
 
-    @Override
-    public String getTranslationKey() {
-        return this.getRegistryName().toString();
-    }
+	@Override
+	public String getTranslationKey() {
+		return this.getRegistryName().toString();
+	}
 }

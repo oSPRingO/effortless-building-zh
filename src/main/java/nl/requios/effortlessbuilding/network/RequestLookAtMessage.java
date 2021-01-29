@@ -16,49 +16,47 @@ import java.util.function.Supplier;
  * This is then sent back with a BlockPlacedMessage.
  */
 public class RequestLookAtMessage {
-    private boolean placeStartPos;
+	private final boolean placeStartPos;
 
-    public RequestLookAtMessage() {
-        placeStartPos = false;
-    }
+	public RequestLookAtMessage() {
+		placeStartPos = false;
+	}
 
-    public RequestLookAtMessage(boolean placeStartPos) {
-        this.placeStartPos = placeStartPos;
-    }
+	public RequestLookAtMessage(boolean placeStartPos) {
+		this.placeStartPos = placeStartPos;
+	}
 
-    public boolean getPlaceStartPos() {
-        return placeStartPos;
-    }
+	public static void encode(RequestLookAtMessage message, PacketBuffer buf) {
+		buf.writeBoolean(message.placeStartPos);
+	}
 
-    public static void encode(RequestLookAtMessage message, PacketBuffer buf) {
-        buf.writeBoolean(message.placeStartPos);
-    }
+	public static RequestLookAtMessage decode(PacketBuffer buf) {
+		boolean placeStartPos = buf.readBoolean();
+		return new RequestLookAtMessage(placeStartPos);
+	}
 
-    public static RequestLookAtMessage decode(PacketBuffer buf) {
-        boolean placeStartPos = buf.readBoolean();
-        return new RequestLookAtMessage(placeStartPos);
-    }
+	public boolean getPlaceStartPos() {
+		return placeStartPos;
+	}
 
-    public static class Handler
-    {
-        public static void handle(RequestLookAtMessage message, Supplier<NetworkEvent.Context> ctx)
-        {
-            ctx.get().enqueueWork(() -> {
-                if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
-                    //Received clientside
-                    //Send back your info
-                    PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+	public static class Handler {
+		public static void handle(RequestLookAtMessage message, Supplier<NetworkEvent.Context> ctx) {
+			ctx.get().enqueueWork(() -> {
+				if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
+					//Received clientside
+					//Send back your info
+					PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
-                    //Prevent double placing in normal mode with placeStartPos false
-                    //Unless QuickReplace is on, then we do need to place start pos.
-                    if (ClientProxy.previousLookAt.getType() == RayTraceResult.Type.BLOCK) {
-                        PacketHandler.INSTANCE.sendToServer(new BlockPlacedMessage((BlockRayTraceResult) ClientProxy.previousLookAt, message.getPlaceStartPos()));
-                    } else {
-                        PacketHandler.INSTANCE.sendToServer(new BlockPlacedMessage());
-                    }
-                }
-            });
-            ctx.get().setPacketHandled(true);
-        }
-    }
+					//Prevent double placing in normal mode with placeStartPos false
+					//Unless QuickReplace is on, then we do need to place start pos.
+					if (ClientProxy.previousLookAt.getType() == RayTraceResult.Type.BLOCK) {
+						PacketHandler.INSTANCE.sendToServer(new BlockPlacedMessage((BlockRayTraceResult) ClientProxy.previousLookAt, message.getPlaceStartPos()));
+					} else {
+						PacketHandler.INSTANCE.sendToServer(new BlockPlacedMessage());
+					}
+				}
+			});
+			ctx.get().setPacketHandled(true);
+		}
+	}
 }

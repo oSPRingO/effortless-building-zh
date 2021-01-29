@@ -16,83 +16,83 @@ import javax.annotation.Nonnull;
 @Mod.EventBusSubscriber
 public class ModeSettingsManager {
 
-    //Retrieves the buildsettings of a player through the modifierCapability capability
-    //Never returns null
-    @Nonnull
-    public static ModeSettings getModeSettings(PlayerEntity player) {
-        LazyOptional<ModeCapabilityManager.IModeCapability> modeCapability =
-                player.getCapability(ModeCapabilityManager.modeCapability, null);
+	//Retrieves the buildsettings of a player through the modifierCapability capability
+	//Never returns null
+	@Nonnull
+	public static ModeSettings getModeSettings(PlayerEntity player) {
+		LazyOptional<ModeCapabilityManager.IModeCapability> modeCapability =
+			player.getCapability(ModeCapabilityManager.modeCapability, null);
 
-        if (modeCapability.isPresent()) {
-            ModeCapabilityManager.IModeCapability capability = modeCapability.orElse(null);
-            if (capability.getModeData() == null) {
-                capability.setModeData(new ModeSettings());
-            }
-            return capability.getModeData();
-        }
+		if (modeCapability.isPresent()) {
+			ModeCapabilityManager.IModeCapability capability = modeCapability.orElse(null);
+			if (capability.getModeData() == null) {
+				capability.setModeData(new ModeSettings());
+			}
+			return capability.getModeData();
+		}
 
-        //Player does not have modeCapability capability
-        //Return dummy settings
-        return new ModeSettings();
+		//Player does not have modeCapability capability
+		//Return dummy settings
+		return new ModeSettings();
 //        throw new IllegalArgumentException("Player does not have modeCapability capability");
-    }
+	}
 
-    public static void setModeSettings(PlayerEntity player, ModeSettings modeSettings) {
-        if (player == null) {
-            EffortlessBuilding.log("Cannot set buildmode settings, player is null");
-            return;
-        }
-        LazyOptional<ModeCapabilityManager.IModeCapability> modeCapability =
-                player.getCapability(ModeCapabilityManager.modeCapability, null);
+	public static void setModeSettings(PlayerEntity player, ModeSettings modeSettings) {
+		if (player == null) {
+			EffortlessBuilding.log("Cannot set buildmode settings, player is null");
+			return;
+		}
+		LazyOptional<ModeCapabilityManager.IModeCapability> modeCapability =
+			player.getCapability(ModeCapabilityManager.modeCapability, null);
 
-        modeCapability.ifPresent((capability) -> {
-            capability.setModeData(modeSettings);
+		modeCapability.ifPresent((capability) -> {
+			capability.setModeData(modeSettings);
 
-            BuildModes.initializeMode(player);
-        });
+			BuildModes.initializeMode(player);
+		});
 
-        if (!modeCapability.isPresent()) {
-            EffortlessBuilding.log(player, "Saving buildmode settings failed.");
-        }
-    }
+		if (!modeCapability.isPresent()) {
+			EffortlessBuilding.log(player, "Saving buildmode settings failed.");
+		}
+	}
 
-    public static String sanitize(ModeSettings modeSettings, PlayerEntity player) {
-        int maxReach = ReachHelper.getMaxReach(player);
-        String error = "";
+	public static String sanitize(ModeSettings modeSettings, PlayerEntity player) {
+		int maxReach = ReachHelper.getMaxReach(player);
+		String error = "";
 
-        //TODO sanitize
+		//TODO sanitize
 
-        return error;
-    }
+		return error;
+	}
 
-    public static class ModeSettings {
-        private BuildModes.BuildModeEnum buildMode = BuildModes.BuildModeEnum.NORMAL;
+	public static void handleNewPlayer(PlayerEntity player) {
+		//Makes sure player has mode settings (if it doesnt it will create it)
+		getModeSettings(player);
 
-        public ModeSettings() {
-        }
+		//Only on server
+		if (!player.world.isRemote) {
+			//Send to client
+			ModeSettingsMessage msg = new ModeSettingsMessage(getModeSettings(player));
+			PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), msg);
+		}
+	}
 
-        public ModeSettings(BuildModes.BuildModeEnum buildMode) {
-            this.buildMode = buildMode;
-        }
+	public static class ModeSettings {
+		private BuildModes.BuildModeEnum buildMode = BuildModes.BuildModeEnum.NORMAL;
 
-        public BuildModes.BuildModeEnum getBuildMode() {
-            return this.buildMode;
-        }
+		public ModeSettings() {
+		}
 
-        public void setBuildMode(BuildModes.BuildModeEnum buildMode) {
-            this.buildMode = buildMode;
-        }
-    }
+		public ModeSettings(BuildModes.BuildModeEnum buildMode) {
+			this.buildMode = buildMode;
+		}
 
-    public static void handleNewPlayer(PlayerEntity player){
-        //Makes sure player has mode settings (if it doesnt it will create it)
-        getModeSettings(player);
+		public BuildModes.BuildModeEnum getBuildMode() {
+			return this.buildMode;
+		}
 
-        //Only on server
-        if (!player.world.isRemote) {
-            //Send to client
-            ModeSettingsMessage msg = new ModeSettingsMessage(getModeSettings(player));
-            PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), msg);
-        }
-    }
+		public void setBuildMode(BuildModes.BuildModeEnum buildMode) {
+			this.buildMode = buildMode;
+		}
+	}
 }

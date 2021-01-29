@@ -14,30 +14,30 @@ import nl.requios.effortlessbuilding.network.PacketHandler;
 
 public class CommandReach {
 
-    public static void register(CommandDispatcher<CommandSource> dispatcher) {
-        dispatcher.register(Commands.literal("reach").then(Commands.literal("set").then(Commands.argument("level", IntegerArgumentType.integer(0, 3)).executes((context) -> {
-            return setReachLevel(context.getSource().asPlayer(), IntegerArgumentType.getInteger(context, "level"));
-        }))).then(Commands.literal("get").executes((context -> {
-            return getReachLevel(context.getSource().asPlayer());
-        }))));
-    }
+	public static void register(CommandDispatcher<CommandSource> dispatcher) {
+		dispatcher.register(Commands.literal("reach").then(Commands.literal("set").then(Commands.argument("level", IntegerArgumentType.integer(0, 3)).executes((context) -> {
+			return setReachLevel(context.getSource().asPlayer(), IntegerArgumentType.getInteger(context, "level"));
+		}))).then(Commands.literal("get").executes((context -> {
+			return getReachLevel(context.getSource().asPlayer());
+		}))));
+	}
 
-    private static int setReachLevel(ServerPlayerEntity player, int level){
-        ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
-        modifierSettings.setReachUpgrade(level);
-        ModifierSettingsManager.setModifierSettings(player, modifierSettings);
-        //Send to client
-        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ModifierSettingsMessage(modifierSettings));
+	private static int setReachLevel(ServerPlayerEntity player, int level) {
+		ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
+		modifierSettings.setReachUpgrade(level);
+		ModifierSettingsManager.setModifierSettings(player, modifierSettings);
+		//Send to client
+		PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ModifierSettingsMessage(modifierSettings));
 
-        player.sendMessage(new StringTextComponent("Reach level of " + player.getName().getString() + " set to " + modifierSettings.getReachUpgrade()));
+		player.sendMessage(new StringTextComponent("Reach level of " + player.getName().getString() + " set to " + modifierSettings.getReachUpgrade()), player.getUniqueID());
 
-        return 1;
-    }
+		return 1;
+	}
 
-    private static int getReachLevel(ServerPlayerEntity player){
-        int reachUpgrade = ModifierSettingsManager.getModifierSettings(player).getReachUpgrade();
-        EffortlessBuilding.log(player, "Current reach: level "+reachUpgrade);
+	private static int getReachLevel(ServerPlayerEntity player) {
+		int reachUpgrade = ModifierSettingsManager.getModifierSettings(player).getReachUpgrade();
+		EffortlessBuilding.log(player, "Current reach: level " + reachUpgrade);
 
-        return 1;
-    }
+		return 1;
+	}
 }
