@@ -10,7 +10,10 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 @OnlyIn(Dist.CLIENT)
+@ParametersAreNonnullByDefault
 public class RandomizerBagScreen extends ContainerScreen<RandomizerBagContainer> {
 	private static final ResourceLocation guiTextures =
 		new ResourceLocation(EffortlessBuilding.MODID, "textures/gui/container/randomizerbag.png");

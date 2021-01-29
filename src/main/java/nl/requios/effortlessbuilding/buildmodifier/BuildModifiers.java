@@ -173,7 +173,7 @@ public class BuildModifiers {
 	}
 
 	public static List<BlockPos> findCoordinates(PlayerEntity player, BlockPos blockPos) {
-		return findCoordinates(player, new ArrayList<>(Arrays.asList(blockPos)));
+		return findCoordinates(player, new ArrayList<>(Collections.singletonList(blockPos)));
 	}
 
 	public static List<BlockState> findBlockStates(PlayerEntity player, List<BlockPos> posList, Vector3d hitVec, Direction facing, List<ItemStack> itemStacks) {

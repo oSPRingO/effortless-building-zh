@@ -10,11 +10,13 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
+@ParametersAreNonnullByDefault
 public class GuiIconButton extends Button {
 
 	private final ResourceLocation resourceLocation;
@@ -38,7 +40,7 @@ public class GuiIconButton extends Button {
 	}
 
 	public void setTooltip(ITextComponent tooltip) {
-		setTooltip(Arrays.asList(tooltip));
+		setTooltip(Collections.singletonList(tooltip));
 	}
 
 	public void setTooltip(List<ITextComponent> tooltip) {
@@ -72,10 +74,7 @@ public class GuiIconButton extends Button {
 		boolean flag = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
 
 		if (flag) {
-			StringTextComponent builder = new StringTextComponent("");
-			tooltip.forEach(c -> builder.append(c).appendString("\n"));
-
-			screen.renderTooltip(ms, builder, mouseX - 10, mouseY + 25);
+			screen.func_243308_b(ms, tooltip, mouseX - 10, mouseY + 25);
 		}
 	}
 }

@@ -1,5 +1,6 @@
 package nl.requios.effortlessbuilding.item;
 
+import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.util.ITooltipFlag;
@@ -36,11 +37,14 @@ import nl.requios.effortlessbuilding.gui.RandomizerBagContainer;
 import nl.requios.effortlessbuilding.helper.SurvivalHelper;
 
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
+@MethodsReturnNonnullByDefault
+@ParametersAreNonnullByDefault
 public class ItemRandomizerBag extends Item {
 	public static final int INV_SIZE = 5;
 

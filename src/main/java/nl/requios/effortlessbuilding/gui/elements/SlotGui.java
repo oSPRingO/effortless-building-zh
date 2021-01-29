@@ -1,11 +1,9 @@
 package nl.requios.effortlessbuilding.gui.elements;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FocusableGui;
 import net.minecraft.client.gui.IGuiEventListener;
 import net.minecraft.client.gui.IRenderable;
@@ -25,8 +23,6 @@ import java.util.List;
 @MethodsReturnNonnullByDefault
 @SuppressWarnings("deprecation")
 public abstract class SlotGui extends FocusableGui implements IRenderable {
-	protected static final int NO_DRAG = -1;
-	protected static final int DRAG_OUTSIDE = -2;
 	protected final Minecraft minecraft;
 	protected final int itemHeight;
 	protected int width;
@@ -35,7 +31,6 @@ public abstract class SlotGui extends FocusableGui implements IRenderable {
 	protected int y1;
 	protected int x1;
 	protected int x0;
-	protected boolean centerListVertically = true;
 	protected int yDrag = -2;
 	protected double yo;
 	protected boolean visible = true;
@@ -55,34 +50,8 @@ public abstract class SlotGui extends FocusableGui implements IRenderable {
 		this.x1 = width;
 	}
 
-	public void updateSize(int p_updateSize_1_, int p_updateSize_2_, int p_updateSize_3_, int p_updateSize_4_) {
-		this.width = p_updateSize_1_;
-		this.height = p_updateSize_2_;
-		this.y0 = p_updateSize_3_;
-		this.y1 = p_updateSize_4_;
-		this.x0 = 0;
-		this.x1 = p_updateSize_1_;
-	}
-
-	public void setRenderSelection(boolean p_setRenderSelection_1_) {
-		this.renderSelection = p_setRenderSelection_1_;
-	}
-
-	protected void setRenderHeader(boolean p_setRenderHeader_1_, int p_setRenderHeader_2_) {
-		this.renderHeader = p_setRenderHeader_1_;
-		this.headerHeight = p_setRenderHeader_2_;
-		if (!p_setRenderHeader_1_) {
-			this.headerHeight = 0;
-		}
-
-	}
-
 	public boolean isVisible() {
 		return this.visible;
-	}
-
-	public void setVisible(boolean p_setVisible_1_) {
-		this.visible = p_setVisible_1_;
 	}
 
 	protected abstract int getItemCount();
@@ -114,9 +83,6 @@ public abstract class SlotGui extends FocusableGui implements IRenderable {
 	protected void clickedHeader(int p_clickedHeader_1_, int p_clickedHeader_2_) {
 	}
 
-	protected void renderDecorations(int p_renderDecorations_1_, int p_renderDecorations_2_) {
-	}
-
 	public int getItemAtPosition(double p_getItemAtPosition_1_, double p_getItemAtPosition_3_) {
 		int i = this.x0 + this.width / 2 - this.getRowWidth() / 2;
 		int j = this.x0 + this.width / 2 + this.getRowWidth() / 2;
@@ -133,11 +99,6 @@ public abstract class SlotGui extends FocusableGui implements IRenderable {
 		return Math.max(0, this.getMaxPosition() - (this.y1 - this.y0 - 4));
 	}
 
-	public void centerScrollOn(int p_centerScrollOn_1_) {
-		this.yo = p_centerScrollOn_1_ * this.itemHeight + this.itemHeight / 2. - (this.y1 - this.y0) / 2.;
-		this.capYPosition();
-	}
-
 	public int getScroll() {
 		return (int) this.yo;
 	}
@@ -146,90 +107,7 @@ public abstract class SlotGui extends FocusableGui implements IRenderable {
 		return p_isMouseInList_3_ >= (double) this.y0 && p_isMouseInList_3_ <= (double) this.y1 && p_isMouseInList_1_ >= (double) this.x0 && p_isMouseInList_1_ <= (double) this.x1;
 	}
 
-	public int getScrollBottom() {
-		return (int) this.yo - this.height - this.headerHeight;
-	}
-
-	public void scroll(int p_scroll_1_) {
-		this.yo += p_scroll_1_;
-		this.capYPosition();
-		this.yDrag = -2;
-	}
-
-	public void render(MatrixStack ms, int p_render_1_, int p_render_2_, float p_render_3_) {
-		if (this.visible) {
-			this.renderBackground();
-			int i = this.getScrollbarPosition();
-			int j = i + 6;
-			this.capYPosition();
-			Tessellator tessellator = Tessellator.getInstance();
-			BufferBuilder bufferbuilder = tessellator.getBuffer();
-			// Forge: background rendering moved into separate method.
-			this.drawContainerBackground(tessellator);
-			int k = this.x0 + this.width / 2 - this.getRowWidth() / 2 + 2;
-			int l = this.y0 + 4 - (int) this.yo;
-			if (this.renderHeader) {
-				this.renderHeader(k, l, tessellator);
-			}
-
-			this.renderList(ms, k, l, p_render_1_, p_render_2_, p_render_3_);
-			RenderSystem.disableDepthTest();
-			this.renderHoleBackground(0, this.y0, 255, 255);
-			this.renderHoleBackground(this.y1, this.height, 255, 255);
-			RenderSystem.enableBlend();
-			RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE);
-			RenderSystem.disableAlphaTest();
-			RenderSystem.shadeModel(7425);
-			RenderSystem.disableTexture();
-			int i1 = 4;
-			bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-			bufferbuilder.pos(this.x0, this.y0 + 4, 0.0D).tex(0.0F, 1.0F).color(0, 0, 0, 0).endVertex();
-			bufferbuilder.pos(this.x1, this.y0 + 4, 0.0D).tex(1.0F, 1.0F).color(0, 0, 0, 0).endVertex();
-			bufferbuilder.pos(this.x1, this.y0, 0.0D).tex(1.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-			bufferbuilder.pos(this.x0, this.y0, 0.0D).tex(0.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-			tessellator.draw();
-			bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-			bufferbuilder.pos(this.x0, this.y1, 0.0D).tex(0.0F, 1.0F).color(0, 0, 0, 255).endVertex();
-			bufferbuilder.pos(this.x1, this.y1, 0.0D).tex(1.0F, 1.0F).color(0, 0, 0, 255).endVertex();
-			bufferbuilder.pos(this.x1, this.y1 - 4, 0.0D).tex(1.0F, 0.0F).color(0, 0, 0, 0).endVertex();
-			bufferbuilder.pos(this.x0, this.y1 - 4, 0.0D).tex(0.0F, 0.0F).color(0, 0, 0, 0).endVertex();
-			tessellator.draw();
-			int j1 = this.getMaxScroll();
-			if (j1 > 0) {
-				int k1 = (int) ((float) ((this.y1 - this.y0) * (this.y1 - this.y0)) / (float) this.getMaxPosition());
-				k1 = MathHelper.clamp(k1, 32, this.y1 - this.y0 - 8);
-				int l1 = (int) this.yo * (this.y1 - this.y0 - k1) / j1 + this.y0;
-				if (l1 < this.y0) {
-					l1 = this.y0;
-				}
-
-				bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-				bufferbuilder.pos(i, this.y1, 0.0D).tex(0.0F, 1.0F).color(0, 0, 0, 255).endVertex();
-				bufferbuilder.pos(j, this.y1, 0.0D).tex(1.0F, 1.0F).color(0, 0, 0, 255).endVertex();
-				bufferbuilder.pos(j, this.y0, 0.0D).tex(1.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-				bufferbuilder.pos(i, this.y0, 0.0D).tex(0.0F, 0.0F).color(0, 0, 0, 255).endVertex();
-				tessellator.draw();
-				bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-				bufferbuilder.pos(i, l1 + k1, 0.0D).tex(0.0F, 1.0F).color(128, 128, 128, 255).endVertex();
-				bufferbuilder.pos(j, l1 + k1, 0.0D).tex(1.0F, 1.0F).color(128, 128, 128, 255).endVertex();
-				bufferbuilder.pos(j, l1, 0.0D).tex(1.0F, 0.0F).color(128, 128, 128, 255).endVertex();
-				bufferbuilder.pos(i, l1, 0.0D).tex(0.0F, 0.0F).color(128, 128, 128, 255).endVertex();
-				tessellator.draw();
-				bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-				bufferbuilder.pos(i, l1 + k1 - 1, 0.0D).tex(0.0F, 1.0F).color(192, 192, 192, 255).endVertex();
-				bufferbuilder.pos(j - 1, l1 + k1 - 1, 0.0D).tex(1.0F, 1.0F).color(192, 192, 192, 255).endVertex();
-				bufferbuilder.pos(j - 1, l1, 0.0D).tex(1.0F, 0.0F).color(192, 192, 192, 255).endVertex();
-				bufferbuilder.pos(i, l1, 0.0D).tex(0.0F, 0.0F).color(192, 192, 192, 255).endVertex();
-				tessellator.draw();
-			}
-
-			this.renderDecorations(p_render_1_, p_render_2_);
-			RenderSystem.enableTexture();
-			RenderSystem.shadeModel(7424);
-			RenderSystem.enableAlphaTest();
-			RenderSystem.disableBlend();
-		}
-	}
+	public abstract void render(MatrixStack ms, int p_render_1_, int p_render_2_, float p_render_3_);
 
 	protected void updateScrollingState(double p_updateScrollingState_1_, double p_updateScrollingState_3_, int p_updateScrollingState_5_) {
 		this.scrolling = p_updateScrollingState_5_ == 0 && p_updateScrollingState_1_ >= (double) this.getScrollbarPosition() && p_updateScrollingState_1_ < (double) (this.getScrollbarPosition() + 6);
@@ -381,41 +259,5 @@ public abstract class SlotGui extends FocusableGui implements IRenderable {
 
 	protected int getScrollbarPosition() {
 		return this.width / 2 + 124;
-	}
-
-	protected void renderHoleBackground(int p_renderHoleBackground_1_, int p_renderHoleBackground_2_, int p_renderHoleBackground_3_, int p_renderHoleBackground_4_) {
-		Tessellator tessellator = Tessellator.getInstance();
-		BufferBuilder bufferbuilder = tessellator.getBuffer();
-		this.minecraft.getTextureManager().bindTexture(AbstractGui.BACKGROUND_LOCATION);
-		RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-		float f = 32.0F;
-		bufferbuilder.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-		bufferbuilder.pos(this.x0, p_renderHoleBackground_2_, 0.0D).tex(0.0F, (float) p_renderHoleBackground_2_ / 32.0F).color(64, 64, 64, p_renderHoleBackground_4_).endVertex();
-		bufferbuilder.pos(this.x0 + this.width, p_renderHoleBackground_2_, 0.0D).tex((float) this.width / 32.0F, (float) p_renderHoleBackground_2_ / 32.0F).color(64, 64, 64, p_renderHoleBackground_4_).endVertex();
-		bufferbuilder.pos(this.x0 + this.width, p_renderHoleBackground_1_, 0.0D).tex((float) this.width / 32.0F, (float) p_renderHoleBackground_1_ / 32.0F).color(64, 64, 64, p_renderHoleBackground_3_).endVertex();
-		bufferbuilder.pos(this.x0, p_renderHoleBackground_1_, 0.0D).tex(0.0F, (float) p_renderHoleBackground_1_ / 32.0F).color(64, 64, 64, p_renderHoleBackground_3_).endVertex();
-		tessellator.draw();
-	}
-
-	public void setLeftPos(int p_setLeftPos_1_) {
-		this.x0 = p_setLeftPos_1_;
-		this.x1 = p_setLeftPos_1_ + this.width;
-	}
-
-	public int getItemHeight() {
-		return this.itemHeight;
-	}
-
-	protected void drawContainerBackground(Tessellator tessellator) {
-		BufferBuilder buffer = tessellator.getBuffer();
-		this.minecraft.getTextureManager().bindTexture(AbstractGui.BACKGROUND_LOCATION);
-		RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-		float scale = 32.0F;
-		buffer.begin(7, DefaultVertexFormats.POSITION_TEX_COLOR);
-		buffer.pos(this.x0, this.y1, 0.0D).tex(this.x0 / scale, (this.y1 + (int) this.yo) / scale).color(32, 32, 32, 255).endVertex();
-		buffer.pos(this.x1, this.y1, 0.0D).tex(this.x1 / scale, (this.y1 + (int) this.yo) / scale).color(32, 32, 32, 255).endVertex();
-		buffer.pos(this.x1, this.y0, 0.0D).tex(this.x1 / scale, (this.y0 + (int) this.yo) / scale).color(32, 32, 32, 255).endVertex();
-		buffer.pos(this.x0, this.y0, 0.0D).tex(this.x0 / scale, (this.y0 + (int) this.yo) / scale).color(32, 32, 32, 255).endVertex();
-		tessellator.draw();
 	}
 }

@@ -6,9 +6,12 @@ import net.minecraft.client.gui.widget.button.Button;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.client.gui.GuiUtils;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 /**
  * This class provides a checkbox style control.
  */
+@ParametersAreNonnullByDefault
 public class GuiCheckBoxFixed extends Button {
 	private final int boxWidth;
 	private boolean isChecked;

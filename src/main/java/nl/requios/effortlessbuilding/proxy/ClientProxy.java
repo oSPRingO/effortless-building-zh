@@ -1,5 +1,6 @@
 package nl.requios.effortlessbuilding.proxy;
 
+import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.client.Minecraft;
@@ -50,10 +51,12 @@ import nl.requios.effortlessbuilding.network.*;
 import nl.requios.effortlessbuilding.render.ShaderHandler;
 import org.lwjgl.glfw.GLFW;
 
-import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.function.Supplier;
 
 @Mod.EventBusSubscriber(value = {Dist.CLIENT})
+@ParametersAreNonnullByDefault
+@MethodsReturnNonnullByDefault
 public class ClientProxy implements IProxy {
 	public static KeyBinding[] keyBindings;
 	public static RayTraceResult previousLookAt;
@@ -148,7 +151,7 @@ public class ClientProxy implements IProxy {
 							BlockPos blockPos = blockLookingAt.getPos();
 							SoundType soundType = state.getBlock().getSoundType(state, player.world, blockPos, player);
 							player.world.playSound(player, player.getPosition(), soundType.getPlaceSound(), SoundCategory.BLOCKS,
-								0.4f, soundType.getPitch() * 1f);
+								0.4f, soundType.getPitch());
 							player.swingArm(Hand.MAIN_HAND);
 						}
 					} else {
@@ -190,7 +193,7 @@ public class ClientProxy implements IProxy {
 						BlockState state = player.world.getBlockState(blockPos);
 						SoundType soundtype = state.getBlock().getSoundType(state, player.world, blockPos, player);
 						player.world.playSound(player, player.getPosition(), soundtype.getBreakSound(), SoundCategory.BLOCKS,
-							0.4f, soundtype.getPitch() * 1f);
+							0.4f, soundtype.getPitch());
 						player.swingArm(Hand.MAIN_HAND);
 					}
 				} else {
@@ -212,6 +215,8 @@ public class ClientProxy implements IProxy {
 	@SubscribeEvent(receiveCanceled = true)
 	public static void onKeyPress(InputEvent.KeyInputEvent event) {
 		ClientPlayerEntity player = Minecraft.getInstance().player;
+		if (player == null)
+			return;
 
 		//Remember to send packet to server if necessary
 		//Show Modifier Settings GUI
@@ -280,6 +285,8 @@ public class ClientProxy implements IProxy {
 	public static void openModifierSettings() {
 		Minecraft mc = Minecraft.getInstance();
 		ClientPlayerEntity player = mc.player;
+		if (player == null)
+			return;
 
 		RadialMenu.instance.setVisibility(0f);
 
@@ -298,6 +305,8 @@ public class ClientProxy implements IProxy {
 	public static void openPlayerSettings() {
 		Minecraft mc = Minecraft.getInstance();
 		ClientPlayerEntity player = mc.player;
+		if (player == null)
+			return;
 
 		RadialMenu.instance.setVisibility(0f);
 
@@ -317,7 +326,6 @@ public class ClientProxy implements IProxy {
 		}
 	}
 
-	@Nullable
 	public static RayTraceResult getLookingAt(PlayerEntity player) {
 		World world = player.world;
 

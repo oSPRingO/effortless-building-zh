@@ -366,22 +366,22 @@ public class RadialMenu extends Screen {
 
 				//Add keybind in brackets
 				if (button.action == ActionEnum.UNDO) {
-					keybind = ClientProxy.keyBindings[4].getTranslationKey();
+					keybind = I18n.format(ClientProxy.keyBindings[4].getTranslationKey());
 				}
 				if (button.action == ActionEnum.REDO) {
-					keybind = ClientProxy.keyBindings[5].getTranslationKey();
+					keybind = I18n.format(ClientProxy.keyBindings[5].getTranslationKey());
 				}
 				if (button.action == ActionEnum.REPLACE) {
-					keybind = ClientProxy.keyBindings[1].getTranslationKey();
+					keybind = I18n.format(ClientProxy.keyBindings[1].getTranslationKey());
 				}
 				if (button.action == ActionEnum.OPEN_MODIFIER_SETTINGS) {
-					keybind = ClientProxy.keyBindings[0].getTranslationKey();
+					keybind = I18n.format(ClientProxy.keyBindings[0].getTranslationKey());
 				}
 				if (currentBuildMode.options.length > 0) {
 					//Add (ctrl) to first two actions of first option
 					if (button.action == currentBuildMode.options[0].actions[0]
 						|| button.action == currentBuildMode.options[0].actions[1]) {
-						keybind = ClientProxy.keyBindings[6].getTranslationKey();
+						keybind = I18n.format(ClientProxy.keyBindings[6].getTranslationKey());
 						if (keybind.equals("Left Control")) keybind = "Ctrl";
 					}
 				}

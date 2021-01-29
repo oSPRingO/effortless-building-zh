@@ -37,6 +37,8 @@ import nl.requios.effortlessbuilding.proxy.ServerProxy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.ParametersAreNonnullByDefault;
+
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(EffortlessBuilding.MODID)
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)

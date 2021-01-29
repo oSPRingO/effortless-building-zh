@@ -1,27 +1,29 @@
 package nl.requios.effortlessbuilding.gui.elements;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import mcp.MethodsReturnNonnullByDefault;
 import net.minecraft.client.gui.AbstractGui;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.gui.widget.Widget;
 import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import javax.annotation.ParametersAreNonnullByDefault;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Formattable;
+import java.util.Collections;
 import java.util.List;
 
 @OnlyIn(Dist.CLIENT)
+@ParametersAreNonnullByDefault
+@MethodsReturnNonnullByDefault
 public class GuiNumberField extends AbstractGui {
 
 	public int x, y, width, height;
@@ -72,7 +74,7 @@ public class GuiNumberField extends AbstractGui {
 	}
 
 	public void setTooltip(ITextComponent tooltip) {
-		setTooltip(Arrays.asList(tooltip));
+		setTooltip(Collections.singletonList(tooltip));
 	}
 
 	public void setTooltip(List<ITextComponent> tooltip) {
@@ -112,29 +114,29 @@ public class GuiNumberField extends AbstractGui {
 
 		// List<String> textLines = new ArrayList<>();
 
-		StringTextComponent textLines = new StringTextComponent("");
+		List<ITextComponent> textLines = new ArrayList<>();
 
 
 		if (insideTextField) {
-			tooltip.forEach(s -> textLines.append(s).appendString("\n"));
+			textLines.addAll(tooltip);
 //            textLines.add(TextFormatting.GRAY + "Tip: try scrolling.");
 		}
 
 		if (insideMinusButton) {
-			textLines.appendString("Hold ").append(new StringTextComponent("shift ").mergeStyle(TextFormatting.AQUA)).appendString("for ")
-				.append(new StringTextComponent("10").mergeStyle(TextFormatting.RED)).appendString("\n");
-			textLines.appendString("Hold ").append(new StringTextComponent("ctrl ").mergeStyle(TextFormatting.AQUA)).appendString("for ")
-				.append(new StringTextComponent("5").mergeStyle(TextFormatting.RED)).appendString("\n");
+			textLines.add(new StringTextComponent("Hold ").append(new StringTextComponent("shift ").mergeStyle(TextFormatting.AQUA)).appendString("for ")
+				.append(new StringTextComponent("10").mergeStyle(TextFormatting.RED)));
+			textLines.add(new StringTextComponent("Hold ").append(new StringTextComponent("ctrl ").mergeStyle(TextFormatting.AQUA)).appendString("for ")
+				.append(new StringTextComponent("5").mergeStyle(TextFormatting.RED)));
 		}
 
 		if (insidePlusButton) {
-			textLines.appendString("Hold ").append(new StringTextComponent("shift ").mergeStyle(TextFormatting.DARK_GREEN)).appendString("for ")
-				.append(new StringTextComponent("10").mergeStyle(TextFormatting.RED)).appendString("\n");
-			textLines.appendString("Hold ").append(new StringTextComponent("ctrl ").mergeStyle(TextFormatting.DARK_GREEN)).appendString("for ")
-				.append(new StringTextComponent("5").mergeStyle(TextFormatting.RED));
+			textLines.add(new StringTextComponent("Hold ").append(new StringTextComponent("shift ").mergeStyle(TextFormatting.DARK_GREEN)).appendString("for ")
+				.append(new StringTextComponent("10").mergeStyle(TextFormatting.RED)));
+			textLines.add(new StringTextComponent("Hold ").append(new StringTextComponent("ctrl ").mergeStyle(TextFormatting.DARK_GREEN)).appendString("for ")
+				.append(new StringTextComponent("5").mergeStyle(TextFormatting.RED)));
 		}
 
-		screen.renderTooltip(ms, textLines, mouseX - 10, mouseY + 25);
+		screen.func_243308_b(ms, textLines, mouseX - 10, mouseY + 25);
 
 	}
 
