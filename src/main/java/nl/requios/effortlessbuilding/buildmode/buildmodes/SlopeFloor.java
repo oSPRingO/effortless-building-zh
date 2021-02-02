@@ -11,85 +11,85 @@ import java.util.List;
 
 public class SlopeFloor extends ThreeClicksBuildMode {
 
-    @Override
-    protected BlockPos findSecondPos(PlayerEntity player, BlockPos firstPos, boolean skipRaytrace) {
-        return Floor.findFloor(player, firstPos, skipRaytrace);
-    }
+	//Add slope floor from first to second
+	public static List<BlockPos> getSlopeFloorBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3) {
+		List<BlockPos> list = new ArrayList<>();
 
-    @Override
-    protected BlockPos findThirdPos(PlayerEntity player, BlockPos firstPos, BlockPos secondPos, boolean skipRaytrace) {
-        return findHeight(player, secondPos, skipRaytrace);
-    }
+		int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
 
-    @Override
-    protected List<BlockPos> getIntermediateBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2) {
-        return Floor.getFloorBlocks(player, x1, y1, z1, x2, y2, z2);
-    }
+		//Determine whether to use x or z axis to slope up
+		boolean onXAxis = true;
 
-    @Override
-    protected List<BlockPos> getFinalBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3) {
-        return getSlopeFloorBlocks(player, x1, y1, z1, x2, y2, z2, x3, y3, z3);
-    }
+		int xLength = Math.abs(x2 - x1);
+		int zLength = Math.abs(z2 - z1);
 
-    //Add slope floor from first to second
-    public static List<BlockPos> getSlopeFloorBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3) {
-        List<BlockPos> list = new ArrayList<>();
+		if (ModeOptions.getRaisedEdge() == ModeOptions.ActionEnum.SHORT_EDGE) {
+			//Slope along short edge
+			if (zLength > xLength) onXAxis = false;
+		} else {
+			//Slope along long edge
+			if (zLength <= xLength) onXAxis = false;
+		}
 
-        int axisLimit = ReachHelper.getMaxBlocksPerAxis(player);
+		if (onXAxis) {
+			//Along X goes up
 
-        //Determine whether to use x or z axis to slope up
-        boolean onXAxis = true;
+			//Get diagonal line blocks
+			List<BlockPos> diagonalLineBlocks = DiagonalLine.getDiagonalLineBlocks(player, x1, y1, z1, x2, y3, z1, 1f);
 
-        int xLength = Math.abs(x2 - x1);
-        int zLength = Math.abs(z2 - z1);
+			//Limit amount of blocks we can place
+			int lowest = Math.min(z1, z2);
+			int highest = Math.max(z1, z2);
 
-        if (ModeOptions.getRaisedEdge() == ModeOptions.ActionEnum.SHORT_EDGE) {
-            //Slope along short edge
-            if (zLength > xLength) onXAxis = false;
-        } else {
-            //Slope along long edge
-            if (zLength <= xLength) onXAxis = false;
-        }
+			if (highest - lowest >= axisLimit) highest = lowest + axisLimit - 1;
 
-        if (onXAxis) {
-            //Along X goes up
+			//Copy diagonal line on x axis
+			for (int z = lowest; z <= highest; z++) {
+				for (BlockPos blockPos : diagonalLineBlocks) {
+					list.add(new BlockPos(blockPos.getX(), blockPos.getY(), z));
+				}
+			}
 
-            //Get diagonal line blocks
-            List<BlockPos> diagonalLineBlocks = DiagonalLine.getDiagonalLineBlocks(player, x1, y1, z1, x2, y3, z1, 1f);
+		} else {
+			//Along Z goes up
 
-            //Limit amount of blocks we can place
-            int lowest = Math.min(z1, z2);
-            int highest = Math.max(z1, z2);
+			//Get diagonal line blocks
+			List<BlockPos> diagonalLineBlocks = DiagonalLine.getDiagonalLineBlocks(player, x1, y1, z1, x1, y3, z2, 1f);
 
-            if (highest - lowest >= axisLimit) highest = lowest + axisLimit - 1;
+			//Limit amount of blocks we can place
+			int lowest = Math.min(x1, x2);
+			int highest = Math.max(x1, x2);
 
-            //Copy diagonal line on x axis
-            for (int z = lowest; z <= highest; z++) {
-                for (BlockPos blockPos : diagonalLineBlocks) {
-                    list.add(new BlockPos(blockPos.getX(), blockPos.getY(), z));
-                }
-            }
+			if (highest - lowest >= axisLimit) highest = lowest + axisLimit - 1;
 
-        } else {
-            //Along Z goes up
+			//Copy diagonal line on x axis
+			for (int x = lowest; x <= highest; x++) {
+				for (BlockPos blockPos : diagonalLineBlocks) {
+					list.add(new BlockPos(x, blockPos.getY(), blockPos.getZ()));
+				}
+			}
+		}
 
-            //Get diagonal line blocks
-            List<BlockPos> diagonalLineBlocks = DiagonalLine.getDiagonalLineBlocks(player, x1, y1, z1, x1, y3, z2, 1f);
+		return list;
+	}
 
-            //Limit amount of blocks we can place
-            int lowest = Math.min(x1, x2);
-            int highest = Math.max(x1, x2);
+	@Override
+	protected BlockPos findSecondPos(PlayerEntity player, BlockPos firstPos, boolean skipRaytrace) {
+		return Floor.findFloor(player, firstPos, skipRaytrace);
+	}
 
-            if (highest - lowest >= axisLimit) highest = lowest + axisLimit - 1;
+	@Override
+	protected BlockPos findThirdPos(PlayerEntity player, BlockPos firstPos, BlockPos secondPos, boolean skipRaytrace) {
+		return findHeight(player, secondPos, skipRaytrace);
+	}
 
-            //Copy diagonal line on x axis
-            for (int x = lowest; x <= highest; x++) {
-                for (BlockPos blockPos : diagonalLineBlocks) {
-                    list.add(new BlockPos(x, blockPos.getY(), blockPos.getZ()));
-                }
-            }
-        }
+	@Override
+	protected List<BlockPos> getIntermediateBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2) {
+		return Floor.getFloorBlocks(player, x1, y1, z1, x2, y2, z2);
+	}
 
-        return list;
-    }
+	@Override
+	protected List<BlockPos> getFinalBlocks(PlayerEntity player, int x1, int y1, int z1, int x2, int y2, int z2, int x3, int y3, int z3) {
+		return getSlopeFloorBlocks(player, x1, y1, z1, x2, y2, z2, x3, y3, z3);
+	}
 }

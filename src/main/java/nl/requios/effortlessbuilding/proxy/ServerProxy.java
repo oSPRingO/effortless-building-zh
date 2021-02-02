@@ -12,21 +12,22 @@ import nl.requios.effortlessbuilding.network.TranslatedLogMessage;
 import java.util.function.Supplier;
 
 public class ServerProxy implements IProxy {
-    //Only physical server! Singleplayer server is seen as clientproxy
-    @Override
-    public void setup(FMLCommonSetupEvent event) {
+	//Only physical server! Singleplayer server is seen as clientproxy
+	@Override
+	public void setup(FMLCommonSetupEvent event) {
 
-    }
+	}
 
-    @Override
-    public void clientSetup(FMLClientSetupEvent event) {}
+	@Override
+	public void clientSetup(FMLClientSetupEvent event) {
+	}
 
-    public PlayerEntity getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx){
-        return ctx.get().getSender();
-    }
+	public PlayerEntity getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx) {
+		return ctx.get().getSender();
+	}
 
-    @Override
-    public void logTranslate(PlayerEntity player, String prefix, String translationKey, String suffix, boolean actionBar) {
-        PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new TranslatedLogMessage(prefix, translationKey, suffix, actionBar));
-    }
+	@Override
+	public void logTranslate(PlayerEntity player, String prefix, String translationKey, String suffix, boolean actionBar) {
+		PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> (ServerPlayerEntity) player), new TranslatedLogMessage(prefix, translationKey, suffix, actionBar));
+	}
 }

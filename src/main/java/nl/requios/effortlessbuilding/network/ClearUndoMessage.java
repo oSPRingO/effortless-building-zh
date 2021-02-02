@@ -14,31 +14,29 @@ import java.util.function.Supplier;
  */
 public class ClearUndoMessage {
 
-    public ClearUndoMessage() {
-    }
+	public ClearUndoMessage() {
+	}
 
-    public static void encode(ClearUndoMessage message, PacketBuffer buf) {
+	public static void encode(ClearUndoMessage message, PacketBuffer buf) {
 
-    }
+	}
 
-    public static ClearUndoMessage decode(PacketBuffer buf) {
-        return new ClearUndoMessage();
-    }
+	public static ClearUndoMessage decode(PacketBuffer buf) {
+		return new ClearUndoMessage();
+	}
 
-    public static class Handler
-    {
-        public static void handle(ClearUndoMessage message, Supplier<NetworkEvent.Context> ctx)
-        {
-            ctx.get().enqueueWork(() -> {
-                if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
-                    //Received clientside
-                    PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+	public static class Handler {
+		public static void handle(ClearUndoMessage message, Supplier<NetworkEvent.Context> ctx) {
+			ctx.get().enqueueWork(() -> {
+				if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
+					//Received clientside
+					PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
-                    //Add to undo stack clientside
-                    UndoRedo.clear(player);
-                }
-            });
-            ctx.get().setPacketHandled(true);
-        }
-    }
+					//Add to undo stack clientside
+					UndoRedo.clear(player);
+				}
+			});
+			ctx.get().setPacketHandled(true);
+		}
+	}
 }

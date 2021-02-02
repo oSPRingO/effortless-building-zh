@@ -1,79 +1,71 @@
 package nl.requios.effortlessbuilding.network;
 
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketBuffer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.network.NetworkEvent;
 import nl.requios.effortlessbuilding.EffortlessBuilding;
-import nl.requios.effortlessbuilding.buildmodifier.BlockSet;
-import nl.requios.effortlessbuilding.buildmodifier.UndoRedo;
 
-import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class TranslatedLogMessage {
-    private String prefix;
-    private String translationKey;
-    private String suffix;
-    private boolean actionBar;
+	private final String prefix;
+	private final String translationKey;
+	private final String suffix;
+	private final boolean actionBar;
 
-    public TranslatedLogMessage(){
-        prefix = "";
-        translationKey = "";
-        suffix = "";
-        actionBar = false;
-    }
+	public TranslatedLogMessage() {
+		prefix = "";
+		translationKey = "";
+		suffix = "";
+		actionBar = false;
+	}
 
-    public TranslatedLogMessage(String prefix, String translationKey, String suffix, boolean actionBar) {
-        this.prefix = prefix;
-        this.translationKey = translationKey;
-        this.suffix = suffix;
-        this.actionBar = actionBar;
-    }
+	public TranslatedLogMessage(String prefix, String translationKey, String suffix, boolean actionBar) {
+		this.prefix = prefix;
+		this.translationKey = translationKey;
+		this.suffix = suffix;
+		this.actionBar = actionBar;
+	}
 
-    public String getPrefix() {
-        return prefix;
-    }
+	public static void encode(TranslatedLogMessage message, PacketBuffer buf) {
+		buf.writeString(message.prefix);
+		buf.writeString(message.translationKey);
+		buf.writeString(message.suffix);
+		buf.writeBoolean(message.actionBar);
+	}
 
-    public String getTranslationKey() {
-        return translationKey;
-    }
+	public static TranslatedLogMessage decode(PacketBuffer buf) {
+		return new TranslatedLogMessage(buf.readString(), buf.readString(), buf.readString(), buf.readBoolean());
+	}
 
-    public String getSuffix() {
-        return suffix;
-    }
+	public String getPrefix() {
+		return prefix;
+	}
 
-    public boolean isActionBar() {
-        return actionBar;
-    }
+	public String getTranslationKey() {
+		return translationKey;
+	}
 
-    public static void encode(TranslatedLogMessage message, PacketBuffer buf) {
-        buf.writeString(message.prefix);
-        buf.writeString(message.translationKey);
-        buf.writeString(message.suffix);
-        buf.writeBoolean(message.actionBar);
-    }
+	public String getSuffix() {
+		return suffix;
+	}
 
-    public static TranslatedLogMessage decode(PacketBuffer buf) {
-        return new TranslatedLogMessage(buf.readString(), buf.readString(), buf.readString(), buf.readBoolean());
-    }
+	public boolean isActionBar() {
+		return actionBar;
+	}
 
-    public static class Handler
-    {
-        public static void handle(TranslatedLogMessage message, Supplier<NetworkEvent.Context> ctx)
-        {
-            ctx.get().enqueueWork(() -> {
-                if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
-                    //Received clientside
+	public static class Handler {
+		public static void handle(TranslatedLogMessage message, Supplier<NetworkEvent.Context> ctx) {
+			ctx.get().enqueueWork(() -> {
+				if (ctx.get().getDirection().getReceptionSide() == LogicalSide.CLIENT) {
+					//Received clientside
 
-                    PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
-                    EffortlessBuilding.logTranslate(player, message.prefix, message.translationKey, message.suffix, message.actionBar);
-                }
-            });
-            ctx.get().setPacketHandled(true);
-        }
-    }
+					PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+					EffortlessBuilding.logTranslate(player, message.prefix, message.translationKey, message.suffix, message.actionBar);
+				}
+			});
+			ctx.get().setPacketHandled(true);
+		}
+	}
 }

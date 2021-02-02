@@ -13,23 +13,21 @@ import java.util.function.Supplier;
  */
 public class CancelModeMessage {
 
-    public static void encode(CancelModeMessage message, PacketBuffer buf) {
-    }
+	public static void encode(CancelModeMessage message, PacketBuffer buf) {
+	}
 
-    public static CancelModeMessage decode(PacketBuffer buf) {
-        return new CancelModeMessage();
-    }
+	public static CancelModeMessage decode(PacketBuffer buf) {
+		return new CancelModeMessage();
+	}
 
-    public static class Handler
-    {
-        public static void handle(CancelModeMessage message, Supplier<NetworkEvent.Context> ctx)
-        {
-            ctx.get().enqueueWork(() -> {
-                PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
+	public static class Handler {
+		public static void handle(CancelModeMessage message, Supplier<NetworkEvent.Context> ctx) {
+			ctx.get().enqueueWork(() -> {
+				PlayerEntity player = EffortlessBuilding.proxy.getPlayerEntityFromContext(ctx);
 
-                BuildModes.initializeMode(player);
-            });
-            ctx.get().setPacketHandled(true);
-        }
-    }
+				BuildModes.initializeMode(player);
+			});
+			ctx.get().setPacketHandled(true);
+		}
+	}
 }

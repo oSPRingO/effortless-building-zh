@@ -14,21 +14,21 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ItemHandlerCapabilityProvider implements ICapabilitySerializable<CompoundNBT> {
-    IItemHandler itemHandler = new ItemStackHandler(ItemRandomizerBag.INV_SIZE);
+	IItemHandler itemHandler = new ItemStackHandler(ItemRandomizerBag.INV_SIZE);
 
-    @Nonnull
-    @Override
-    public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
-        return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.orEmpty(cap, LazyOptional.of(() -> itemHandler));
-    }
+	@Nonnull
+	@Override
+	public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
+		return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.orEmpty(cap, LazyOptional.of(() -> itemHandler));
+	}
 
-    @Override
-    public CompoundNBT serializeNBT() {
-        return ((ItemStackHandler) itemHandler).serializeNBT();
-    }
+	@Override
+	public CompoundNBT serializeNBT() {
+		return ((ItemStackHandler) itemHandler).serializeNBT();
+	}
 
-    @Override
-    public void deserializeNBT(CompoundNBT nbt) {
-        ((ItemStackHandler) itemHandler).deserializeNBT(nbt);
-    }
+	@Override
+	public void deserializeNBT(CompoundNBT nbt) {
+		((ItemStackHandler) itemHandler).deserializeNBT(nbt);
+	}
 }
