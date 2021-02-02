@@ -37,15 +37,13 @@ import nl.requios.effortlessbuilding.proxy.ServerProxy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.annotation.ParametersAreNonnullByDefault;
-
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(EffortlessBuilding.MODID)
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EffortlessBuilding {
 	public static final String MODID = "effortlessbuilding";
 	public static final String NAME = "Effortless Building";
-	public static final String VERSION = "1.15.2-2.20";
+	public static final String VERSION = "1.15.2-2.21";
 	public static final Logger logger = LogManager.getLogger();
 	public static final ItemRandomizerBag ITEM_RANDOMIZER_BAG = new ItemRandomizerBag();
 	public static final ItemReachUpgrade1 ITEM_REACH_UPGRADE_1 = new ItemReachUpgrade1();
