@@ -4,8 +4,10 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.ClickType;
 import net.minecraft.inventory.container.Container;
+import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.Hand;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
@@ -19,12 +21,23 @@ public class RandomizerBagContainer extends Container {
 		HOTBAR_START = INV_END + 1, HOTBAR_END = HOTBAR_START + 8;
 	private final IItemHandler bagInventory;
 
+	public RandomizerBagContainer(ContainerType<?> type, int id){
+		super(type, id);
+		bagInventory = null;
+	}
+
+	//Client
+	public RandomizerBagContainer(int id, PlayerInventory playerInventory, PacketBuffer packetBuffer) {
+		this(id, playerInventory);
+	}
+
+	//Server?
 	public RandomizerBagContainer(int containerId, PlayerInventory playerInventory) {
 		this(containerId, playerInventory, new ItemStackHandler(ItemRandomizerBag.INV_SIZE));
 	}
 
 	public RandomizerBagContainer(int containerId, PlayerInventory playerInventory, IItemHandler inventory) {
-		super(EffortlessBuilding.RANDOMIZER_BAG_CONTAINER, containerId);
+		super(EffortlessBuilding.RANDOMIZER_BAG_CONTAINER.get(), containerId);
 		bagInventory = inventory;
 
 		for (int i = 0; i < ItemRandomizerBag.INV_SIZE; ++i) {

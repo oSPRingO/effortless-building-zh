@@ -13,6 +13,7 @@ import net.minecraftforge.common.capabilities.CapabilityManager;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -21,6 +22,9 @@ import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.network.IContainerFactory;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
 import nl.requios.effortlessbuilding.capability.ModeCapabilityManager;
 import nl.requios.effortlessbuilding.capability.ModifierCapabilityManager;
 import nl.requios.effortlessbuilding.command.CommandReach;
@@ -42,8 +46,6 @@ import org.apache.logging.log4j.Logger;
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EffortlessBuilding {
 	public static final String MODID = "effortlessbuilding";
-	public static final String NAME = "Effortless Building";
-	public static final String VERSION = "1.15.2-2.21";
 	public static final Logger logger = LogManager.getLogger();
 	public static final ItemRandomizerBag ITEM_RANDOMIZER_BAG = new ItemRandomizerBag();
 	public static final ItemReachUpgrade1 ITEM_REACH_UPGRADE_1 = new ItemReachUpgrade1();
@@ -57,7 +59,8 @@ public class EffortlessBuilding {
 		ITEM_REACH_UPGRADE_2,
 		ITEM_REACH_UPGRADE_3
 	};
-	public static final ContainerType<RandomizerBagContainer> RANDOMIZER_BAG_CONTAINER = register("randomizer_bag", RandomizerBagContainer::new);
+	public static final DeferredRegister<ContainerType<?>> CONTAINERS = DeferredRegister.create(ForgeRegistries.CONTAINERS, EffortlessBuilding.MODID);
+	public static final RegistryObject<ContainerType<RandomizerBagContainer>> RANDOMIZER_BAG_CONTAINER = CONTAINERS.register("randomizer_bag", () -> registerContainer(RandomizerBagContainer::new));
 	public static final ResourceLocation RANDOMIZER_BAG_GUI = new ResourceLocation(EffortlessBuilding.MODID, "randomizer_bag");
 	public static EffortlessBuilding instance;
 	public static IProxy proxy = DistExecutor.runForDist(() -> ClientProxy::new, () -> ServerProxy::new);
@@ -79,10 +82,13 @@ public class EffortlessBuilding {
 
 		// Register ourselves for server and other game events we are interested in
 		MinecraftForge.EVENT_BUS.register(this);
+
+		CONTAINERS.register(FMLJavaModLoadingContext.get().getModEventBus());
 	}
 
-	private static <T extends Container> ContainerType<T> register(String key, ContainerType.IFactory<T> factory) {
-		return Registry.register(Registry.MENU, key, new ContainerType<>(factory));
+	public static <T extends Container> ContainerType<T> registerContainer(IContainerFactory<T> fact){
+		ContainerType<T> type = new ContainerType<T>(fact);
+		return type;
 	}
 
 	public static void log(String msg) {

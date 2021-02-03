@@ -372,7 +372,7 @@ public class ClientProxy implements IProxy {
 			ClientRegistry.registerKeyBinding(keyBinding);
 		}
 
-		DeferredWorkQueue.runLater(() -> ScreenManager.registerFactory(EffortlessBuilding.RANDOMIZER_BAG_CONTAINER, RandomizerBagScreen::new));
+		DeferredWorkQueue.runLater(() -> ScreenManager.registerFactory(EffortlessBuilding.RANDOMIZER_BAG_CONTAINER.get(), RandomizerBagScreen::new));
 	}
 
 	public PlayerEntity getPlayerEntityFromContext(Supplier<NetworkEvent.Context> ctx) {

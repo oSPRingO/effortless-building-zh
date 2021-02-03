@@ -279,7 +279,7 @@ public class PlayerSettingsGui extends Screen {
 			RenderSystem.disableBlend();
 		}
 
-		private int getMaxScroll() {
+		public int getMaxScroll() {
 			return Math.max(0, this.getMaxPosition() - (this.y1 - this.y0 - 4));
 		}
 
