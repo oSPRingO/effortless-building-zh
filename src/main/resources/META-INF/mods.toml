@@ -12,21 +12,21 @@ issueTrackerURL="http://my.issue.tracker/" #optional
 # A list of mods - how many allowed here is determined by the individual mod loader
 [[mods]] #mandatory
 # The modid of the mod
-modId="effortlessbuilding" #mandatory
+modId="effortlessbuildingzh" #mandatory
 # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
 version="${file.jarVersion}" #mandatory
  # A display name for the mod
-displayName="Effortless Building" #mandatory
+displayName="Effortless Building 汉化版" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification <here>
 #updateJSONURL="example.com" #optional
 # A URL for the "homepage" for this mod, displayed in the mod UI
-displayURL="https://minecraft.curseforge.com/projects/effortless-building" #optional
+displayURL="https://github.com/oSPRingO/effortless-building-zh" #optional
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="logo.png" #optional
 # A text field displayed in the mod UI
 credits="" #optional
 # A text field displayed in the mod UI
-authors="Requios" #optional
+authors="Requios (汉化 By MrPighead)" #optional
 # The description text for the mod (multi line!) (#mandatory)
 description='''
 Makes building easier by providing tools like mirrors, arrays, QuickReplace and a block randomizer. For survival and creative mode.
