@@ -26,10 +26,12 @@ logoFile="logo.png" #optional
 # A text field displayed in the mod UI
 credits="" #optional
 # A text field displayed in the mod UI
-authors="Requios (汉化 By MrPighead)" #optional
+authors="Requios, MrPigHead, oSPRingO" #optional
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Makes building easier by providing tools like mirrors, arrays, QuickReplace and a block randomizer. For survival and creative mode.
+用镜像、序列、快速替换、随机放置等工具更轻松地建造，生存、创造模式可用。
+汉化 By: MrPigHead & oSPRingO团队
+前往我们的爱发电主页赞助我们! https://afdian.net/@oSPRingO
 '''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.examplemod]] #optional
