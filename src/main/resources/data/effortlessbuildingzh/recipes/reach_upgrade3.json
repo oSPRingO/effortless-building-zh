@@ -1,0 +1,22 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        " FE",
+        " /F",
+		"/  "
+    ],
+    "key": {
+        "E": {
+            "item": "minecraft:ender_eye"
+        },
+		"F": {
+            "item": "minecraft:feather"
+        },
+		"/": {
+            "item": "minecraft:blaze_rod"
+        }
+    },
+    "result": {
+        "item": "effortlessbuildingzh:reach_upgrade3"
+    }
+}

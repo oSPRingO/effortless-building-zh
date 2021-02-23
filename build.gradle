@@ -13,6 +13,8 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'maven-publish'
 
+compileJava.options.encoding('utf8')
+
 version = '1.15.2-2.21'
 group = 'nl.requios.effortlessbuilding' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = 'effortlessbuilding'
