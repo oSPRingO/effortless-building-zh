@@ -29,14 +29,14 @@ public class CommandReach {
         //Send to client
         PacketHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player), new ModifierSettingsMessage(modifierSettings));
 
-        player.sendMessage(new StringTextComponent("Reach level of " + player.getName().getString() + " set to " + modifierSettings.getReachUpgrade()));
+        player.sendMessage(new StringTextComponent("已将" + player.getName().getString() + "的手长等级设为" + modifierSettings.getReachUpgrade() + "级"));
 
         return 1;
     }
 
     private static int getReachLevel(ServerPlayerEntity player){
         int reachUpgrade = ModifierSettingsManager.getModifierSettings(player).getReachUpgrade();
-        EffortlessBuildingZh.log(player, "Current reach: level "+reachUpgrade);
+        EffortlessBuildingZh.log(player, "当前手长等级为" + reachUpgrade + "级");
 
         return 1;
     }

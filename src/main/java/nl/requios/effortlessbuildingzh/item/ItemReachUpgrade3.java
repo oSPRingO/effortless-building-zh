@@ -28,8 +28,8 @@ public class ItemReachUpgrade3 extends Item {
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, PlayerEntity player, Hand hand) {
         if (player.isCreative()) {
-            if (world.isRemote) EffortlessBuildingZh.log(player, "Reach upgrades are not necessary in creative.");
-            if (world.isRemote) EffortlessBuildingZh.log(player, "Still want increased reach? Use the config.");
+            if (world.isRemote) EffortlessBuildingZh.log(player, "手长等级在创造模式下不可用");
+            if (world.isRemote) EffortlessBuildingZh.log(player, "仍想提升手长？请转到配置文件。");
             return new ActionResult<>(ActionResultType.PASS, player.getHeldItem(hand));
         }
 
@@ -37,21 +37,18 @@ public class ItemReachUpgrade3 extends Item {
         int currentLevel = modifierSettings.getReachUpgrade();
         if (currentLevel == 2) {
             modifierSettings.setReachUpgrade(3);
-            if (world.isRemote) EffortlessBuildingZh.log(player, "Upgraded reach to " + ReachHelper.getMaxReach(player));
+            if (world.isRemote) EffortlessBuildingZh.log(player, "已将手长提升至" + ReachHelper.getMaxReach(player) + "级");
             player.setHeldItem(hand, ItemStack.EMPTY);
 
             SoundEvent soundEvent = new SoundEvent(new ResourceLocation("entity.player.levelup"));
             player.playSound(soundEvent, 1f, 1f);
         } else if (currentLevel < 2) {
-            if (currentLevel == 0)
-                if (world.isRemote) EffortlessBuildingZh.log(player, "Use Reach Upgrade 1 and 2 first.");
-            if (currentLevel == 1)
-                if (world.isRemote) EffortlessBuildingZh.log(player, "Use Reach Upgrade 2 first.");
+            if (world.isRemote) EffortlessBuildingZh.log(player, "请先升到2级");
 
             SoundEvent soundEvent = new SoundEvent(new ResourceLocation("item.armor.equip_leather"));
             player.playSound(soundEvent, 1f, 1f);
-        } else if (currentLevel > 2) {
-            if (world.isRemote) EffortlessBuildingZh.log(player, "Already used this upgrade! Current reach is " + ReachHelper
+        } else {
+            if (world.isRemote) EffortlessBuildingZh.log(player, "已经升到这一级了！当前的手长等级是" + ReachHelper
                     .getMaxReach(player) + ".");
 
             SoundEvent soundEvent = new SoundEvent(new ResourceLocation("item.armor.equip_leather"));
@@ -62,8 +59,8 @@ public class ItemReachUpgrade3 extends Item {
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-        tooltip.add(new StringTextComponent(TextFormatting.GRAY + "Consume to increase reach to " + TextFormatting.BLUE + BuildConfig.reach.maxReachLevel3.get()));
-        tooltip.add(new StringTextComponent(TextFormatting.GRAY + "Previous upgrades need to be consumed first"));
+        tooltip.add(new StringTextComponent(TextFormatting.GRAY + "可将手长提升至" + TextFormatting.BLUE + BuildConfig.reach.maxReachLevel3.get() + TextFormatting.GRAY + "方块"));
+        tooltip.add(new StringTextComponent(TextFormatting.GRAY + "需要先升到2级"));
     }
 
     @Override
