@@ -45,7 +45,7 @@ public class RadialMenu extends Screen {
     public boolean actionUsed = false;
 
     public RadialMenu() {
-        super(new TranslationTextComponent("effortlessbuilding.screen.radial_menu"));
+        super(new TranslationTextComponent("effortlessbuildingzh.screen.radial_menu"));
     }
 
     private float clampVis(final float f) {
@@ -365,7 +365,7 @@ public class RadialMenu extends Screen {
             font.drawStringWithShadow(I18n.format(option.name), (int) (middleX + buttonDistance - 9), (int) middleY - 37 + i * 39, 0xeeeeeeff);
         }
 
-        String credits = "Effortless Building";
+        String credits = "Effortless Building ZH";
         font.drawStringWithShadow(credits, width - font.getStringWidth(credits) - 4, height - 10, 0x88888888);
 
         //Draw buildmode text

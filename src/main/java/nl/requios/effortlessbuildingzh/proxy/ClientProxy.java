@@ -69,10 +69,10 @@ public class ClientProxy implements IProxy {
         keyBindings = new KeyBinding[7];
 
         // instantiate the key bindings
-        keyBindings[0] = new KeyBinding("key.effortlessbuilding.hud.desc", KeyConflictContext.UNIVERSAL, InputMappings.getInputByCode(GLFW.GLFW_KEY_KP_ADD, 0), "key.effortlessbuilding.category");
-        keyBindings[1] = new KeyBinding("key.effortlessbuilding.replace.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_KP_SUBTRACT, 0), "key.effortlessbuilding.category");
-        keyBindings[2] = new KeyBinding("key.effortlessbuilding.creative.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_F4, 0), "key.effortlessbuilding.category");
-        keyBindings[3] = new KeyBinding("key.effortlessbuilding.mode.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_LEFT_ALT, 0), "key.effortlessbuilding.category") {
+        keyBindings[0] = new KeyBinding("key.effortlessbuildingzh.hud.desc", KeyConflictContext.UNIVERSAL, InputMappings.getInputByCode(GLFW.GLFW_KEY_KP_ADD, 0), "key.effortlessbuildingzh.category");
+        keyBindings[1] = new KeyBinding("key.effortlessbuildingzh.replace.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_KP_SUBTRACT, 0), "key.effortlessbuildingzh.category");
+        keyBindings[2] = new KeyBinding("key.effortlessbuildingzh.creative.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_F4, 0), "key.effortlessbuildingzh.category");
+        keyBindings[3] = new KeyBinding("key.effortlessbuildingzh.mode.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_LEFT_ALT, 0), "key.effortlessbuildingzh.category") {
             @Override
             public boolean conflicts(KeyBinding other) {
                 //Does not conflict with Chisels and Bits radial menu
@@ -80,10 +80,10 @@ public class ClientProxy implements IProxy {
                 return super.conflicts(other);
             }
         };
-        keyBindings[4] = new KeyBinding("key.effortlessbuilding.undo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, InputMappings.getInputByCode(GLFW.GLFW_KEY_Z, 0), "key.effortlessbuilding.category");
-        keyBindings[5] = new KeyBinding("key.effortlessbuilding.redo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, InputMappings.getInputByCode(GLFW.GLFW_KEY_Y, 0), "key.effortlessbuilding.category");
-        keyBindings[6] = new KeyBinding("key.effortlessbuilding.altplacement.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_LEFT_CONTROL, 0), "key.effortlessbuilding.category");
-        //keyBindings[7] = new KeyBinding("Reload shaders", KeyConflictContext.UNIVERSAL, InputMappings.getInputByCode(GLFW.GLFW_KEY_TAB, 0), "key.effortlessbuilding.category");
+        keyBindings[4] = new KeyBinding("key.effortlessbuildingzh.undo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, InputMappings.getInputByCode(GLFW.GLFW_KEY_Z, 0), "key.effortlessbuildingzh.category");
+        keyBindings[5] = new KeyBinding("key.effortlessbuildingzh.redo.desc", KeyConflictContext.IN_GAME, KeyModifier.CONTROL, InputMappings.getInputByCode(GLFW.GLFW_KEY_Y, 0), "key.effortlessbuildingzh.category");
+        keyBindings[6] = new KeyBinding("key.effortlessbuildingzh.altplacement.desc", KeyConflictContext.IN_GAME, InputMappings.getInputByCode(GLFW.GLFW_KEY_LEFT_CONTROL, 0), "key.effortlessbuildingzh.category");
+        //keyBindings[7] = new KeyBinding("Reload shaders", KeyConflictContext.UNIVERSAL, InputMappings.getInputByCode(GLFW.GLFW_KEY_TAB, 0), "key.effortlessbuildingzh.category");
 
         // register all the key bindings
         for (int i = 0; i < keyBindings.length; ++i) {

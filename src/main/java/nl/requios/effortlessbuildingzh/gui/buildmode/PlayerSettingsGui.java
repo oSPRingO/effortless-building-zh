@@ -40,7 +40,7 @@ public class PlayerSettingsGui extends Screen {
     }
 
     public PlayerSettingsGui() {
-        super(new TranslationTextComponent("effortlessbuilding.screen.player_settings"));
+        super(new TranslationTextComponent("effortlessbuildingzh.screen.player_settings"));
     }
 
     @Override

@@ -5,6 +5,7 @@ import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import nl.requios.effortlessbuildingzh.EffortlessBuildingZh;
@@ -15,7 +16,7 @@ public class RandomizerBagScreen extends ContainerScreen<RandomizerBagContainer>
             new ResourceLocation(EffortlessBuildingZh.MODID, "textures/gui/container/randomizerbag.png");
 
     public RandomizerBagScreen(RandomizerBagContainer randomizerBagContainer, PlayerInventory playerInventory, ITextComponent title) {
-        super(randomizerBagContainer, playerInventory, title);//new TranslationTextComponent("effortlessbuilding.screen.randomizer_bag"));
+        super(randomizerBagContainer, playerInventory, new TranslationTextComponent("effortlessbuildingzh.screen.randomizer_bag"));
         ySize = 134;
     }
 

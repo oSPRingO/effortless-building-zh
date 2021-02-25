@@ -202,10 +202,10 @@ public class ItemRandomizerBag extends Item {
 
     @Override
     public void addInformation(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
-        tooltip.add(new StringTextComponent(TextFormatting.BLUE + "Rightclick" + TextFormatting.GRAY + " to place a random block"));
-        tooltip.add(new StringTextComponent(TextFormatting.BLUE + "Sneak + rightclick" + TextFormatting.GRAY + " to open inventory"));
+        tooltip.add(new StringTextComponent(TextFormatting.BLUE + "右键" + TextFormatting.GRAY + "以放置一个随机方块"));
+        tooltip.add(new StringTextComponent(TextFormatting.BLUE + "潜行+右键" + TextFormatting.GRAY + "以打开袋子"));
         if (world != null && world.getPlayers().size() > 1) {
-            tooltip.add(new StringTextComponent(TextFormatting.YELLOW + "Experimental on servers: may lose inventory"));
+            tooltip.add(new StringTextComponent(TextFormatting.YELLOW + "警告: 网络原因，物品可能会丢失"));
         }
     }
 
