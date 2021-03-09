@@ -136,7 +136,7 @@ public class ModifierSettingsGui extends Screen {
         //Send to server
         PacketHandler.INSTANCE.sendToServer(new ModifierSettingsMessage(modifierSettings));
 
-        Minecraft.getInstance().mouseHelper.grabMouse();
+//        Minecraft.getInstance().mouseHelper.grabMouse();
     }
 
 }

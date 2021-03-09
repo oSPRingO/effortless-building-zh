@@ -52,7 +52,7 @@ public class ModeSettingsManager {
         });
 
         if (!modeCapability.isPresent()) {
-            EffortlessBuildingZh.log(player, "Saving buildmode settings failed.");
+            EffortlessBuildingZh.log(player, "保存建造模式时失败");
         }
     }
 

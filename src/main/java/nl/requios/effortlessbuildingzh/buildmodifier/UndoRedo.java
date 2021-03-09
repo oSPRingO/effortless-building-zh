@@ -112,7 +112,7 @@ public class UndoRedo {
                             previousBlockState = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
                         } else {
                             if (previousBlockStates.get(i).getBlock() != Blocks.AIR)
-                                EffortlessBuildingZh.logTranslate(player, "", previousBlockStates.get(i).getBlock().getTranslationKey(), " not found in inventory", true);
+                                EffortlessBuildingZh.logTranslate(player, "", previousBlockStates.get(i).getBlock().getTranslationKey(), "在背包中不存在", true);
                             previousBlockState = Blocks.AIR.getDefaultState();
                         }
                     }
@@ -172,7 +172,7 @@ public class UndoRedo {
                             newBlockState = ((BlockItem) itemStack.getItem()).getBlock().getDefaultState();
                         } else {
                             if (newBlockStates.get(i).getBlock() != Blocks.AIR)
-                                EffortlessBuildingZh.logTranslate(player, "", newBlockStates.get(i).getBlock().getTranslationKey(), " not found in inventory", true);
+                                EffortlessBuildingZh.logTranslate(player, "", newBlockStates.get(i).getBlock().getTranslationKey(), "在背包中不存在", true);
                             newBlockState = Blocks.AIR.getDefaultState();
                         }
                     }

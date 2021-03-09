@@ -124,8 +124,8 @@ public class ModeOptions {
             case REPLACE:
                 ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(player);
                 modifierSettings.setQuickReplace(!modifierSettings.doQuickReplace());
-                EffortlessBuildingZh.log(player, "Set " + TextFormatting.GOLD + "Quick Replace " + TextFormatting.RESET + (
-                        modifierSettings.doQuickReplace() ? "on" : "off"), true);
+                EffortlessBuildingZh.log(player, "已将" + TextFormatting.GOLD + "快速替换" + TextFormatting.RESET + (
+                        modifierSettings.doQuickReplace() ? "开启" : "关闭"), true);
                 break;
             case OPEN_MODIFIER_SETTINGS:
                 if (player.world.isRemote)

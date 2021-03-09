@@ -52,7 +52,7 @@ public class ModifierSettingsManager {
         });
 
         if (!modifierCapability.isPresent()) {
-            EffortlessBuildingZh.log(player, "Saving buildsettings failed.");
+            EffortlessBuildingZh.log(player, "保存建筑设置时失败");
         }
     }
 
@@ -64,39 +64,39 @@ public class ModifierSettingsManager {
         Mirror.MirrorSettings m = modifierSettings.getMirrorSettings();
         if (m.radius < 1) {
             m.radius = 1;
-            error += "Mirror size has to be at least 1. This has been corrected. ";
+            error += "镜像至少需要达到1，错误已被修正";
         }
         if (m.getReach() > maxReach) {
             m.radius = maxReach / 2;
-            error += "Mirror exceeds your maximum reach of " + (maxReach / 2) + ". Radius has been set to "+ (maxReach / 2) + ". ";
+            error += "镜像超出了你的建筑可及区" + (maxReach / 2) + "，半径已被设为"+ (maxReach / 2) + "。";
         }
 
         //Array settings
         Array.ArraySettings a = modifierSettings.getArraySettings();
         if (a.count < 0) {
             a.count = 0;
-            error += "Array count may not be negative. It has been reset to 0.";
+            error += "序列数不得为负数，已被更改为0";
         }
 
         if (a.getReach() > maxReach) {
             a.count = 0;
-            error += "Array exceeds your maximum reach of " + maxReach + ". Array count has been reset to 0. ";
+            error += "序列超出了你的建筑可及区" + maxReach + "。序列数已被设为1";
         }
 
         //Radial mirror settings
         RadialMirror.RadialMirrorSettings r = modifierSettings.getRadialMirrorSettings();
         if (r.slices < 2) {
             r.slices = 2;
-            error += "Radial mirror needs to have at least 2 slices. Slices has been set to 2.";
+            error += "环形镜像至少达到2。镜像数已被设为2";
         }
 
         if (r.radius < 1) {
             r.radius = 1;
-            error += "Radial mirror radius has to be at least 1. This has been corrected. ";
+            error += "环形镜像半径至少为1。错误已被修正";
         }
         if (r.getReach() > maxReach) {
             r.radius = maxReach / 2;
-            error += "Radial mirror exceeds your maximum reach of " + (maxReach / 2) + ". Radius has been set to "+ (maxReach / 2) + ". ";
+            error += "环形镜像超出了你的建筑可及区" + (maxReach / 2) + "，半径已被设为"+ (maxReach / 2) + "。";
         }
 
         //Other

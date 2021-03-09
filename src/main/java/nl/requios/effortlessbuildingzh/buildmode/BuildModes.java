@@ -92,7 +92,7 @@ public class BuildModes {
             //Check if player reach does not exceed startpos
             int maxReach = ReachHelper.getMaxReach(player);
             if (buildMode != BuildModeEnum.NORMAL && player.getPosition().distanceSq(startPos) > maxReach * maxReach) {
-                EffortlessBuildingZh.log(player, "Placement exceeds your reach.");
+                EffortlessBuildingZh.log(player, "位置超出你的建造可及区");
                 return;
             }
         }
