@@ -16,8 +16,8 @@ apply plugin: 'maven-publish'
 compileJava.options.encoding('utf8')
 
 version = '1.15.2-2.21'
-group = 'nl.requios.effortlessbuilding' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = 'effortlessbuilding'
+group = 'nl.requios.effortlessbuildingzh' // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = 'effortlessbuildingzh'
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
