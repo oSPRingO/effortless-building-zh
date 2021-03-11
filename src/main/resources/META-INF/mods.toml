@@ -30,6 +30,7 @@ authors="Requios, MrPigHead, oSPRingO" #optional
 # The description text for the mod (multi line!) (#mandatory)
 description='''
 用镜像、序列、快速替换、随机放置等工具更轻松地建造，生存、创造模式可用。
+版本: 1.15-2.21
 汉化 By: MrPigHead & oSPRingO团队
 前往我们的爱发电主页赞助我们! https://afdian.net/@oSPRingO
 '''
