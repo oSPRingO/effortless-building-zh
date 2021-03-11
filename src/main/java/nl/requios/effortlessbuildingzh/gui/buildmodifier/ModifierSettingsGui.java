@@ -27,7 +27,7 @@ public class ModifierSettingsGui extends Screen {
     private RadialMirrorSettingsGui radialMirrorSettingsGui;
 
     public ModifierSettingsGui() {
-        super(new TranslationTextComponent("effortlessbuilding.screen.modifier_settings"));
+        super(new TranslationTextComponent("effortlessbuildingzh.screen.modifier_settings"));
     }
 
     @Override
@@ -48,7 +48,7 @@ public class ModifierSettingsGui extends Screen {
 
         //Close button
         int y = height - 26;
-        buttonClose = new Button(width / 2 - 100, y, 200, 20, "Close", (button) -> {
+        buttonClose = new Button(width / 2 - 100, y, 200, 20, "关闭", (button) -> {
             Minecraft.getInstance().player.closeScreen();
         });
         buttons.add(buttonClose);

@@ -113,13 +113,13 @@ public class GuiNumberField extends AbstractGui {
         }
 
         if (insideMinusButton) {
-            textLines.add("Hold " + TextFormatting.AQUA + "shift " + TextFormatting.RESET + "for " + TextFormatting.RED + "10");
-            textLines.add("Hold " + TextFormatting.AQUA + "ctrl " + TextFormatting.RESET + "for " + TextFormatting.RED + "5");
+            textLines.add("按住" + TextFormatting.AQUA + "shift" + TextFormatting.RESET + "点击可以加" + TextFormatting.RED + "10");
+            textLines.add("按住" + TextFormatting.AQUA + "ctrl" + TextFormatting.RESET + "点击可以加" + TextFormatting.RED + "5");
         }
 
         if (insidePlusButton) {
-            textLines.add("Hold " + TextFormatting.AQUA + "shift " + TextFormatting.RESET + "for " + TextFormatting.DARK_GREEN + "10");
-            textLines.add("Hold " + TextFormatting.AQUA + "ctrl " + TextFormatting.RESET + "for " + TextFormatting.DARK_GREEN + "5");
+            textLines.add("按住" + TextFormatting.AQUA + "shift " + TextFormatting.RESET + "点击可以加" + TextFormatting.DARK_GREEN + "10");
+            textLines.add("按住" + TextFormatting.AQUA + "ctrl " + TextFormatting.RESET + "点击可以加" + TextFormatting.DARK_GREEN + "5");
         }
 
         screen.renderTooltip(textLines, mouseX - 10, mouseY + 25);

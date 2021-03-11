@@ -47,23 +47,23 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         y = top + 20;
         textArrayOffsetX = new GuiNumberField(font, buttons, left + 70, y, 50, 18);
         textArrayOffsetX.setNumber(0);
-        textArrayOffsetX.setTooltip("How much each copy is shifted.");
+        textArrayOffsetX.setTooltip("每份拷贝的偏移坐标");
         arrayNumberFieldList.add(textArrayOffsetX);
 
         textArrayOffsetY = new GuiNumberField(font, buttons, left + 140, y, 50, 18);
         textArrayOffsetY.setNumber(0);
-        textArrayOffsetY.setTooltip("How much each copy is shifted.");
+        textArrayOffsetY.setTooltip("每份拷贝的偏移坐标");
         arrayNumberFieldList.add(textArrayOffsetY);
 
         textArrayOffsetZ = new GuiNumberField(font, buttons, left + 210, y, 50, 18);
         textArrayOffsetZ.setNumber(0);
-        textArrayOffsetZ.setTooltip("How much each copy is shifted.");
+        textArrayOffsetZ.setTooltip("每份拷贝的偏移坐标");
         arrayNumberFieldList.add(textArrayOffsetZ);
 
         y = top + 50;
         textArrayCount = new GuiNumberField(font, buttons, left + 55, y, 50, 18);
         textArrayCount.setNumber(5);
-        textArrayCount.setTooltip("How many copies should be made.");
+        textArrayCount.setTooltip("将有的拷贝份数");
         arrayNumberFieldList.add(textArrayCount);
 
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
@@ -92,10 +92,10 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         buttonArrayEnabled.render(mouseX, mouseY, partialTicks);
         if (buttonArrayEnabled.isChecked()) {
             buttonArrayEnabled.y = yy;
-            font.drawString("Array enabled", left + offset, yy + 2, 0xFFFFFF);
+            font.drawString("序列已启用", left + offset, yy + 2, 0xFFFFFF);
 
             yy = y + 20;
-            font.drawString("Offset", left + offset, yy + 5, 0xFFFFFF);
+            font.drawString("偏移距离", left + offset, yy + 5, 0xFFFFFF);
             font.drawString("X", left + 50 + offset, yy + 5, 0xFFFFFF);
             textArrayOffsetX.y = yy;
             font.drawString("Y", left + 120 + offset, yy + 5, 0xFFFFFF);
@@ -104,19 +104,19 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
             textArrayOffsetZ.y = yy;
 
             yy = y + 50;
-            font.drawString("Count", left + offset, yy + 5, 0xFFFFFF);
+            font.drawString("数量", left + offset, yy + 5, 0xFFFFFF);
             textArrayCount.y = yy;
 
             int currentReach = Math.max(-1, getArrayReach());
             int maxReach = ReachHelper.getMaxReach(mc.player);
             TextFormatting reachColor = isCurrentReachValid(currentReach, maxReach) ? TextFormatting.GRAY : TextFormatting.RED;
-            String reachText = "Reach: " + reachColor + currentReach + TextFormatting.GRAY + "/" + TextFormatting.GRAY + maxReach;
+            String reachText = "建筑区: " + reachColor + currentReach + TextFormatting.GRAY + "/" + TextFormatting.GRAY + maxReach;
             font.drawString(reachText, left + 176 + offset, yy + 5, 0xFFFFFF);
 
             arrayNumberFieldList.forEach(numberField -> numberField.drawNumberField(mouseX, mouseY, partialTicks));
         } else {
             buttonArrayEnabled.y = yy;
-            font.drawString("Array disabled", left + offset, yy + 2, 0x999999);
+            font.drawString("序列已禁用", left + offset, yy + 2, 0x999999);
         }
 
     }
@@ -158,14 +158,14 @@ public class ArraySettingsGui extends GuiCollapsibleScrollEntry {
         try {
             arrayOffset = new BlockPos(textArrayOffsetX.getNumber(), textArrayOffsetY.getNumber(), textArrayOffsetZ.getNumber());
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuildingZh.log(mc.player, "Array offset not a valid number.");
+            EffortlessBuildingZh.log(mc.player, "序列偏移距离不合法");
         }
 
         int arrayCount = 5;
         try {
             arrayCount = (int) textArrayCount.getNumber();
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuildingZh.log(mc.player, "Array count not a valid number.");
+            EffortlessBuildingZh.log(mc.player, "序列数量距离不合法");
         }
 
         return new Array.ArraySettings(arrayEnabled, arrayOffset, arrayCount);

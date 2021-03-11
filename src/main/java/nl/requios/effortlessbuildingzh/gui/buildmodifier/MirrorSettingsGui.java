@@ -55,17 +55,17 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         textMirrorPosX = new GuiNumberField(font, buttonList, left + 58, y, 62, 18);
         textMirrorPosX.setNumber(0);
         textMirrorPosX.setTooltip(
-                Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
+                Arrays.asList("镜子位置 ", TextFormatting.GRAY + "奇数加0.5"));
         mirrorNumberFieldList.add(textMirrorPosX);
 
         textMirrorPosY = new GuiNumberField(font, buttonList, left + 138, y, 62, 18);
         textMirrorPosY.setNumber(64);
-        textMirrorPosY.setTooltip(Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
+        textMirrorPosY.setTooltip(Arrays.asList("镜子位置 ", TextFormatting.GRAY + "奇数加0.5"));
         mirrorNumberFieldList.add(textMirrorPosY);
 
         textMirrorPosZ = new GuiNumberField(font, buttonList, left + 218, y, 62, 18);
         textMirrorPosZ.setNumber(0);
-        textMirrorPosZ.setTooltip(Arrays.asList("The position of the mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
+        textMirrorPosZ.setTooltip(Arrays.asList("镜子位置 ", TextFormatting.GRAY + "奇数加0.5"));
         mirrorNumberFieldList.add(textMirrorPosZ);
 
         y = top + 50;
@@ -82,9 +82,9 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         textMirrorRadius = new GuiNumberField(font, buttonList, left + 218, y, 62, 18);
         textMirrorRadius.setNumber(50);
         //TODO change to diameter (remove /2)
-        textMirrorRadius.setTooltip(Arrays.asList("How far the mirror reaches in any direction.",
-                TextFormatting.GRAY + "Max: " + TextFormatting.GOLD + ReachHelper.getMaxReach(mc.player) / 2,
-                TextFormatting.GRAY + "Upgradeable in survival with reach upgrades."));
+        textMirrorRadius.setTooltip(Arrays.asList("镜子的影响距离",
+                TextFormatting.GRAY + "最大: " + TextFormatting.GOLD + ReachHelper.getMaxReach(mc.player) / 2,
+                TextFormatting.GRAY + "在生存模式下可升级"));
         mirrorNumberFieldList.add(textMirrorRadius);
 
         y = top + 72;
@@ -94,41 +94,41 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
             textMirrorPosY.setNumber(pos.y);
             textMirrorPosZ.setNumber(pos.z);
         });
-        buttonCurrentPosition.setTooltip("Set mirror position to current player position");
+        buttonCurrentPosition.setTooltip("将镜子设为玩家位置");
         mirrorIconButtonList.add(buttonCurrentPosition);
 
         buttonToggleOdd = new GuiIconButton(left + 35, y, 0, 20, BUILDING_ICONS, button -> {
             toggleOdd = !toggleOdd;
             buttonToggleOdd.setUseAlternateIcon(toggleOdd);
             if (toggleOdd) {
-                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
+                buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块角落", "对于偶数"));
                 textMirrorPosX.setNumber(textMirrorPosX.getNumber() + 0.5);
                 textMirrorPosY.setNumber(textMirrorPosY.getNumber() + 0.5);
                 textMirrorPosZ.setNumber(textMirrorPosZ.getNumber() + 0.5);
             } else {
-                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+                buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块中间", "对于奇数"));
                 textMirrorPosX.setNumber(Math.floor(textMirrorPosX.getNumber()));
                 textMirrorPosY.setNumber(Math.floor(textMirrorPosY.getNumber()));
                 textMirrorPosZ.setNumber(Math.floor(textMirrorPosZ.getNumber()));
             }
         });
-        buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+        buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块中间", "对于奇数"));
         mirrorIconButtonList.add(buttonToggleOdd);
 
         buttonDrawLines = new GuiIconButton(left + 65, y, 0, 40, BUILDING_ICONS, button -> {
             drawLines = !drawLines;
             buttonDrawLines.setUseAlternateIcon(drawLines);
-            buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
+            buttonDrawLines.setTooltip(drawLines ? "隐藏坐标轴" : "显示坐标轴");
         });
-        buttonDrawLines.setTooltip("Show lines");
+        buttonDrawLines.setTooltip("显示坐标轴");
         mirrorIconButtonList.add(buttonDrawLines);
 
         buttonDrawPlanes = new GuiIconButton(left + 95, y, 0, 60, BUILDING_ICONS, button -> {
             drawPlanes = !drawPlanes;
             buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
-            buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
+            buttonDrawPlanes.setTooltip(drawPlanes ? "隐藏建造区" : "显示建造区");
         });
-        buttonDrawPlanes.setTooltip("Show area");
+        buttonDrawPlanes.setTooltip("显示建造区");
         mirrorIconButtonList.add(buttonDrawPlanes);
 
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
@@ -146,14 +146,14 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
             drawPlanes = m.drawPlanes;
             buttonDrawLines.setUseAlternateIcon(drawLines);
             buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
-            buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
-            buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
+            buttonDrawLines.setTooltip(drawLines ? "隐藏坐标轴" : "显示坐标轴");
+            buttonDrawPlanes.setTooltip(drawPlanes ? "隐藏建造区" : "显示建造区");
             if (textMirrorPosX.getNumber() == Math.floor(textMirrorPosX.getNumber())) {
                 toggleOdd = false;
-                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+                buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块中心", "对于奇数"));
             } else {
                 toggleOdd = true;
-                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
+                buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块角落", "对于偶数"));
             }
             buttonToggleOdd.setUseAlternateIcon(toggleOdd);
         }
@@ -180,10 +180,10 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonMirrorEnabled.render(mouseX, mouseY, partialTicks);
         if (buttonMirrorEnabled.isChecked()) {
             buttonMirrorEnabled.y = yy;
-            font.drawString("Mirror enabled", left + offset, yy + 2, 0xFFFFFF);
+            font.drawString("镜像已启用", left + offset, yy + 2, 0xFFFFFF);
 
             yy = y + 18;
-            font.drawString("Position", left + offset, yy + 5, 0xFFFFFF);
+            font.drawString("位置", left + offset, yy + 5, 0xFFFFFF);
             font.drawString("X", left + 40 + offset, yy + 5, 0xFFFFFF);
             textMirrorPosX.y = yy;
             font.drawString("Y", left + 120 + offset, yy + 5, 0xFFFFFF);
@@ -192,11 +192,11 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
             textMirrorPosZ.y = yy;
 
             yy = y + 50;
-            font.drawString("Direction", left + offset, yy + 2, 0xFFFFFF);
+            font.drawString("方向", left + offset, yy + 2, 0xFFFFFF);
             buttonMirrorX.y = yy;
             buttonMirrorY.y = yy;
             buttonMirrorZ.y = yy;
-            font.drawString("Radius", left + 176 + offset, yy + 2, 0xFFFFFF);
+            font.drawString("半径", left + 176 + offset, yy + 2, 0xFFFFFF);
             textMirrorRadius.y = yy - 3;
 
             yy = y + 72;
@@ -210,7 +210,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
             mirrorNumberFieldList.forEach(numberField -> numberField.drawNumberField(mouseX, mouseY, partialTicks));
         } else {
             buttonMirrorEnabled.y = yy;
-            font.drawString("Mirror disabled", left + offset, yy + 2, 0x999999);
+            font.drawString("镜像已禁用", left + offset, yy + 2, 0x999999);
         }
 
     }
@@ -254,7 +254,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         try {
             mirrorPos = new Vec3d(textMirrorPosX.getNumber(), textMirrorPosY.getNumber(), textMirrorPosZ.getNumber());
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuildingZh.log(mc.player, "Mirror position not a valid number.");
+            EffortlessBuildingZh.log(mc.player, "镜像位置不合法");
         }
 
         boolean mirrorX = buttonMirrorX.isChecked();
@@ -265,7 +265,7 @@ public class MirrorSettingsGui extends GuiCollapsibleScrollEntry {
         try {
             mirrorRadius = (int) textMirrorRadius.getNumber();
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuildingZh.log(mc.player, "Mirror radius not a valid number.");
+            EffortlessBuildingZh.log(mc.player, "镜像半径不合法");
         }
 
         return new Mirror.MirrorSettings(mirrorEnabled, mirrorPos, mirrorX, mirrorY, mirrorZ, mirrorRadius, drawLines, drawPlanes);

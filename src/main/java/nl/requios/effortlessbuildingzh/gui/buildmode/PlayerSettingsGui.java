@@ -30,8 +30,8 @@ public class PlayerSettingsGui extends Screen {
     protected boolean showShaderList = false;
 
     public enum ShaderType {
-        DISSOLVE_BLUE("Dissolve Blue"),
-        DISSOLVE_ORANGE("Dissolve Orange");
+        DISSOLVE_BLUE("蓝色"),
+        DISSOLVE_ORANGE("橙色");
 
         public String name;
         ShaderType(String name) {
@@ -66,7 +66,7 @@ public class PlayerSettingsGui extends Screen {
         });
         addButton(slider);
 
-        closeButton = new ExtendedButton(left + 50, bottom - 20, 180, 20, "Done", (button) -> {
+        closeButton = new ExtendedButton(left + 50, bottom - 20, 180, 20, "完成", (button) -> {
             this.minecraft.player.closeScreen();
         });
         addButton(closeButton);
@@ -82,10 +82,10 @@ public class PlayerSettingsGui extends Screen {
         this.renderBackground();
 
         int yy = top;
-        font.drawString("Shader type", left, yy + 5, 0xFFFFFF);
+        font.drawString("特效类型", left, yy + 5, 0xFFFFFF);
 
         yy += 50;
-        font.drawString("Shader speed", left, yy + 5, 0xFFFFFF);
+        font.drawString("特效速度", left, yy + 5, 0xFFFFFF);
 
         super.render(mouseX, mouseY, partialTicks);
 

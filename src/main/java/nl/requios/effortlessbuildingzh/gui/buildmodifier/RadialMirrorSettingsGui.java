@@ -55,31 +55,31 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
         textRadialMirrorPosX = new GuiNumberField(font, buttonList, left + 58, y, 62, 18);
         textRadialMirrorPosX.setNumber(0);
         textRadialMirrorPosX.setTooltip(
-                Arrays.asList("The position of the radial mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
+                Arrays.asList("镜子位置 ", TextFormatting.GRAY + "奇数加0.5"));
         radialMirrorNumberFieldList.add(textRadialMirrorPosX);
 
         textRadialMirrorPosY = new GuiNumberField(font, buttonList, left + 138, y, 62, 18);
         textRadialMirrorPosY.setNumber(64);
-        textRadialMirrorPosY.setTooltip(Arrays.asList("The position of the radial mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
+        textRadialMirrorPosY.setTooltip(Arrays.asList("镜子位置 ", TextFormatting.GRAY + "奇数加0.5"));
         radialMirrorNumberFieldList.add(textRadialMirrorPosY);
 
         textRadialMirrorPosZ = new GuiNumberField(font, buttonList, left + 218, y, 62, 18);
         textRadialMirrorPosZ.setNumber(0);
-        textRadialMirrorPosZ.setTooltip(Arrays.asList("The position of the radial mirror.", TextFormatting.GRAY + "For odd numbered builds add 0.5."));
+        textRadialMirrorPosZ.setTooltip(Arrays.asList("镜子位置 ", TextFormatting.GRAY + "奇数加0.5"));
         radialMirrorNumberFieldList.add(textRadialMirrorPosZ);
 
         y = top + 47;
         textRadialMirrorSlices = new GuiNumberField(font, buttonList, left + 55, y, 50, 18);
         textRadialMirrorSlices.setNumber(4);
-        textRadialMirrorSlices.setTooltip(Arrays.asList("The number of repeating slices.", TextFormatting.GRAY + "Minimally 2."));
+        textRadialMirrorSlices.setTooltip(Arrays.asList("环形镜像重复的瓣数", TextFormatting.GRAY + "至少为2"));
         radialMirrorNumberFieldList.add(textRadialMirrorSlices);
 
         textRadialMirrorRadius = new GuiNumberField(font, buttonList, left + 218, y, 62, 18);
         textRadialMirrorRadius.setNumber(50);
         //TODO change to diameter (remove /2)
-        textRadialMirrorRadius.setTooltip(Arrays.asList("How far the radial mirror reaches from its center position.",
-                TextFormatting.GRAY + "Max: " + TextFormatting.GOLD + ReachHelper.getMaxReach(mc.player) / 2,
-                TextFormatting.GRAY + "Upgradeable in survival with reach upgrades."));
+        textRadialMirrorRadius.setTooltip(Arrays.asList("镜子的影响距离",
+                TextFormatting.GRAY + "最大: " + TextFormatting.GOLD + ReachHelper.getMaxReach(mc.player) / 2,
+                TextFormatting.GRAY + "在生存模式下可升级"));
         radialMirrorNumberFieldList.add(textRadialMirrorRadius);
 
         y = top + 72;
@@ -89,45 +89,45 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
             textRadialMirrorPosY.setNumber(pos.y);
             textRadialMirrorPosZ.setNumber(pos.z);
         });
-        buttonCurrentPosition.setTooltip("Set radial mirror position to current player position");
+        buttonCurrentPosition.setTooltip("将镜子设为玩家位置");
         radialMirrorIconButtonList.add(buttonCurrentPosition);
 
         buttonToggleOdd = new GuiIconButton(left + 35, y, 0, 20, BUILDING_ICONS, button -> {
             toggleOdd = !toggleOdd;
             buttonToggleOdd.setUseAlternateIcon(toggleOdd);
             if (toggleOdd) {
-                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to corner of block", "for even numbered builds"));
+                buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块角落", "对于偶数"));
                 textRadialMirrorPosX.setNumber(textRadialMirrorPosX.getNumber() + 0.5);
                 textRadialMirrorPosY.setNumber(textRadialMirrorPosY.getNumber() + 0.5);
                 textRadialMirrorPosZ.setNumber(textRadialMirrorPosZ.getNumber() + 0.5);
             } else {
-                buttonToggleOdd.setTooltip(Arrays.asList("Set mirror position to middle of block", "for odd numbered builds"));
+                buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块中间", "对于奇数"));
                 textRadialMirrorPosX.setNumber(Math.floor(textRadialMirrorPosX.getNumber()));
                 textRadialMirrorPosY.setNumber(Math.floor(textRadialMirrorPosY.getNumber()));
                 textRadialMirrorPosZ.setNumber(Math.floor(textRadialMirrorPosZ.getNumber()));
             }
         });
-        buttonToggleOdd.setTooltip(Arrays.asList("Set radial mirror position to middle of block", "for odd numbered builds"));
+        buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块中间", "对于奇数"));
         radialMirrorIconButtonList.add(buttonToggleOdd);
 
         buttonDrawLines = new GuiIconButton(left + 65, y, 0, 40, BUILDING_ICONS, button -> {
             drawLines = !drawLines;
             buttonDrawLines.setUseAlternateIcon(drawLines);
-            buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
+            buttonDrawLines.setTooltip(drawLines ? "隐藏坐标轴" : "显示坐标轴");
         });
-        buttonDrawLines.setTooltip("Show lines");
+        buttonDrawLines.setTooltip("显示坐标轴");
         radialMirrorIconButtonList.add(buttonDrawLines);
 
         buttonDrawPlanes = new GuiIconButton(left + 95, y, 0, 60, BUILDING_ICONS, button -> {
             drawPlanes = !drawPlanes;
             buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
-            buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
+            buttonDrawPlanes.setTooltip(drawPlanes ? "隐藏建造区" : "显示建造区");
         });
-        buttonDrawPlanes.setTooltip("Show area");
+        buttonDrawPlanes.setTooltip("显示建造区");
         radialMirrorIconButtonList.add(buttonDrawPlanes);
 
         y = top + 76;
-        buttonRadialMirrorAlternate = new GuiCheckBoxFixed(left + 140, y, " Alternate", false);
+        buttonRadialMirrorAlternate = new GuiCheckBoxFixed(left + 140, y, "轴对称", false);
         radialMirrorButtonList.add(buttonRadialMirrorAlternate);
 
         ModifierSettingsManager.ModifierSettings modifierSettings = ModifierSettingsManager.getModifierSettings(mc.player);
@@ -144,14 +144,14 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
             drawPlanes = r.drawPlanes;
             buttonDrawLines.setUseAlternateIcon(drawLines);
             buttonDrawPlanes.setUseAlternateIcon(drawPlanes);
-            buttonDrawLines.setTooltip(drawLines ? "Hide lines" : "Show lines");
-            buttonDrawPlanes.setTooltip(drawPlanes ? "Hide area" : "Show area");
+            buttonDrawLines.setTooltip(drawLines ? "隐藏坐标轴" : "显示坐标轴");
+            buttonDrawPlanes.setTooltip(drawPlanes ? "隐藏建造区" : "显示建造区");
             if (textRadialMirrorPosX.getNumber() == Math.floor(textRadialMirrorPosX.getNumber())) {
                 toggleOdd = false;
-                buttonToggleOdd.setTooltip(Arrays.asList("Set radial mirror position to middle of block", "for odd numbered builds"));
+                buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块中心", "对于奇数"));
             } else {
                 toggleOdd = true;
-                buttonToggleOdd.setTooltip(Arrays.asList("Set radial mirror position to corner of block", "for even numbered builds"));
+                buttonToggleOdd.setTooltip(Arrays.asList("将镜子位置设置在方块角落", "对于偶数"));
             }
             buttonToggleOdd.setUseAlternateIcon(toggleOdd);
         }
@@ -177,10 +177,10 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
         buttonRadialMirrorEnabled.render(mouseX, mouseY, partialTicks);
         if (buttonRadialMirrorEnabled.isChecked()) {
             buttonRadialMirrorEnabled.y = yy;
-            font.drawString("Radial mirror enabled", left + offset, yy + 2, 0xFFFFFF);
+            font.drawString("环形镜像已启用", left + offset, yy + 2, 0xFFFFFF);
 
             yy = y + 18;
-            font.drawString("Position", left + offset, yy + 5, 0xFFFFFF);
+            font.drawString("位置", left + offset, yy + 5, 0xFFFFFF);
             font.drawString("X", left + 40 + offset, yy + 5, 0xFFFFFF);
             textRadialMirrorPosX.y = yy;
             font.drawString("Y", left + 120 + offset, yy + 5, 0xFFFFFF);
@@ -189,9 +189,9 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
             textRadialMirrorPosZ.y = yy;
 
             yy = y + 50;
-            font.drawString("Slices", left + offset, yy + 2, 0xFFFFFF);
+            font.drawString("瓣数", left + offset, yy + 2, 0xFFFFFF);
             textRadialMirrorSlices.y = yy - 3;
-            font.drawString("Radius", left + 176 + offset, yy + 2, 0xFFFFFF);
+            font.drawString("半径", left + 176 + offset, yy + 2, 0xFFFFFF);
             textRadialMirrorRadius.y = yy - 3;
 
             yy = y + 72;
@@ -209,7 +209,7 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
                     .forEach(numberField -> numberField.drawNumberField(mouseX, mouseY, partialTicks));
         } else {
             buttonRadialMirrorEnabled.y = yy;
-            font.drawString("Radial mirror disabled", left + offset, yy + 2, 0x999999);
+            font.drawString("环形镜像已禁用", left + offset, yy + 2, 0x999999);
         }
 
     }
@@ -254,14 +254,14 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
             radialMirrorPos = new Vec3d(textRadialMirrorPosX.getNumber(), textRadialMirrorPosY.getNumber(), textRadialMirrorPosZ
                     .getNumber());
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuildingZh.log(mc.player, "Radial mirror position not a valid number.");
+            EffortlessBuildingZh.log(mc.player, "环形镜像位置不合法");
         }
 
         int radialMirrorSlices = 4;
         try {
             radialMirrorSlices = (int) textRadialMirrorSlices.getNumber();
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuildingZh.log(mc.player, "Radial mirror slices not a valid number.");
+            EffortlessBuildingZh.log(mc.player, "环形镜像瓣数不合法.");
         }
 
         boolean radialMirrorAlternate = buttonRadialMirrorAlternate.isChecked();
@@ -270,7 +270,7 @@ public class RadialMirrorSettingsGui extends GuiCollapsibleScrollEntry {
         try {
             radialMirrorRadius = (int) textRadialMirrorRadius.getNumber();
         } catch (NumberFormatException | NullPointerException ex) {
-            EffortlessBuildingZh.log(mc.player, "Mirror radius not a valid number.");
+            EffortlessBuildingZh.log(mc.player, "环形镜像半径不合法");
         }
 
         return new RadialMirror.RadialMirrorSettings(radialMirrorEnabled, radialMirrorPos, radialMirrorSlices, radialMirrorAlternate, radialMirrorRadius, drawLines, drawPlanes);
